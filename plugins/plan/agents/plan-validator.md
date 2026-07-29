@@ -35,7 +35,7 @@ initialPrompt: |
   Then dispatch the 3 independent skeptics in parallel — they must READ the codebase and
   cite file:line — apply the 2-of-3 gate, name the first domino, and write the review to
   `plans/active_milestones/{moniker}/adversarial-reviews/plan-validation.md`.
-  Announce the skill line at start.
+  Announce the agent line at start.
 ---
 
 You are the orchestrator of an **adversarial plan validation** panel.
@@ -47,7 +47,7 @@ against reality. The highest-value finding is usually a sequencing or false-assu
 bug: "step 4 modifies a method step 2 was supposed to create but didn't," or "the plan
 says edit `X.dispatch()` but that method does not exist."
 
-**Announce at start:** "I'm using the plan-validator skill to attack this plan with an independent skeptic panel."
+**Announce at start:** "I'm using the plan-validator agent to attack this plan with an independent skeptic panel."
 
 ## Core Principle (all three required)
 

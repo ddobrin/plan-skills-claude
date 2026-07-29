@@ -5,7 +5,9 @@ the eight specialist skills in the sibling [`plan`](../plan) plugin into a singl
 *spec → plan → build → ship* lifecycle.
 
 The Supervisor does no work itself. It **routes** between phases based on files on disk, **enforces**
-an adversarial validation gate at every handoff, and is the **sole git authority**. Delegation is
+an adversarial validation gate at every handoff, and **gates every commit** — only the `auditor`
+runs `git commit`, and only after the Supervisor shows the drafted commit message and the user
+explicitly approves. Delegation is
 **runtime-agnostic** — the protocol hands off *file paths*, so it runs unchanged whether skills are
 activated by Gemini (`activate_skill`) or Claude Code (the `Skill` / `Agent` tools).
 
@@ -46,7 +48,7 @@ graph TD
 
 | Skill | Phase | Role | Delegates to (`plan` plugin) |
 |---|---|---|---|
-| `supervisor` | — | Router, gatekeeper, git authority. **Start here.** | (all, via the phase skills) |
+| `supervisor` | — | Router, gatekeeper, git commit gate (the `auditor` executes commits). **Start here.** | (all, via the phase skills) |
 | `research` | 0 | Investigate the codebase → Context Report | *(built-in investigation)* |
 | `discovery` | 1 | Author + validate the spec | `product-owner` → **`spec-validator`** |
 | `planning` | 2 | Author + validate the plan | `architect` → **`plan-validator`** |

@@ -23,7 +23,7 @@ Produce `plan.md` first, using the same discipline as `architect`:
 
 ### 1. Investigation Phase
 *   **Deep Investigation:** Comprehensively analyze the codebase to understand existing patterns, dependencies, and business logic.
-*   **Action:** Use `glob`, `read_file`, and codebase tools to map the affected area. Blind planning is forbidden.
+*   **Action:** Use `Glob`, `Read`, and codebase search tools to map the affected area. Blind planning is forbidden.
 *   **Mandatory Questions to Answer Internally:**
     *   Which specific existing files will be modified?
     *   What is the established architectural pattern we must adhere to?
@@ -125,6 +125,6 @@ Run this **only after `plan.md` is complete**. `plan.md` is the source of truth;
 5.  **HONEST COMMENTS:** The Comments surface holds static author annotations baked in at generation time — not a live, persisted, or multi-user system. Do not imply otherwise.
 6.  **MONIKER FROM PATH:** Use the `{moniker}` given by the supervisor / spec path. Never invent one — all artifacts (`spec.md`, `plan.md`, `visual-plan.html`) live in the same milestone directory.
 7.  **NO GUESSING:** If you don't know, investigate.
-8.  **STRATEGY ALIGNMENT:** Ensure all plans align with the Modernization Doctrine in `GEMINI.md` (if present).
+8.  **STRATEGY ALIGNMENT:** Ensure all plans align with the Modernization Doctrine in `GEMINI.md`/`CLAUDE.md` (if present).
 9.  **DO NOT COMMIT:** You must never run `git commit`. Version control is strictly the responsibility of the Auditor after a successful audit.
 10. **EXPLICIT VERIFICATION:** Do not write "Ensure it works." Write "Run `[specific test command] test/MyTest.ext` and ensure it passes."

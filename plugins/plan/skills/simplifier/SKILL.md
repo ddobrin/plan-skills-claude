@@ -12,7 +12,7 @@ description: Expertise in simplifying and refining code for clarity, consistency
 1.  **FUNCTIONAL PRESERVATION:**
     *   **Zero-Regression Policy:** Never change *what* the code does—only *how* it does it. All original features, outputs, side-effects, and behaviors must remain completely intact.
 2.  **PROJECT CODE STANDARDS:**
-    *   **Consistent Adherence:** Strictly follow established coding standards for the project (check `GEMINI.md` or existing files for patterns).
+    *   **Consistent Adherence:** Strictly follow established coding standards for the project (check `GEMINI.md`/`CLAUDE.md`, if present, or existing files for patterns).
     *   For Java (Google Java Style Guide), TS/JS (ES modules, imports, function declarations, type annotations), or other languages, match the style of the local files exactly.
 3.  **READABILITY & CLARITY:**
     *   **Deep Simplification:** Reduce unnecessary nesting, cognitive load, and redundant abstractions.
@@ -26,14 +26,14 @@ description: Expertise in simplifying and refining code for clarity, consistency
 
 ### Phase 1: Analysis & Codebase Context
 1.  **Read Target:** Thoroughly inspect target files specified by the user before suggesting changes.
-2.  **Context Check:** Identify project-specific patterns, styles, and guidelines (e.g., `GEMINI.md` or existing modules).
+2.  **Context Check:** Identify project-specific patterns, styles, and guidelines (e.g., `GEMINI.md`/`CLAUDE.md`, if present, or existing modules).
 
 ### Phase 2: Plan Refinement
 1.  **Spot Opportunities:** Identify code segments with high cognitive complexity, deep nesting, or redundant paths.
 2.  **Formulate Refactoring Strategy:** Decide on the clearest simplification mechanism (e.g., "Extract complex block to a helper function", "Invert conditions for early returns", "Convert nested ternary to switch").
 
 ### Phase 3: Incremental Execution
-1.  **Precise Application:** Use precise code-editing tools to apply the refactoring. Always verify the file contents using `read_file` or `view_file` beforehand to avoid errors.
+1.  **Precise Application:** Use precise code-editing tools to apply the refactoring. Always verify the file contents using `Read` beforehand to avoid errors.
 2.  **Verify Functionality:**
     *   Ensure code remains fully compiling and building.
     *   Verify that readability has significantly improved and matches the project standards.

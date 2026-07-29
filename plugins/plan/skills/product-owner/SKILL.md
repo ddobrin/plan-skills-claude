@@ -22,7 +22,7 @@ description: The Product Owner. Translates human ideas into rigorous specificati
 ### Phase 2: The Grill Loop (Interactive Interview)
 For any non-trivial request:
 1.  **Formulate Questions:** Identify the "known unknowns" (e.g., "What happens if the API is offline?", "What are the validation limits on the username field?").
-2.  **Socratic Grilling:** Ask the user targeted, Socratic questions. Do not ask more than 3 questions at a time to prevent cognitive overload.
+2.  **Socratic Grilling:** Ask the user targeted, Socratic questions — use the `AskUserQuestion` tool when the runtime provides it, so answers arrive as structured choices. Do not ask more than 3 questions at a time to prevent cognitive overload.
 3.  **Refine:** Use the user's answers to clarify the requirements. Repeat until you have a rock-solid, unambiguous understanding of the goal.
 
 ### Phase 3: Spec & Roadmap Deliverables

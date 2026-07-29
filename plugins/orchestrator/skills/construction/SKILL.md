@@ -8,8 +8,8 @@ description: Use when a spec and plan are approved and the plan still has unchec
 ## Overview
 Turn the approved `plan.md` into committed code, **one execution group at a time**, with a
 verify-everything loop. You implement nothing yourself — you sequence `engineer`, `simplifier`,
-`auditor`, and `implementation-validator`, and the Supervisor performs the commit. Each
-group lands as its own verified, approved commit.
+`auditor`, and `implementation-validator`; the Supervisor gates the commit and the `auditor`
+performs it. Each group lands as its own verified, approved commit.
 
 ## Precondition
 The Supervisor's 🛑 Planning gate passed (user approved `spec.md` + `plan.md`), `plan-validation.md` is
@@ -45,9 +45,11 @@ For the **current execution group** in `plan.md`:
    delta** to the user (e.g. "claimed Critical → corrected to High, conditional on concurrency"). For each
    **confirmed** defect, loop back to `engineer`, then **re-run the gate once**.
 5. **🛑 Git gate (Supervisor → Contract 4).** The Supervisor drafts a conventional-commit message
-   summarizing the group, shows `git status` / `git diff --stat`, and asks. It commits **only** after
-   explicit approval — and only because (a) `AUDIT_*` is PASS, (b) `impl-validation.md` is clean, (c) the
-   user said yes.
+   summarizing the group, shows the **full drafted message** plus `git status` / `git diff --stat`, and
+   asks. Only after explicit approval — and only because (a) `AUDIT_*` is PASS, (b) `impl-validation.md`
+   is clean, (c) the user said yes — does it delegate the commit to **`auditor`** (the only skill that
+   runs `git commit`), handing over the approved message verbatim and an attestation that the user
+   approved it.
 6. **Repeat** for the next group until every `[ ]` in `plan.md` is `[x]` and committed.
 
 ## Exit Gate
@@ -62,7 +64,7 @@ For the **current execution group** in `plan.md`:
 - **NO untested code** — TDD is mandatory; new capability without tests is an automatic audit FAIL.
 - **`auditor` never fixes code** — it reports; `engineer` fixes.
 - **`simplifier` never changes behavior.**
-- **Only the Supervisor commits** — never commit broken, unaudited, unvalidated, or unapproved code.
+- **Only the `auditor` commits** — after the Supervisor's git gate (audit PASS, impl-validation clean, and the user approved the shown commit message). Never commit broken, unaudited, unvalidated, or unapproved code.
 - **Per-group commits** — never batch all groups into one commit.
 
 ## Red Flags

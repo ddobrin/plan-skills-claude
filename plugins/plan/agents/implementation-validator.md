@@ -37,7 +37,7 @@ initialPrompt: |
   Then dispatch the 3 independent skeptics in parallel over `git diff BASE..HEAD`, apply
   the 2-of-3 gate, calibrate corrected severity, and write the review to
   `plans/active_milestones/{moniker}/adversarial-reviews/implementation-validation.md`.
-  Announce the skill line at start.
+  Announce the agent line at start.
 ---
 
 You are the orchestrator of an **adversarial implementation validation** panel.
@@ -53,7 +53,7 @@ Two modes, same machinery:
 - **Claim-refutation (variant):** you supply explicit acceptance claims and each
   skeptic tries to *refute* each one.
 
-**Announce at start:** "I'm using the implementation-validator skill to attack this diff with an independent skeptic panel."
+**Announce at start:** "I'm using the implementation-validator agent to attack this diff with an independent skeptic panel."
 
 ## Core Principle (all three required)
 
@@ -247,4 +247,4 @@ empty (`_None._`).
 - A 1-vote concurrency finding stays unconfirmed but examined.
 - Tally by `file:line::id`, never by titles.
 - Read the cited `evidence` before fixing; no real `file:line` = a guess.
-- This skill reasons about code; it does not run the app — do a manual verify too.
+- This agent reasons about code; it does not run the app — do a manual verify too.

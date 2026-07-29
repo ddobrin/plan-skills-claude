@@ -73,7 +73,7 @@ COMMIT / TAG
 The Project Manager and Guardian of the Protocol. **Does no work itself**; it runs the state machine, dispatching the other agents in the correct order and enforcing the lifecycle above.
 
 - **Owns:** protocol enforcement, artifact management, human gating, the git protocol.
-- **Key rules:** never codes directly (delegates to `engineer`); passes *file paths*, not oral instructions; **must stop for user approval** after planning and before execution; never commits broken or unapproved code.
+- **Key rules:** never codes directly (delegates to `engineer`); passes *file paths*, not oral instructions; **must stop for user approval** after planning and before execution; never runs `git commit` itself — it shows the drafted commit message, gets explicit user approval, and dispatches the `auditor` (the only role that commits).
 - **Triggers:** "be the supervisor", "orchestrate this end to end", "run the swarm", "drive this from idea to commit", or resuming a milestone in `plans/active_milestones/`.
 
 #### 2. `product-owner` — The Product Owner
@@ -215,7 +215,7 @@ The swarm communicates through files under `plans/`. Knowing this layout is the 
 |---|---|---|
 | `plans/research/*.md` | Phase 0 investigator | Context report: affected domain, existing patterns, constraints. |
 | `plans/00-ROADMAP.md` | `product-owner` | Master roadmap — releases, milestones, and their status. |
-| `plans/active_milestones/{moniker}/context.md` | `product-owner` | The context report, moved in once the milestone is opened. |
+| `plans/active_milestones/{moniker}/context.md` | `product-owner` | The context report, copied in once the milestone is opened. |
 | `plans/active_milestones/{moniker}/spec.md` | `product-owner` | The specification (Gherkin acceptance criteria). |
 | `plans/active_milestones/{moniker}/visual-spec.html` | `visual-product-owner` | Self-contained, browsable companion to `spec.md` for spec review (zero build; opens in any browser). |
 | `plans/active_milestones/{moniker}/deliberations/{spec,plan}-deliberation.md` | `spec-deliberator` · `plan-deliberator` | Deliberation record — panel & private bundles/territories, key disclosures (cited), trade-offs decided, applied edits with rationale and acceptance bases, disputes (converged/arbitrated/escalated), round log. Written every run, even on "no changes"; re-runs append `-r2`; the hybrid tail-panel writes `-tail`. |

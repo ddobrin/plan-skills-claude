@@ -54,7 +54,7 @@ Representative examples straight from the agents:
 | **Deliberative panels** | `spec-deliberator`, `plan-deliberator` | Improve a drafted artifact via delegates holding deliberately disjoint context (stakeholder bundles for specs, codebase/intent/delivery territories for plans) who deliberate to consensus — the generative counterpart to the validators. |
 | **Transport** | `geap-interactions-caller` | Not a reasoning role. A shell that calls one remote Vertex AI / Interactions-API model and returns its verdict JSON; dispatched (one per skeptic) by the `geap-interactions-*-validator` **skills**. |
 
-> **Not ported to the agents family** (available only as [skills](../README.md)): `simplifier`, `teamwork-trajectory`, and the four `geap-*` remote validators (`geap-spec-validator`, `geap-plan-validator`, `geap-interactions-spec-validator`, `geap-interactions-plan-validator`). The remote validators remain skills because they orchestrate a Python script or a fleet of `curl` callers; in the agents world their only footprint is the `geap-interactions-caller` transport shell. See [Differences from the Skills family](#differences-from-the-skills-family).
+> **Not ported to the agents family** (available only as [skills](../README.md)): `simplifier`, `teamwork-trajectory`, `wf-trajectory`, and the four `geap-*` remote validators (`geap-spec-validator`, `geap-plan-validator`, `geap-interactions-spec-validator`, `geap-interactions-plan-validator`). The remote validators remain skills because they orchestrate a Python script or a fleet of `curl` callers; in the agents world their only footprint is the `geap-interactions-caller` transport shell. See [Differences from the Skills family](#differences-from-the-skills-family).
 
 ---
 
@@ -115,7 +115,7 @@ COMMIT / TAG
 
 - **Owns:** protocol enforcement, artifact management, human gating, the git protocol.
 - **`initialPrompt` behavior:** read the roadmap, inventory every active milestone, determine the current phase, report *(milestone, next action, target agent)* — then **stop and wait** for the user before dispatching anything.
-- **Key rules:** never codes directly (delegates to `engineer`); passes *file paths*, not oral instructions; **must stop for user approval** after planning and before execution; never commits broken or unapproved code.
+- **Key rules:** never codes directly (delegates to `engineer`); passes *file paths*, not oral instructions; **must stop for user approval** after planning and before execution; never runs `git commit` itself — it shows the drafted commit message, gets explicit user approval, and dispatches the `auditor` (the only agent that commits).
 
 #### 2. `product-owner` — The Product Owner
 `model: inherit` · `color: magenta` · `tools: Read, Write, Edit, Glob, Grep, AskUserQuestion` (no `Bash` — read-only on code) — Translates raw, ambiguous human ideas into rigorous, testable specifications, and owns the master roadmap.
@@ -224,6 +224,7 @@ The agents mirror the [skills](../README.md), with a few deliberate divergences:
 | **Orchestrator name** | `starter` | `supervisor` (same role) |
 | **`simplifier`** | Present — refines code with zero behavioral change inside the Construction Loop | **Not ported.** Use the skill, or fold clarity work into the `engineer`'s refactor step. |
 | **`teamwork-trajectory`** | Present — utility that renders `.agents/trajectory.html` | **Not ported** (utility, out of lifecycle). |
+| **`wf-trajectory`** | Present — utility that renders a Workflow run's trajectory as HTML | **Not ported** (utility, out of lifecycle). |
 | **Remote `geap-*` validators** | Four skills (`geap-spec-validator`, `geap-plan-validator`, `geap-interactions-spec-validator`, `geap-interactions-plan-validator`) | Represented only by the `geap-interactions-caller` transport shell; the validator *orchestration* stays in the skills. |
 | **Per-role runtime config** | Implicit | Explicit frontmatter: `model`, `color`, `tools`, `initialPrompt`. |
 | **Invocation** | `Skill` tool | `Task` tool (`subagent_type`), auto-delegation from `description`, or `claude --agent <name>`. |
@@ -238,7 +239,7 @@ The swarm communicates through files under `plans/` — the layout is identical 
 |---|---|---|
 | `plans/research/*.md` | Phase 0 investigator | Context report: affected domain, existing patterns, constraints. |
 | `plans/00-ROADMAP.md` | `product-owner` | Master roadmap — releases, milestones, and their status. |
-| `plans/active_milestones/{moniker}/context.md` | `product-owner` | The context report, moved in once the milestone is opened. |
+| `plans/active_milestones/{moniker}/context.md` | `product-owner` | The context report, copied in once the milestone is opened. |
 | `plans/active_milestones/{moniker}/spec.md` | `product-owner` | The specification (Gherkin acceptance criteria). |
 | `plans/active_milestones/{moniker}/visual-spec.html` | `visual-product-owner` | Self-contained, browsable companion to `spec.md` (zero build). |
 | `plans/active_milestones/{moniker}/deliberations/{spec,plan}-deliberation.md` | `spec-deliberator` · `plan-deliberator` | Deliberation record — panel & private bundles/territories, cited disclosures, trade-offs decided, edits with rationale & acceptance bases, disputes, round log. Written every run; re-runs append `-r2`; the hybrid tail-panel writes `-tail`. |

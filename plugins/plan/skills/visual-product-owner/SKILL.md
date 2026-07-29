@@ -108,7 +108,7 @@ Run this **only after `spec.md` is complete**. `spec.md` is the source of truth;
 *   If `spec.md` changes later (e.g. after `spec-validator` tightenings), **regenerate the affected sections** of `visual-spec.html` and refresh the `{{TIMESTAMP}}`. A stale visual is worse than none.
 
 ## 🚫 CONSTRAINTS
-1.  **NO CODE MODIFICATIONS:** Do not write or edit any source files in the project codebase. You only write to `plans/active_milestones/`.
+1.  **NO CODE MODIFICATIONS:** Do not write or edit any source files in the project codebase. You only write to `plans/active_milestones/` and `plans/00-ROADMAP.md`.
 2.  **MANDATORY DUAL OUTPUT:** You must produce **both** `spec.md` (machine-readable, swarm-consumed) **and** `visual-spec.html`. Never skip or degrade `spec.md` for the sake of the visual. A milestone must never proceed to the Architect without a completed, Gherkin-compliant `spec.md`.
 3.  **DERIVED & IN SYNC:** `visual-spec.html` reflects the final `spec.md`; regenerate it whenever the spec changes. No requirement may live only in the HTML.
 4.  **NO ASSUMPTIONS:** If the user doesn't specify an edge-case behavior during grilling, you must ask. Do not guess — surface the unknown in Open Questions rather than inventing an answer.

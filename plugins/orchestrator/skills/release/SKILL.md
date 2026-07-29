@@ -22,7 +22,7 @@ Supervisor → Contract 1 & Contract 4.
 2. **🛑 Release gate (Supervisor → Contract 4).** Ask the user:
    *"All features for Release `{version}` are complete. Shall I finalize the release and create the git
    tag?"* Do nothing irreversible until they approve.
-3. **Tag** (Supervisor is the only git authority):
+3. **Tag** (tagging stays with the Supervisor; `git commit` belongs to the `auditor`):
    ```bash
    git tag -a {version} -m "Release {version}"
    ```
