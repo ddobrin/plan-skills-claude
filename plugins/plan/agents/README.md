@@ -60,47 +60,54 @@ Representative examples straight from the agents:
 
 ## The Lifecycle
 
-```
+> The diagram below is generated from [`../graph.json`](../graph.json) — the single
+> declaration of this swarm's nodes, edges and gates. Edit that file and run
+> `python3 lib/graph/graph.py sync`; do not hand-edit the block.
+
+<!-- BEGIN GENERATED: lifecycle (python3 lib/graph/graph.py sync) -->
+<!-- graph_version: plan-swarm@2.1 — edit graph.json, then run sync. -->
+
+```text
  IDEA
-  │
-  ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│  supervisor (THE ORCHESTRATOR) — dispatches everything below         │
-└─────────────────────────────────────────────────────────────────────┘
-  │
-  ▼  Phase 0  Strategic Research ─────────────► plans/research/*.md
-  │
-  ▼  Phase 1  product-owner   ── "Grill Loop" ─► spec.md + 00-ROADMAP.md
-  │                                                  │
-  │                              ┌───────────────────▼───────────────────┐
-  │                              │ spec-deliberator (optional — enrich   │
-  │                              │ spec with siloed stakeholder context) │
-  │                              └───────────────────┬───────────────────┘
-  │                                    ╔═════════════▼═════════════╗
-  │                                    ║   spec-validator (gate)   ║
-  │                                    ╚═══════════════════════════╝
-  ▼  Phase 2  architect        ── plan ────────► plan.md (+ data-model.md)
-  │                                                  │
-  │                              ┌───────────────────▼───────────────────┐
-  │                              │ plan-deliberator (optional — reshape  │
-  │                              │ plan, decide trade-offs by territory) │
-  │                              └───────────────────┬───────────────────┘
-  │                                    ╔═════════════▼═════════════╗
-  │                                    ║   plan-validator (gate)   ║
-  │                                    ╚═══════════════════════════╝
-  ▼  Phase 3  🛑 HUMAN REVIEW GATE — user must "approve"
-  │
-  ▼  Phase 4  CONSTRUCTION LOOP, per execution group:
-  │             engineer (×N parallel, TDD) ⇄ auditor (verify)
-  │                                            │
-  │                                    ╔══════▼══════════════════════════╗
-  │                                    ║ implementation-validator (gate) ║
-  │                                    ╚═════════════════════════════════╝
-  │             🛑 supervisor commits — only on green audit + explicit user "yes"
-  │
-  ▼  Phase 5  RELEASE & TAG — product-owner marks release "Shipped"
-COMMIT / TAG
+  |
+  v  Phase 0   research -- plans/research/*.md
+  |
+  v  Phase 1   product-owner -- spec.md · 00-ROADMAP.md
+  |            +- (optional) spec-deliberator -- 3 delegates · disjoint bundles
+  |            === GATE spec-validator [3-lens majority gate: internal-consistency · missing-requirement · malicious-compliance]
+  |                 -> plans/active_milestones/{moniker}/adversarial-reviews/spec-validation.md
+  |
+  v  Phase 2   architect -- plan.md · parallel groups
+  |            +- (optional) plan-deliberator -- intent · codebase · delivery
+  |            === GATE plan-validator [3-lens majority gate: sequencing · ground-truth · blast-radius]
+  |                 -> plans/active_milestones/{moniker}/adversarial-reviews/plan-validation.md
+  |
+  v  Phase 3  *** HUMAN REVIEW GATE *** -- user types "approve"
+  |
+  v  Phase 4   engineer × N -- ≤ 4 concurrent · disjoint files
+  |               fan-out over execution group tasks, max 4 concurrent, files-disjoint
+  |            +- (optional) simplifier -- zero behavioral change
+  |
+  v  Phase 4   auditor -- AUDIT_[Plan_Name].md
+  |            === GATE implementation-validator [3-lens majority gate: claim-vs-reality · failure-paths · blast-radius]
+  |                 -> plans/active_milestones/{moniker}/adversarial-reviews/implementation-validation.md
+  |            +- (optional) visual-implementation-recap -- visual-recap.html
+  |
+  v  Phase 4  *** COMMIT GATE *** -- green audit + explicit "yes"
+  |
+  v  Phase 5  release · tag -- product-owner marks Shipped
+
+ feedback edges (cycles):
+   spec-validator -> product-owner   when: confirmed findings — fold in tightenings
+   plan-validator -> architect   when: confirmed findings — apply fixes · first_domino
+   auditor -> engineer   when: code failure — fix the failing task
+   auditor -> architect   when: plan failure — step is impossible
+   implementation-validator -> engineer   when: confirmed defects — fix at calibrated severity
+   commit-gate -> engineer   when: more groups remain — next execution group
 ```
+
+<!-- END GENERATED: lifecycle -->
+
 
 > **Renderer aside:** `visual-product-owner`, `visual-architect`, and `visual-implementation-recap` are drop-in / additive companions that render the phase-1, phase-2, and commit-gate artifacts as self-contained HTML review surfaces. In the skills family the `simplifier` role also runs inside the Construction Loop; there is no `simplifier` agent — see below.
 
@@ -182,7 +189,7 @@ COMMIT / TAG
 
 ### Adversarial Validators
 
-All three share the same machinery: dispatch **3 independent skeptic subagents in parallel** (no shared scratchpad), each framed to *break* the artifact with a **default-to-reject** posture, then keep only findings confirmed by a **2-of-3 majority** (1-vote findings go to a **Single-Vote Findings (triage required)** section, never silently dropped). Each skeptic returns a single fenced JSON block; the orchestrator dedups by a stable kebab-case `id` before tallying. The gate is tunable (any-one for high-stakes, unanimous when re-work is costly). Every panel writes a human-readable Markdown report to `plans/active_milestones/{moniker}/adversarial-reviews/{stage}-validation.md` — on every run, re-runs preserved as `-r2`/`-r3`. All three carry `tools: all` because they spawn their own skeptic subagents.
+All three share the same machinery: dispatch **3 lens-partitioned skeptic subagents in parallel** (no shared scratchpad), each framed to *break* the artifact with a **default-to-reject** posture, then keep only findings confirmed by a **2-of-3 majority** (1-vote findings go to a **Single-Vote Findings (triage required)** section, never silently dropped). **The three are not given the same prompt** — each owns a different slice of the attack surface and a different reading assignment, because three identical prompts on one model produce correlated errors and a panel shaped like three votes carries close to one. Each skeptic returns a single fenced JSON block tagged with its `lens`; the orchestrator dedups by a stable kebab-case `id`, records which lenses agreed, and ranks **cross-lens** agreement above same-lens repetition. The gate is tunable (any-one for high-stakes, unanimous when re-work is costly). Every panel writes a human-readable Markdown report to `plans/active_milestones/{moniker}/adversarial-reviews/{stage}-validation.md` — on every run, re-runs preserved as `-r2`/`-r3`. All three carry `tools: all` because they spawn their own skeptic subagents.
 
 #### 7. `spec-validator` — Attack the Spec
 `model: inherit` · `color: red` — Runs **after a spec is drafted, before a plan is written** — defects are cheapest to fix here.

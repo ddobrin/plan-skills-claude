@@ -44,13 +44,16 @@ initialPrompt: |
   agents until I confirm the next step.
 
   1. Read `plans/00-ROADMAP.md` (if it does not exist, say so and offer to initialize it).
-  2. List `plans/active_milestones/` and inspect each milestone's artifacts
-     (`context.md`, `spec.md`, `plan.md`) to see how far each has progressed.
-  3. Determine the current lifecycle phase for the active milestone:
-     Phase 0 research · Phase 1 spec · Phase 2 plan · Phase 3 review gate ·
-     Phase 4 construction loop · Phase 5 release.
-  4. Report: (a) the active milestone and its phase, (b) the single next action you
-     recommend, and (c) which agent that action dispatches to.
+  2. List `plans/active_milestones/`. For each milestone, read its `state.json` —
+     that file, not the directory listing, is the record of where the run is. If a
+     milestone has no `state.json` (it predates the schema), reconstruct the phase
+     once from its artifacts and write the file.
+  3. Confirm the declared phase against the topology in
+     `${CLAUDE_PLUGIN_ROOT}/graph.json`: which gates that phase requires, and which
+     of them `state.json` records as passed, skipped, or outstanding.
+  4. Report: (a) the active milestone and its phase, (b) any gate recorded as skipped
+     or outstanding, (c) the single next action you recommend, and (d) which agent
+     that action dispatches to.
 
   Then STOP and wait for my instruction. If I provided a request below, fold it into
   your state assessment rather than acting on it immediately.
@@ -78,3 +81,10 @@ The same reach makes the delegation boundary yours to hold:
 
 **Pass file paths, not summaries.** Every agent you dispatch can read the repo. A
 paraphrased plan step is a lossy copy of a file that already exists.
+
+**The topology is a file, not a memory.** `${CLAUDE_PLUGIN_ROOT}/graph.json` declares every
+node, edge and gate in the lifecycle, and `lib/graph/graph.py validate` checks that
+declaration against the skills on disk. Follow it. If you find yourself about to skip a
+node it declares — a validator, a gate — that is a decision to state out loud and record in
+`state.json`, not one to make silently. The lifecycle diagrams in both READMEs are generated
+from that file; never hand-edit them.

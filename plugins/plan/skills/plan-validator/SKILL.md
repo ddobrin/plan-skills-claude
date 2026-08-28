@@ -30,11 +30,12 @@ says edit `X.dispatch()` but that method does not exist."
 
 ## Core Principle
 
-Three things turn an ordinary review into adversarial findings. All three are required:
+Four things turn an ordinary review into adversarial findings. All four are required:
 
 1. **Adversarial framing** — the agent assumes the plan fails and hunts for the failure, rather than judging whether it "seems reasonable."
 2. **Default-to-reject** — uncertainty about whether a step is safe resolves *against* the plan. "Looks fine" is a failed review unless the agent shows what it verified.
-3. **Independent quorum** — run **N = 3** skeptics that never see each other's output, then keep only findings confirmed by a **majority (2 of 3)**.
+3. **Partitioned lenses** — the three skeptics are **not** given the same prompt. Each owns a different slice of the attack surface *and* a different reading assignment (the step graph · the source files the plan names · the callers, tests and CI it disturbs). Three identical prompts on one model produce correlated errors: the panel is shaped like three votes and carries close to one.
+4. **Independent quorum** — the lenses never see each other's output; keep only findings confirmed by a **majority (2 of 3)**, and rank **cross-lens** agreement above same-lens repetition.
 
 The difference from spec stage: plan skeptics must **verify assumptions in the source**.
 A predicted failure that the agent did not check against the actual code is a guess, not a
@@ -63,9 +64,16 @@ reliably the noise. Recall is the skeptic's job; precision is the gate's.
 Fill the template in `references/skeptic-prompt.md`, which also carries the aggregation
 **Output Contract**.
 
-### 3. Dispatch 3 skeptics in parallel
-Make **three `Agent` calls in a single message**. Use `subagent_type: "general-purpose"`
-(it can read and grep the codebase). Each runs independently — no shared scratchpad.
+### 3. Run the asymmetry test, then dispatch one skeptic per lens
+Before dispatching, name one finding **only that lens could reach** — lens 2 opens files
+lens 1 never reads; lens 3 traces callers neither of the others visits. If you cannot name
+one for a lens, merge it and run two: a panel of near-clones is worse than an honest pair,
+because it manufactures false corroboration.
+
+Then make **three `Agent` calls in a single message**, one per lens from
+`references/skeptic-prompt.md` (Sequencing · Ground Truth · Blast Radius). Use
+`subagent_type: "general-purpose"` (it can read and grep the codebase). Each runs
+independently — no shared scratchpad.
 
 > **Panel cost.** Review accuracy holds up well below the top model tier, so a routine
 > pre-execution gate does not need the most expensive panel you can build — pass
@@ -83,6 +91,10 @@ ordering bug should collapse to one entry, not three.
 
 ### 6. Apply the majority gate
 - **Confirmed:** appears in **≥ 2 of 3** outputs.
+- **Cross-lens vs. same-lens.** Record *which lenses* agreed. Two lenses reaching one
+  finding from different evidence is independent corroboration and ranks first. A
+  finding both raised by lenses that read the same material is weaker than its vote
+  count suggests — read the evidence, not the tally.
 - **Single vote:** appears in exactly one. These go to the **Single-Vote Findings (triage
   required)** section and each one needs an explicit decision — fixed, accepted as a known
   risk, or refuted with a reason. A lone finding from a current-generation skeptic is more
@@ -115,6 +127,7 @@ for a complete run.
 
 | Thought | Reality |
 |---|---|
+| "Three identical prompts give me three independent opinions." | They give one opinion sampled three times. Correlated skeptics manufacture false corroboration — partition the lens *and* the reading assignment. |
 | "The plan reads cleanly, it'll be fine." | Clean prose hides dead assumptions. The skeptics must open the files. |
 | "The agent says step 3 is wrong but didn't cite a line." | Unverified prediction = guess. Force `file:line` or mark confidence low. |
 | "One skeptic found the ordering bug, two didn't — so it's noise." | Wrong default. Modern skeptics are precise; the lone finding is usually real. Triage it and record the decision. |

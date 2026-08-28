@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Graph Engineering and the Plan Swarm</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap">
+<style>
+:root{
+  --ground:#F6F8F9; --surface:#FFFFFF; --surface-2:#EDF1F3;
+  --ink:#131A1F; --ink-2:#4C5A64; --ink-3:#6E7C86;
+  --rule:#D7DFE3; --rule-2:#C2CDD3;
+  --accent:#0E7385; --accent-ink:#0A5261; --accent-wash:#E0EFF2;
+  --gate:#8A5A12; --gate-wash:#F6EEDC;
+  --flag:#9E3348; --flag-wash:#F7E6E9;
+  --shadow:0 1px 2px rgba(19,26,31,.05), 0 8px 24px -16px rgba(19,26,31,.28);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#0F1418; --surface:#161C21; --surface-2:#1C232A;
+    --ink:#E3E9ED; --ink-2:#98A6B0; --ink-3:#7C8A94;
+    --rule:#262F36; --rule-2:#33404A;
+    --accent:#4EC5D8; --accent-ink:#8FDDE9; --accent-wash:#0D2A31;
+    --gate:#DDA94C; --gate-wash:#2A2113;
+    --flag:#E3808F; --flag-wash:#2E181D;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.7);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0F1418; --surface:#161C21; --surface-2:#1C232A;
+  --ink:#E3E9ED; --ink-2:#98A6B0; --ink-3:#7C8A94;
+  --rule:#262F36; --rule-2:#33404A;
+  --accent:#4EC5D8; --accent-ink:#8FDDE9; --accent-wash:#0D2A31;
+  --gate:#DDA94C; --gate-wash:#2A2113;
+  --flag:#E3808F; --flag-wash:#2E181D;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.7);
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  background:var(--ground); color:var(--ink); margin:0;
+  font-family:"IBM Plex Sans","Helvetica Neue",Helvetica,Arial,sans-serif;
+  font-size:16.5px; line-height:1.62; -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:960px; margin:0 auto; padding:0 28px 96px}
+header.mast{padding:64px 0 36px; border-bottom:1px solid var(--rule); display:flex; flex-direction:column; gap:18px}
+.kicker{font-family:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace; font-size:11.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--accent-ink)}
+h1{font-family:"Newsreader",Georgia,"Times New Roman",serif; font-weight:500; font-size:clamp(2.2rem,5vw,3.4rem); line-height:1.06; letter-spacing:-.018em; margin:0; text-wrap:balance; max-width:18ch}
+.standfirst{font-family:"Newsreader",Georgia,serif; font-size:1.18rem; line-height:1.55; color:var(--ink-2); max-width:62ch; margin:0}
+.meta{font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:11.5px; color:var(--ink-3); letter-spacing:.04em; display:flex; flex-wrap:wrap; gap:6px 18px}
+section{padding:48px 0; border-bottom:1px solid var(--rule)}
+section:last-of-type{border-bottom:0}
+.eyebrow{font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:11px; letter-spacing:.15em; text-transform:uppercase; color:var(--ink-3); margin:0 0 12px}
+h2{font-family:"Newsreader",Georgia,serif; font-weight:500; font-size:clamp(1.6rem,3vw,2.15rem); line-height:1.16; letter-spacing:-.012em; margin:0 0 20px; text-wrap:balance; max-width:26ch}
+h3{font-size:1.02rem; font-weight:600; margin:32px 0 10px; letter-spacing:-.005em}
+p{margin:0 0 16px; max-width:70ch}
+a{color:var(--accent-ink); text-underline-offset:2.5px; text-decoration-thickness:1px}
+a:hover{text-decoration-thickness:2px}
+a:focus-visible{outline:2px solid var(--accent); outline-offset:3px; border-radius:2px}
+strong{font-weight:600}
+ul{margin:0 0 16px; padding-left:0; list-style:none; max-width:70ch; display:flex; flex-direction:column; gap:9px}
+ul li{position:relative; padding-left:20px}
+ul li::before{content:""; position:absolute; left:2px; top:.68em; width:7px; height:1.5px; background:var(--rule-2)}
+code{font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:.855em; background:var(--surface-2); padding:.1em .34em; border-radius:3px; border:1px solid var(--rule)}
+.lede{background:var(--surface); border:1px solid var(--rule); border-left:3px solid var(--accent); padding:22px 24px; margin:0 0 28px; box-shadow:var(--shadow); border-radius:2px}
+.lede p:last-child{margin-bottom:0}
+.note{background:var(--gate-wash); border:1px solid var(--rule); padding:16px 18px; margin:22px 0; border-radius:2px; font-size:.945rem}
+.note p:last-child{margin-bottom:0}
+.note .tag{font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:10.5px; letter-spacing:.13em; text-transform:uppercase; color:var(--gate); display:block; margin-bottom:6px}
+.tw{overflow-x:auto; margin:24px 0; border:1px solid var(--rule); border-radius:2px; background:var(--surface)}
+table{border-collapse:collapse; width:100%; font-size:.9rem; min-width:620px}
+th,td{text-align:left; padding:11px 14px; border-bottom:1px solid var(--rule); vertical-align:top}
+thead th{font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:10.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-3); background:var(--surface-2); font-weight:500; white-space:nowrap}
+tbody tr:last-child td{border-bottom:0}
+td code{background:transparent; border:0; padding:0; color:var(--accent-ink)}
+.mark{font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; white-space:nowrap; padding:2px 7px; border-radius:2px; border:1px solid currentColor}
+.m-pass{color:var(--accent-ink)}
+.m-part{color:var(--gate)}
+.m-fail{color:var(--flag)}
+figure{margin:32px 0; padding:0}
+.figbox{background:var(--surface); border:1px solid var(--rule); border-radius:2px; padding:26px 20px 18px; overflow-x:auto; box-shadow:var(--shadow)}
+figure svg{max-width:100%; height:auto; display:block; margin:0 auto; color:var(--ink-2)}
+figcaption{font-size:.855rem; color:var(--ink-2); margin-top:14px; max-width:70ch; line-height:1.55}
+.dia text{font-family:"IBM Plex Sans",sans-serif; fill:var(--ink)}
+.dia .lbl{font-size:12.5px; fill:var(--ink)}
+.dia .sub{font-size:10.5px; fill:var(--ink-3); font-family:"IBM Plex Mono",monospace}
+.dia .edge{stroke:var(--rule-2); stroke-width:1.4; fill:none}
+.dia .box{fill:var(--surface-2); stroke:var(--rule-2); stroke-width:1.2}
+.dia .box-acc{fill:var(--accent-wash); stroke:var(--accent); stroke-width:1.4}
+.dia .box-dash{fill:none; stroke:var(--flag); stroke-width:1.2; stroke-dasharray:5 4}
+.dia .chip{fill:var(--surface); stroke:var(--rule-2); stroke-width:1}
+.dia .flagtxt{fill:var(--flag); font-size:10.5px; font-family:"IBM Plex Mono",monospace}
+.dia .acctxt{fill:var(--accent-ink); font-size:10.5px; font-family:"IBM Plex Mono",monospace}
+footer{padding:40px 0 0; color:var(--ink-3); font-size:.85rem; font-family:"IBM Plex Mono",ui-monospace,monospace}
+@media (max-width:640px){.wrap{padding:0 20px 72px} header.mast{padding:44px 0 30px} body{font-size:16px}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important; transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="mast">
+  <div class="kicker">docs/original · conceptual note</div>
+  <h1>Graph Engineering and the Plan Swarm</h1>
+  <p class="standfirst">What the term actually asserts, how much of it this plugin already satisfies, and the one thing it is structurally unable to see.</p>
+  <p class="standfirst" style="font-size:1rem"><strong>Update:</strong> the changes described here are implemented on branch <code>plan-graph</code>. For what shipped against each assertion, with the generated topology and the before/after diagrams, see <a href="../graph-adherence.html">Graph Conformance</a>.</p>
+  <div class="meta">
+    <span>28 August 2026</span>
+    <span>ddobrin/plan-skills-claude</span>
+    <span>companion to the suitability analysis</span>
+    <span>implemented on branch <code>plan-graph</code></span>
+  </div>
+</header>
+
+<section>
+  <p class="eyebrow">The claim, reduced</p>
+  <h2>Three assertions, and everything else is vocabulary</h2>
+
+  <p>“Graph engineering” surfaced around July 2026 as the successor term to context, harness, and loop engineering. No Anthropic surface uses it. Stripped of the marketing, it asserts three things:</p>
+
+  <ul>
+    <li><strong>The topology should be an explicit artifact.</strong> Which nodes exist, who routes to whom, and under what condition — readable as one diagram, not inferred from prose.</li>
+    <li><strong>Each node should get its own clean context.</strong> Different prompts, different tools, different evidence per node, so one agent's working memory does not pollute another's.</li>
+    <li><strong>State should cross node boundaries only through declared edges.</strong> A schema, not a convention.</li>
+  </ul>
+
+  <p>LangChain — who shipped the runtime the term describes — put the honest framing on it: <em>“loops are simple graphs… a loop is just a directed, cyclic graph.”</em> You do not graduate from loops to graphs. You compose loops into graphs when one loop stops being enough. That already happened here, long before the word existed.</p>
+
+  <p>So for this project the term is not prescriptive. It is a <strong>diagnostic checklist</strong>, and the swarm scores unevenly against it.</p>
+</section>
+
+<section>
+  <p class="eyebrow">Scorecard</p>
+  <h2>Where the swarm already satisfies it, and where it doesn't</h2>
+
+  <div class="tw">
+  <table>
+    <thead><tr><th>Assertion</th><th>State of the swarm</th><th></th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>Context separation per node</strong></td>
+        <td>Further along than most systems that use the word. Every skill is a node with its own prompt, its own boundary, and its own capability contract — <code>architect</code> read-only on source, <code>auditor</code> reports but never fixes, only <code>starter</code> commits. The <code>tools:</code> frontmatter as an explicit authority bound <em>is</em> “context crosses borders only through declared edges,” implemented before anyone named it. <strong>Shipped:</strong> the isolation now extends <em>inside</em> the panels — each fan-out branch holds its own lens and its own reading assignment instead of a copy of one prompt.</td>
+        <td><span class="mark m-pass">Satisfied</span><br><span class="mark m-pass" style="margin-top:6px;display:inline-block">Extended</span></td>
+      </tr>
+      <tr>
+        <td><strong>Explicit topology</strong></td>
+        <td>The graph lives in three hand-maintained prose copies — the ASCII lifecycle in <code>plugins/plan/README.md</code>, a second copy in <code>agents/README.md</code>, and the state machine in <code>starter/SKILL.md</code> — and they have diverged. The validators and deliberators documented as gates are never dispatched by the state machine. This is the one place the term earns its keep: it names precisely what is wrong. <strong>Shipped:</strong> <code>plugins/plan/graph.json</code> is the single declaration; both README diagrams are generated from it and <code>graph.py sync --check</code> fails when they go stale.</td>
+        <td><span class="mark m-fail">Failed</span><br><span class="mark m-pass" style="margin-top:6px;display:inline-block">Now generated</span></td>
+      </tr>
+      <tr>
+        <td><strong>Declared state</strong></td>
+        <td>Files under <code>plans/</code> beat passing prose summaries between agents, which is more than most systems manage — and “pass file paths, not summaries” is the right instinct. But it is a directory convention, not a schema, so <code>starter</code> resumes by <em>inferring</em> which phase a milestone stopped in rather than reading it. <strong>Shipped:</strong> <code>state.json</code> per milestone records phase, gate decisions, node status and group commits; node contracts live in <code>graph.json</code> and are machine-checked.</td>
+        <td><span class="mark m-part">Partial</span><br><span class="mark m-pass" style="margin-top:6px;display:inline-block">Now declared</span></td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>Two of the recommended changes — making the topology a generated artifact, and declaring a <code>state.json</code> per milestone — are pure graph engineering. They are the term paying rent.</p>
+</section>
+
+<section>
+  <p class="eyebrow">The blind spot</p>
+  <h2>A topology cannot show you whether its parallel branches are independent</h2>
+
+  <div class="lede">
+    <p>The highest-value change identified in the analysis is not graph engineering, and graph engineering has no way to detect it.</p>
+    <p style="margin-bottom:0">The validator panels are drawn correctly as a graph: fan out to three, join on a quorum. The topology is right. The diagram is right. And the panel still behaves close to a single agent, because three identical prompts on one model produce correlated errors. <strong>You can satisfy every graph-engineering principle perfectly and still have a three-way fan-out carrying one vote.</strong></p>
+  </div>
+
+  <figure>
+    <div class="figbox">
+      <svg class="dia" viewBox="0 0 640 210" role="img" aria-label="Two panels with identical graph topology. Both fan out from one node to three agents and join at a quorum gate. The left panel's three agents receive the same prompt and produce overlapping findings worth about one effective vote; the right panel's three agents receive partitioned lenses and different evidence and produce about three effective votes. The drawn topology is identical in both cases.">
+        <defs>
+          <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M0,1 L9,5 L0,9 z" fill="currentColor"/>
+          </marker>
+        </defs>
+
+        <text class="sub" x="10" y="14" text-anchor="start">IDENTICAL PROMPTS</text>
+        <text class="sub" x="350" y="14" text-anchor="start">PARTITIONED LENSES + EVIDENCE</text>
+
+        <!-- left -->
+        <rect class="box" x="90" y="26" width="120" height="26" rx="2"/>
+        <text class="sub" x="150" y="43" text-anchor="middle">fan-out</text>
+        <g color="var(--rule-2)">
+          <line class="edge" x1="150" y1="52" x2="60" y2="78" marker-end="url(#a)"/>
+          <line class="edge" x1="150" y1="52" x2="150" y2="78" marker-end="url(#a)"/>
+          <line class="edge" x1="150" y1="52" x2="240" y2="78" marker-end="url(#a)"/>
+        </g>
+        <rect class="chip" x="22" y="80" width="76" height="22" rx="2"/>
+        <rect class="chip" x="112" y="80" width="76" height="22" rx="2"/>
+        <rect class="chip" x="202" y="80" width="76" height="22" rx="2"/>
+        <text class="sub" x="60" y="95" text-anchor="middle">skeptic</text>
+        <text class="sub" x="150" y="95" text-anchor="middle">skeptic</text>
+        <text class="sub" x="240" y="95" text-anchor="middle">skeptic</text>
+        <circle cx="132" cy="134" r="22" fill="none" stroke="var(--flag)" stroke-width="1.2"/>
+        <circle cx="150" cy="134" r="22" fill="none" stroke="var(--flag)" stroke-width="1.2"/>
+        <circle cx="168" cy="134" r="22" fill="none" stroke="var(--flag)" stroke-width="1.2"/>
+        <text class="flagtxt" x="150" y="172" text-anchor="middle">≈ 1 effective vote</text>
+        <g color="var(--rule-2)">
+          <line class="edge" x1="150" y1="178" x2="150" y2="192" marker-end="url(#a)"/>
+        </g>
+        <rect class="box" x="66" y="184" width="168" height="22" rx="2"/>
+        <text class="sub" x="150" y="199" text-anchor="middle">2-of-3 quorum</text>
+
+        <line x1="310" y1="22" x2="310" y2="204" stroke="var(--rule)" stroke-width="1" stroke-dasharray="3 4"/>
+
+        <!-- right -->
+        <rect class="box" x="430" y="26" width="120" height="26" rx="2"/>
+        <text class="sub" x="490" y="43" text-anchor="middle">fan-out</text>
+        <g color="var(--accent)">
+          <line class="edge" x1="490" y1="52" x2="400" y2="78" marker-end="url(#a)" stroke="var(--accent)"/>
+          <line class="edge" x1="490" y1="52" x2="490" y2="78" marker-end="url(#a)" stroke="var(--accent)"/>
+          <line class="edge" x1="490" y1="52" x2="580" y2="78" marker-end="url(#a)" stroke="var(--accent)"/>
+        </g>
+        <rect class="chip" x="362" y="80" width="76" height="22" rx="2"/>
+        <rect class="chip" x="452" y="80" width="76" height="22" rx="2"/>
+        <rect class="chip" x="542" y="80" width="76" height="22" rx="2"/>
+        <text class="sub" x="400" y="95" text-anchor="middle">sequencing</text>
+        <text class="sub" x="490" y="95" text-anchor="middle">ground truth</text>
+        <text class="sub" x="580" y="95" text-anchor="middle">blast radius</text>
+        <circle cx="446" cy="134" r="22" fill="none" stroke="var(--accent)" stroke-width="1.2"/>
+        <circle cx="490" cy="134" r="22" fill="none" stroke="var(--accent)" stroke-width="1.2"/>
+        <circle cx="534" cy="134" r="22" fill="none" stroke="var(--accent)" stroke-width="1.2"/>
+        <text class="acctxt" x="490" y="172" text-anchor="middle">≈ 3 effective votes</text>
+        <g color="var(--accent)">
+          <line class="edge" x1="490" y1="178" x2="490" y2="192" marker-end="url(#a)" stroke="var(--accent)"/>
+        </g>
+        <rect class="box" x="406" y="184" width="168" height="22" rx="2"/>
+        <text class="sub" x="490" y="199" text-anchor="middle">2-of-3 quorum</text>
+      </svg>
+    </div>
+    <figcaption><strong>The same graph, twice.</strong> Node count, edge count, branch structure and join rule are identical on both sides — a topology diagram cannot distinguish them. What differs is whether the three branches carry independent information, which is a property of the prompts and the evidence, not of the shape. This is the gap the vocabulary leaves open.</figcaption>
+  </figure>
+
+  <p>The measurements behind this sit outside the graph literature entirely. Correlated judge panels run 8–22 points below the independent-voting ideal, and no aggregation algorithm recovers more than 11% of that gap. Only about 10% of size-3 ensembles beat their own strongest member. None of that is expressible as topology; all of it decides whether the gate works.</p>
+
+  <div class="note">
+    <span class="tag">The takeaway from the original question</span>
+    <p>Graph engineering gave a good checklist for the <em>shape</em> of this system and was silent on the thing that mattered most. That is worth knowing before adopting any successor term: these frameworks describe how work is routed, not whether the work being routed is any good.</p>
+  </div>
+</section>
+
+<section>
+  <p class="eyebrow">Component mapping</p>
+  <h2>How the skills and agents translate</h2>
+
+  <div class="tw">
+  <table>
+    <thead><tr><th>Component</th><th>Graph role</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td><code>skills/*/SKILL.md</code></td><td>Node definition</td><td>The prompt plus the behavioral contract. The unit of context isolation.</td></tr>
+      <tr><td><code>agents/*.md</code></td><td>Node + capability bound</td><td>The same nodes with <code>model</code>, <code>tools</code>, <code>color</code>, <code>initialPrompt</code>. Two spellings of one graph — which is itself a duplication worth watching.</td></tr>
+      <tr><td><code>starter</code> / <code>supervisor</code></td><td>Root orchestrator and router</td><td>The only node that holds the graph. Also the only node with a user-facing turn, which is why the human gates and the commit authority live there and cannot be compiled away.</td></tr>
+      <tr><td><code>plans/active_milestones/</code></td><td>Shared state</td><td>Real files rather than passed summaries. The right substrate; not yet a declared schema.</td></tr>
+      <tr><td><code>product-owner</code> → <code>architect</code> → <code>engineer</code></td><td>Prompt chaining</td><td>The DAG spine. Each stage consumes the previous stage's artifact by path.</td></tr>
+      <tr><td>Validator panels</td><td>Parallelization by voting</td><td>Fan-out to N, join on quorum. Correct shape; see the blind spot above for what the shape does not guarantee.</td></tr>
+      <tr><td>Execution groups</td><td>Parallelization by sectioning</td><td>Disjoint-file constraint is the barrier that makes the fan-out safe.</td></tr>
+      <tr><td><code>engineer</code> ⇄ <code>auditor</code></td><td>Evaluator-optimizer cycle</td><td>The loop the graph vocabulary insists is “just a cyclic subgraph” — correctly.</td></tr>
+      <tr><td>Audit verdict routing</td><td>Conditional edge</td><td>Code failure routes to <code>engineer</code>; plan failure routes to <code>architect</code>.</td></tr>
+      <tr><td>Human review &amp; commit gates</td><td>Human checkpoint nodes</td><td>The reason the lifecycle cannot run as one scripted workflow: a workflow run takes no mid-run user input.</td></tr>
+      <tr><td><strong>Deliberators</strong></td><td><strong>No graph equivalent</strong></td><td>See below.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>The deliberators are the interesting case</h3>
+  <p>Graph engineering has no name for them, and the omission is structural rather than accidental. A graph models <em>routing</em>: node A finishes, an edge carries its output to node B. Delegates holding disjoint territories, taking sequential turns relayed verbatim, continued across rounds until they converge on one revised artifact, is not an edge — it is a conversation. There is no arrow that means “argued until they agreed, and each acceptance had to state its basis.”</p>
+  <p>So the deliberators are simultaneously the part of this system the graph vocabulary describes worst, and — by the correlation evidence — the part that gets independence most right. Their Core Principle 1 is a precise statement of decorrelation, complete with a falsifiable pre-flight check:</p>
+  <blockquote style="margin:0 0 16px; padding:14px 18px; border-left:3px solid var(--accent); background:var(--surface); font-size:.94rem; color:var(--ink-2); max-width:70ch; border-radius:2px">asymmetry is created by <strong>assigned investigation</strong>: each delegate deep-reads only its territory and becomes the panel's sole authority on it. Apply the <strong>asymmetry test</strong>: for each delegate, name one question about this plan that only its territory can answer. If you cannot, merge the territories and revise centrally instead.</blockquote>
+  <p>The validators — which run far more often and hold the actual gates — do not apply this at all. The direction of borrowing should run from the deliberators to the validators, not the other way around.</p>
+</section>
+
+<section>
+  <p class="eyebrow">Where the recommendations land</p>
+  <h2>Two of six are graph engineering. The top one isn't.</h2>
+
+  <div class="tw">
+  <table>
+    <thead><tr><th>Change</th><th>Is it graph engineering?</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Partition each panel's attack surface into three lenses</strong>, and give each lens different evidence to read</td><td><span class="mark m-fail">No</span> — an information-independence property the vocabulary cannot express. Borrowed from the deliberators.</td></tr>
+      <tr><td><strong>Fix the drift between the topology's three copies</strong>; generate them from one source</td><td><span class="mark m-pass">Yes</span> — assertion 1, exactly.</td></tr>
+      <tr><td><strong>Declare <code>state.json</code></strong>; add <code>reads:</code> / <code>writes:</code> contracts per skill</td><td><span class="mark m-pass">Yes</span> — assertion 3, exactly.</td></tr>
+      <tr><td><strong>Extract the quorum tally</strong> to a harness-neutral script</td><td><span class="mark m-part">Adjacent</span> — a deterministic join node. Worth about a point; do it after the lens work.</td></tr>
+      <tr><td><strong>Retire the offload experiments</strong> from the documented surface</td><td><span class="mark m-fail">No</span> — documentation hygiene, same defect class as the drift.</td></tr>
+      <tr><td><strong>A dynamic workflow for the construction loop</strong>, additive and Claude-Code-only</td><td><span class="mark m-part">The runtime</span> — the only recommendation that touches a graph engine, ranked last, and disqualified for anything that decides whether a plan passes.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>The shape of that table is the answer to the original question. Chasing the term was worth it — it produced a real defect (assertion 1) and a real structural improvement (assertion 3). It did not produce the change that matters most, and it could not have.</p>
+</section>
+
+<section>
+  <p class="eyebrow">Bottom line</p>
+  <h2>How to describe this project</h2>
+
+  <p>Not as graph engineering. No Anthropic surface uses the term, it will likely be superseded before it stabilizes, and adopting it would claim credit for the weakest part of the design while obscuring the strongest.</p>
+
+  <p>The defensible claim is stronger and more durable: <strong>a spec-driven swarm whose nodes have genuine context isolation and capability bounds, whose phase boundaries are guarded by adversarial panels, and whose irreversible steps are gated on a human.</strong> When precision is needed, use the vocabulary that will still parse in a year — <em>orchestrator-workers</em>, <em>parallelization by voting</em>, <em>evaluator-optimizer</em>, <em>prompt chaining</em> — all of which predate the buzzword and all of which this system implements.</p>
+
+  <p>The work stated without any framework at all was: make the topology a single artifact instead of three, declare the state instead of inferring it, and make the votes actually independent. All three are now implemented on <code>plan-graph</code> — two of them the graph literature helped with, and the third, where the points are, it could not see. What remains is measurement: re-run a shipped milestone with partitioned lenses and with identical ones, and diff the confirmed sets.</p>
+</section>
+
+<footer>
+  Companion to the suitability analysis · sources cited there · plan-skills-claude
+</footer>
+
+</div>
+</body>
+</html>

@@ -32,11 +32,12 @@ in the spec, not the implementer.
 
 ## Core Principle
 
-Three things turn an ordinary review into adversarial findings. All three are required:
+Four things turn an ordinary review into adversarial findings. All four are required:
 
 1. **Adversarial framing** — the agent's success metric is "how many real holes did I find," not "is this good." It is told to *break* the spec, not evaluate it.
 2. **Default-to-reject** — uncertainty resolves *against* the spec. Returning "looks complete" is a failed review unless the agent lists what it attacked and why each attack failed.
-3. **Independent quorum** — run **N = 3** skeptics that never see each other's output, then keep only findings confirmed by a **majority (2 of 3)**.
+3. **Partitioned lenses** — the three skeptics are **not** given the same prompt. Each owns a different slice of the attack surface *and* a different reading assignment (the spec against itself · the world outside the spec · the acceptance criteria alone, read as a contract to game). Three identical prompts on one model produce correlated errors: the panel is shaped like three votes and carries close to one.
+4. **Independent quorum** — the lenses never see each other's output; keep only findings confirmed by a **majority (2 of 3)**, and rank **cross-lens** agreement above same-lens repetition.
 
 Never tell a skeptic to be conservative or to report only what matters. A review prompt
 that asks for restraint gets restraint: the model reports *less*, and what it drops is not
@@ -60,9 +61,16 @@ reliably the noise. Recall is the skeptic's job; precision is the gate's.
 Fill the template in `references/skeptic-prompt.md`, which also carries the aggregation
 **Output Contract**.
 
-### 3. Dispatch 3 skeptics in parallel
-Make **three `Agent` calls in a single message** so they run concurrently and independently.
-Use `subagent_type: "general-purpose"` (or `"Explore"` if the spec lives in files they must
+### 3. Run the asymmetry test, then dispatch one skeptic per lens
+Before dispatching, name one hole **only that lens could find** — lens 2 is the only one
+looking outside the document; lens 3 is the only one that never reads the prose rationale.
+If you cannot name one for a lens (typically because there is no context report and lens 2
+has nothing external to read), merge it and run two.
+
+Then make **three `Agent` calls in a single message**, one per lens from
+`references/skeptic-prompt.md` (Internal Consistency · Missing Requirement · Malicious
+Compliance), so they run concurrently and independently. Use
+`subagent_type: "general-purpose"` (or `"Explore"` if the spec lives in files they must
 read). Do **not** let them share a scratchpad — independence is what makes the vote mean
 something.
 
@@ -85,6 +93,10 @@ quorum.
 
 ### 6. Apply the majority gate
 - **Confirmed:** appears in **≥ 2 of 3** outputs.
+- **Cross-lens vs. same-lens.** Record *which lenses* agreed. Two lenses reaching one
+  finding from different evidence is independent corroboration and ranks first. A
+  finding both raised by lenses that read the same material is weaker than its vote
+  count suggests — read the evidence, not the tally.
 - **Single vote:** appears in exactly one. These go to the **Single-Vote Findings (triage
   required)** section and each one needs an explicit decision — tightened, accepted as
   intended behavior, or refuted with a reason. A lone finding from a current-generation
@@ -118,6 +130,7 @@ for a complete run.
 
 | Thought | Reality |
 |---|---|
+| "Three identical prompts give me three independent opinions." | They give one opinion sampled three times. Correlated skeptics manufacture false corroboration — partition the lens *and* the reading assignment. |
 | "The spec looks thorough, one skeptic is enough." | One agent trends toward agreement. The vote needs ≥3 independent runs. |
 | "I'll let the three agents collaborate." | Shared context collapses them toward consensus; the vote becomes meaningless. |
 | "Only 1 skeptic flagged it, so ignore it." | Wrong default. Modern skeptics are precise; the lone finding is usually real. Triage it and record the decision. |

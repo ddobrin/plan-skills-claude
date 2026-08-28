@@ -34,11 +34,12 @@ Two modes, same machinery:
 
 ## Core Principle
 
-Three things turn an ordinary review into adversarial findings. All three are required:
+Four things turn an ordinary review into adversarial findings. All four are required:
 
 1. **Adversarial framing** — the agent's job is to construct the input or sequence that breaks the code, not to judge whether it "looks good."
 2. **Default-to-reject** — for finding-hunt, default `isReal=false` (only confirmed, code-grounded defects count). For claim-refutation, default `refuted=true` (a claim survives only if the agent actively tried and failed to break it).
-3. **Independent quorum** — run **N = 3** skeptics that never see each other's output, then keep only findings confirmed by a **majority (2 of 3)**.
+3. **Partitioned lenses** — the three skeptics are **not** given the same prompt. Each owns a different slice of the attack surface *and* a different reading assignment (the diff against its own description · the error branches and tests · the call sites the diff never touches). Three identical prompts on one model produce correlated errors: the panel is shaped like three votes and carries close to one.
+4. **Independent quorum** — the lenses never see each other's output; keep only findings confirmed by a **majority (2 of 3)**, and rank **cross-lens** agreement above same-lens repetition.
 
 Default-to-reject is a demand for **evidence**, not for restraint. It asks the skeptic to
 ground every claim in a real `file:line`; it does not ask for a shorter list. Never tell a
@@ -72,11 +73,15 @@ HEAD_SHA=$(git rev-parse HEAD)
 Pick the **Finding-Hunt** or **Claim-Refutation** template in
 `references/skeptic-prompts.md`, which also carries the aggregation **Output Contract**.
 
-### 3. Dispatch 3 skeptics in parallel
-Make **three `Agent` calls in a single message**, `subagent_type: "general-purpose"`
-(it can run `git diff` and read files). Independent runs, no shared scratchpad.
+### 3. Run the asymmetry test, then dispatch one skeptic per lens
+Before dispatching, name one defect **only that lens could reach** — lens 3 reads files
+that are not in the diff at all; lens 2 reads the test suite; lens 1 reads the claim text
+neither of the others is given. If you cannot name one for a lens, merge it and run two.
 
-> **Perspective-diverse variant:** instead of three identical skeptics, give each a distinct lens — e.g. one `correctness`, one `concurrency`, one `failure-paths`. Diversity catches failure modes that three identical refuters would all miss together. Then the "majority" becomes "≥2 lenses independently land on the same defect."
+Then make **three `Agent` calls in a single message**, one per lens from
+`references/skeptic-prompts.md` (Claim vs. Reality · Failure Paths · Blast Radius),
+`subagent_type: "general-purpose"` (it can run `git diff` and read files). Independent
+runs, no shared scratchpad.
 
 > **Panel cost.** Review accuracy holds up well below the top model tier, so a routine
 > pre-merge gate does not need the most expensive panel you can build — pass
@@ -97,6 +102,10 @@ you tally on raw text, nothing reaches quorum. Normalize to `file:line::id` befo
 ### 6. Apply the majority gate + severity calibration
 - **Finding-hunt:** a finding is **confirmed** when **≥ 2 of 3** skeptics report it with `isReal=true`. Its severity is the **most common `correctedSeverity`** among the agreeing skeptics (tie → higher).
 - **Claim-refutation:** a claim **survives** when **≥ 2 of 3** skeptics return `refuted=false`. A claim **fails** (the code is broken) when ≥2 return `refuted=true` — those become defects to fix.
+- **Cross-lens vs. same-lens.** Record *which lenses* agreed. Two lenses reaching one defect
+  from different evidence — the failure-path lens and the blast-radius lens landing on the
+  same race — is independent corroboration and ranks first. Two votes are not automatically
+  that; read the evidence, not the tally.
 - **Single vote:** appears in exactly one output. These go to the **Single-Vote Findings
   (triage required)** section and each one needs an explicit decision — fixed, accepted as a
   known risk, or refuted with a reason. A lone finding from a current-generation skeptic is
@@ -129,6 +138,7 @@ for a complete run.
 
 | Thought | Reality |
 |---|---|
+| "Three identical prompts give me three independent opinions." | They give one opinion sampled three times. Correlated skeptics manufacture false corroboration — partition the lens *and* the reading assignment. |
 | "The diff is small, one reviewer is enough." | Small diffs hide concurrency and failure-path bugs. Run the panel. |
 | "All three rated it Critical, so it's Critical." | Check the *corrected* severity and the reasoning — adversarial framing over-rates. Calibration is the point. |
 | "One skeptic flagged a race, two didn't." | Concurrency bugs are the easiest to miss and the lone finding is usually real. Read the evidence and record a decision. |
