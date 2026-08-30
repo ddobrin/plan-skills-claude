@@ -83,4 +83,8 @@ Explore the underlying documentation for details on individual roles, lifecycle 
 * **Swarm Agents (AGY CLI):** Detailed system prompts and guidelines are documented in [agents/README.md](file:///Users/ddobrin/work/dan/danrepos/agentic/active/plan-skills/agents/README.md).
 * **Planning Skills (Claude Code):** Complete guide to skills, artifacts, and lifecycle is documented in [plugins/plan/README.md](file:///Users/ddobrin/work/dan/danrepos/agentic/active/plan-skills/plugins/plan/README.md).
 * **Planning Subagents (Claude Code):** Complete guide to subagents, frontmatter schema, and auto-delegation triggers is documented in [plugins/plan/agents/README.md](file:///Users/ddobrin/work/dan/danrepos/agentic/active/plan-skills/plugins/plan/agents/README.md).
-* **Supervisor Orchestrator Plugin:** Documentation for the spec-driven coordinator and validation gates is in [plugins/orchestrator/README.md](file:///Users/ddobrin/work/dan/danrepos/agentic/active/plan-skills/plugins/orchestrator/README.md).
+
+
+---
+
+This is only an open source test set of skills - not an official Google project

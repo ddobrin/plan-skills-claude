@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The plan swarm, as a graph — a primer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap">
+<style>
+/* ── tokens ──────────────────────────────────────────────────────────────────── */
+:root{
+  --ground:#F6F8F9; --surface:#FFFFFF; --surface-2:#EDF1F3; --code-bg:#F1F5F6;
+  --ink:#131A1F; --ink-2:#4C5A64; --ink-3:#6E7C86;
+  --rule:#D7DFE3; --rule-2:#C2CDD3;
+  --accent:#0E7385; --accent-ink:#0A5261; --accent-wash:#E0EFF2;
+  --gate:#8A5A12; --gate-wash:#F6EEDC;
+  --flag:#9E3348; --flag-wash:#F7E6E9;
+  --shadow:0 1px 2px rgba(19,26,31,.05), 0 8px 24px -16px rgba(19,26,31,.28);
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --ground:#0F1418; --surface:#161C21; --surface-2:#1C232A; --code-bg:#12181D;
+  --ink:#E3E9ED; --ink-2:#98A6B0; --ink-3:#7C8A94;
+  --rule:#262F36; --rule-2:#33404A;
+  --accent:#4EC5D8; --accent-ink:#8FDDE9; --accent-wash:#0D2A31;
+  --gate:#DDA94C; --gate-wash:#2A2113;
+  --flag:#E3808F; --flag-wash:#2E181D;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.7);
+}}
+:root[data-theme="dark"]{
+  --ground:#0F1418; --surface:#161C21; --surface-2:#1C232A; --code-bg:#12181D;
+  --ink:#E3E9ED; --ink-2:#98A6B0; --ink-3:#7C8A94;
+  --rule:#262F36; --rule-2:#33404A;
+  --accent:#4EC5D8; --accent-ink:#8FDDE9; --accent-wash:#0D2A31;
+  --gate:#DDA94C; --gate-wash:#2A2113;
+  --flag:#E3808F; --flag-wash:#2E181D;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.7);
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0; background:var(--ground); color:var(--ink); overflow:hidden;
+  font-family:"IBM Plex Sans","Helvetica Neue",Arial,sans-serif; -webkit-font-smoothing:antialiased}
+
+#viewport{position:fixed; inset:0; display:grid; place-items:center}
+#stage{width:1280px; height:720px; position:relative; transform-origin:center center; flex:none}
+.slide{position:absolute; inset:0; padding:60px 76px 56px; display:none; flex-direction:column; background:var(--ground)}
+.slide.is-active{display:flex}
+
+.kicker{font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:12px; letter-spacing:.16em;
+  text-transform:uppercase; color:var(--accent-ink); margin:0 0 16px; flex:none}
+h2{font-family:"Newsreader",Georgia,serif; font-weight:500; font-size:40px; line-height:1.11;
+  letter-spacing:-.016em; margin:0 0 24px; text-wrap:balance; max-width:32ch; flex:none}
+h2 em{font-style:italic; color:var(--accent-ink)}
+p{margin:0 0 14px; font-size:19px; line-height:1.55; color:var(--ink-2); max-width:76ch}
+p strong{color:var(--ink); font-weight:600}
+code{font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:.87em; background:var(--surface-2);
+  padding:.1em .34em; border-radius:3px; border:1px solid var(--rule)}
+.body{flex:1; min-height:0; display:flex; flex-direction:column; justify-content:center}
+.foot{flex:none; margin-top:auto; padding-top:15px; border-top:1px solid var(--rule);
+  font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:11.5px; color:var(--ink-3);
+  display:flex; gap:22px; align-items:baseline}
+.foot .src{color:var(--accent-ink)}
+.punch{font-family:"Newsreader",Georgia,serif; font-size:25px; line-height:1.32; color:var(--ink);
+  margin:0; text-wrap:balance}
+.slideno{position:absolute; right:26px; bottom:20px; font-family:"IBM Plex Mono",monospace;
+  font-size:11px; color:var(--ink-3); letter-spacing:.08em}
+
+.cols{display:grid; gap:26px}
+.c2{grid-template-columns:1fr 1fr}
+.c3{grid-template-columns:repeat(3,1fr)}
+
+.card{background:var(--surface); border:1px solid var(--rule); border-left:3px solid var(--accent);
+  border-radius:2px; padding:17px 19px; display:flex; flex-direction:column; gap:6px; box-shadow:var(--shadow)}
+.card .id{font-family:"IBM Plex Mono",monospace; font-size:11.5px; letter-spacing:.13em; color:var(--accent-ink); font-weight:600}
+.card .t{font-weight:600; font-size:17px; line-height:1.25; color:var(--ink)}
+.card .d{font-size:14.5px; line-height:1.5; color:var(--ink-2)}
+.card.flag{border-left-color:var(--flag)} .card.flag .id{color:var(--flag)}
+.card.gate{border-left-color:var(--gate)} .card.gate .id{color:var(--gate)}
+
+pre{background:var(--code-bg); border:1px solid var(--rule); border-radius:2px; padding:15px 17px; margin:0;
+  overflow:hidden; font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:12.5px; line-height:1.58;
+  color:var(--ink-2); white-space:pre}
+pre b{color:var(--ink); font-weight:600}
+pre .ok{color:var(--accent-ink)} pre .bad{color:var(--flag)}
+pre .dim{color:var(--ink-3)} pre .cmd{color:var(--ink)}
+
+.note{background:var(--gate-wash); border:1px solid var(--rule); border-left:3px solid var(--gate);
+  padding:14px 17px; border-radius:2px}
+.note .tag2{font-family:"IBM Plex Mono",monospace; font-size:10.5px; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--gate); display:block; margin-bottom:5px}
+.note p{margin:0; font-size:15.5px; color:var(--ink-2); max-width:none}
+
+.checks{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:7px}
+.checks li{display:flex; gap:11px; align-items:baseline; font-size:14.5px; color:var(--ink-2); line-height:1.45}
+.checks .mk{font-family:"IBM Plex Mono",monospace; flex:none; width:14px; color:var(--flag); font-weight:600}
+.checks .mk.ok{color:var(--accent)} .checks .mk.dim{color:var(--ink-3)}
+.checks code{font-size:12.5px}
+
+table{border-collapse:collapse; width:100%; font-size:14.5px}
+th,td{padding:9px 12px; border-bottom:1px solid var(--rule); text-align:left; vertical-align:top}
+thead th{font-family:"IBM Plex Mono",monospace; font-size:10.5px; letter-spacing:.12em;
+  text-transform:uppercase; color:var(--ink-3); background:var(--surface-2); font-weight:500}
+td.f{font-family:"IBM Plex Mono",monospace; font-size:12.5px; color:var(--ink)}
+td.n{color:var(--ink-2)} td.c{text-align:center; width:60px}
+.tblwrap{border:1px solid var(--rule); border-radius:2px; background:var(--surface); box-shadow:var(--shadow); overflow:hidden}
+.dot{display:inline-block; width:12px; height:12px; border-radius:50%; vertical-align:middle}
+.d-full{background:var(--accent); box-shadow:0 0 0 3px var(--accent-wash)}
+.d-ring{background:transparent; border:1.5px solid var(--rule-2)}
+.d-new{background:var(--gate); box-shadow:0 0 0 3px var(--gate-wash)}
+.hard{font-family:"IBM Plex Mono",monospace; font-size:10.5px; letter-spacing:.08em; color:var(--flag)}
+.soft{font-family:"IBM Plex Mono",monospace; font-size:10.5px; letter-spacing:.08em; color:var(--ink-3)}
+
+/* ── coverage table (slide 5) ───────────────────────────────────────────────── */
+table.mx2{font-size:13px}
+.mx2 td{padding:5.5px 12px; vertical-align:middle}
+.mx2 th.p,.mx2 td.p{text-align:center; width:120px; background:var(--surface-2)}
+.mx2 th.pa,.mx2 td.pa{border-left:1px solid var(--rule-2)}
+.mx2 th.pz,.mx2 td.pz{border-right:1px solid var(--rule-2)}
+.mx2 th.p{padding-top:8px; padding-bottom:8px}
+.mx2 th.p .pn{display:block; font-family:"IBM Plex Sans",sans-serif; font-size:12.5px; font-weight:600;
+  letter-spacing:0; text-transform:none; color:var(--ink); line-height:1.2}
+.mx2 th.p .pp{display:block; font-family:"IBM Plex Mono",monospace; font-size:9.5px;
+  letter-spacing:.1em; color:var(--accent-ink); margin-top:1px; line-height:1.3}
+.mx2 th.p .pg{display:block; font-family:"IBM Plex Sans",sans-serif; font-size:9.5px; font-weight:400;
+  letter-spacing:0; text-transform:none; color:var(--ink-3); margin-top:3px; line-height:1.2; white-space:nowrap}
+.mx2 tr.grp td{background:var(--surface-2); font-family:"IBM Plex Mono",monospace; font-size:9.5px;
+  letter-spacing:.15em; text-transform:uppercase; color:var(--ink-3); padding:4.5px 12px}
+.chip{display:inline-block; min-width:70px; padding:2px 7px; border-radius:11px; border:1px solid;
+  font-family:"IBM Plex Mono",monospace; font-size:9.5px; letter-spacing:.1em;
+  text-transform:uppercase; font-weight:600; line-height:1.5}
+.c-def{color:var(--gate); background:var(--gate-wash); border-color:var(--gate)}
+.c-enf{color:var(--accent-ink); background:var(--accent-wash); border-color:var(--accent)}
+.c-obey{color:var(--ink-2); background:transparent; border-color:var(--rule-2)}
+.c-der{color:var(--ink-3); background:transparent; border-color:var(--rule); font-weight:400}
+.c-na{color:var(--ink-3); background:transparent; border-color:transparent; font-weight:400;
+  letter-spacing:.05em; min-width:34px}
+
+/* ── the loop (slide 2) ─────────────────────────────────────────────────────── */
+.c4{grid-template-columns:repeat(4,1fr)}
+.card.sm{padding:13px 15px; gap:4px}
+.card.sm .id{font-size:10.5px; letter-spacing:.12em}
+.card.sm .t{font-size:14.5px; line-height:1.22}
+.card.sm .d{font-size:12.5px; line-height:1.42}
+
+/* ── inventory (slide 5) ────────────────────────────────────────────────────── */
+table.inv{font-size:12px}
+.inv th,.inv td{padding:2.6px 9px; border-bottom:1px solid var(--rule)}
+.inv thead th{font-size:9.5px; letter-spacing:.13em}
+.inv td.ix{font-family:"IBM Plex Mono",monospace; font-size:10px; color:var(--ink-3); width:22px;
+  text-align:right; padding-right:2px}
+.inv td.nd{font-family:"IBM Plex Mono",monospace; font-size:11.5px; color:var(--ink); width:210px;
+  white-space:nowrap}
+.inv td.kd{font-family:"IBM Plex Mono",monospace; font-size:9.5px; letter-spacing:.09em;
+  text-transform:uppercase; color:var(--ink-3); width:92px; white-space:nowrap}
+.inv td.kd.k-gate{color:var(--gate); font-weight:600}
+.inv td.kd.k-panel{color:var(--accent-ink); font-weight:600}
+.inv td.wr{font-family:"IBM Plex Mono",monospace; font-size:10.2px; color:var(--ink-2);
+  white-space:nowrap}
+.inv td.nv{font-family:"IBM Plex Mono",monospace; font-size:10px; color:var(--flag); width:150px;
+  white-space:nowrap}
+.inv tr.gate-row td{background:var(--gate-wash)}
+.note.tight{padding:11px 14px}
+.note.tight p{font-size:13px; line-height:1.46}
+.mini{border-collapse:collapse; width:100%; font-size:11.5px}
+.mini td{padding:4.5px 10px; border-bottom:1px solid var(--rule); vertical-align:top}
+.mini tr:last-child td{border-bottom:0}
+.mini td.q{font-family:"Newsreader",Georgia,serif; font-size:19px; line-height:1; color:var(--accent-ink);
+  width:34px; text-align:right; padding-top:5px}
+.mini td.k{font-family:"IBM Plex Mono",monospace; font-size:10px; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--ink); font-weight:600}
+.mini td.k em{display:block; font-style:normal; font-family:"IBM Plex Sans",sans-serif; font-size:11.5px;
+  letter-spacing:0; text-transform:none; color:var(--ink-2); font-weight:400; margin-top:1px; line-height:1.32}
+.mini .back td.q{color:var(--flag)}
+
+/* ── the ladder (slide 8) ───────────────────────────────────────────────────── */
+.rungs{display:grid; grid-template-columns:repeat(3,1fr); gap:14px}
+.rung{display:grid; grid-template-columns:auto 1fr; gap:13px; align-items:center;
+  border:1px solid var(--rule); border-left:3px solid var(--accent); border-radius:2px;
+  background:var(--surface); padding:10px 15px; box-shadow:var(--shadow)}
+.rung .num{font-family:"Newsreader",Georgia,serif; font-size:32px; line-height:1; color:var(--accent-ink)}
+.rung .rn{display:block; font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--ink); font-weight:600}
+.rung .rd{display:block; font-size:12px; line-height:1.34; color:var(--ink-2); margin-top:2px}
+.rung.r1{border-left-color:var(--gate)} .rung.r1 .num{color:var(--gate)}
+.rung.r3{border-left-color:var(--rule-2)} .rung.r3 .num{color:var(--ink-3)}
+
+/* ── invariant ledger (slide 6) ─────────────────────────────────────────────── */
+.ledger{border:1px solid var(--rule); border-radius:2px; background:var(--surface);
+  box-shadow:var(--shadow); overflow:hidden}
+.lrow{display:grid; grid-template-columns:18px 1fr; gap:11px; padding:9px 14px;
+  border-bottom:1px solid var(--rule); border-left:3px solid var(--accent)}
+.lrow:last-child{border-bottom:0}
+.lrow.prose{background:var(--surface-2); border-left-color:var(--rule-2)}
+.lrow .mk2{font-family:"IBM Plex Mono",monospace; font-size:13px; font-weight:600;
+  color:var(--accent); line-height:1.35}
+.lrow.prose .mk2{color:var(--ink-3)}
+.lrow .inv{display:block; font-size:13.5px; line-height:1.34; color:var(--ink)}
+.lrow .by{display:block; font-family:"IBM Plex Mono",monospace; font-size:10.5px;
+  line-height:1.45; color:var(--accent-ink); margin-top:3px}
+.lrow.prose .by{color:var(--ink-3)}
+.lrow code{font-size:.9em; padding:.05em .28em}
+.caplbl{font-family:"IBM Plex Mono",monospace; font-size:12px; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--ink-3); margin:0 0 9px}
+
+/* generated graph */
+.graphsvg{max-width:100%; max-height:534px; height:auto; display:block; margin:0 auto; color:var(--rule-2)}
+.graphsvg .n-lbl{font-family:"IBM Plex Sans",sans-serif; font-size:12.5px; fill:var(--ink)}
+.graphsvg .n-sub{font-family:"IBM Plex Mono",monospace; font-size:9.5px; fill:var(--ink-3)}
+.graphsvg .n-entry,.graphsvg .n-term,.graphsvg .n-role{fill:var(--surface-2); stroke:var(--rule-2); stroke-width:1.2}
+.graphsvg .n-panel{fill:var(--accent-wash); stroke:var(--accent); stroke-width:1.5}
+.graphsvg .n-gate{fill:var(--gate-wash); stroke:var(--gate); stroke-width:1.5}
+.graphsvg .n-delib{fill:none; stroke:var(--accent); stroke-width:1.2; stroke-dasharray:4 3}
+.graphsvg .n-render{fill:none; stroke:var(--rule-2); stroke-width:1.2; stroke-dasharray:4 3}
+.graphsvg .e-fwd{stroke:var(--rule-2); stroke-width:1.4; fill:none}
+.graphsvg .e-opt{stroke:var(--rule-2); stroke-width:1.2; fill:none; stroke-dasharray:4 3}
+.graphsvg .e-back{stroke:var(--flag); stroke-width:1.2; fill:none; opacity:.75}
+.graphsvg .e-lbl{font-family:"IBM Plex Mono",monospace; font-size:9px; fill:var(--ink-3)}
+.graphsvg .e-lbl-back{font-family:"IBM Plex Mono",monospace; font-size:8.5px; fill:var(--flag)}
+.gkey{display:flex; flex-wrap:wrap; gap:7px 18px; font-size:12px; color:var(--ink-2);
+  margin:12px 0 0; font-family:"IBM Plex Mono",monospace}
+.gkey span{display:flex; align-items:center; gap:7px}
+.sw{width:20px; height:11px; border-radius:2px; display:inline-block; flex:none}
+.sw-role{background:var(--surface-2); border:1.2px solid var(--rule-2)}
+.sw-panel{background:var(--accent-wash); border:1.5px solid var(--accent)}
+.sw-gate{background:var(--gate-wash); border:1.5px solid var(--gate)}
+.sw-opt{background:transparent; border:1.2px dashed var(--accent)}
+.sw-back{background:transparent; border-top:1.5px solid var(--flag); height:2px; border-radius:0}
+
+.dia text{font-family:"IBM Plex Sans",sans-serif; fill:var(--ink)}
+.dia .lbl{font-size:13px; fill:var(--ink)}
+.dia .sub{font-size:11px; fill:var(--ink-3); font-family:"IBM Plex Mono",monospace}
+.dia .edge{stroke:var(--rule-2); stroke-width:1.4; fill:none}
+.dia .box{fill:var(--surface-2); stroke:var(--rule-2); stroke-width:1.2}
+.dia .box-acc{fill:var(--accent-wash); stroke:var(--accent); stroke-width:1.5}
+.dia .box-gate{fill:var(--gate-wash); stroke:var(--gate); stroke-width:1.5}
+.dia .box-plain{fill:var(--surface); stroke:var(--rule-2); stroke-width:1}
+.dia .acctxt{fill:var(--accent-ink); font-size:11px; font-family:"IBM Plex Mono",monospace}
+.dia .gatetxt{fill:var(--gate); font-size:11px; font-family:"IBM Plex Mono",monospace}
+.dia .flagtxt{fill:var(--flag); font-size:11px; font-family:"IBM Plex Mono",monospace}
+
+/* overview */
+body.overview{overflow:auto}
+body.overview #viewport{position:static; display:block; padding:34px}
+body.overview #stage{width:auto; height:auto; transform:none!important; display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(304px,1fr)); gap:20px; max-width:1500px; margin:0 auto}
+body.overview .slide{display:flex!important; position:relative; inset:auto; width:304px; height:171px;
+  padding:60px 76px 56px; border:1px solid var(--rule); border-radius:3px; cursor:pointer; overflow:hidden;
+  box-shadow:var(--shadow); transform:scale(.2375); transform-origin:top left; margin:0 -972px -549px 0}
+body.overview .slide.is-active{outline:3px solid var(--accent)}
+
+#help{position:fixed; left:0; right:0; bottom:0; padding:7px 16px; background:var(--surface);
+  border-top:1px solid var(--rule); font-family:"IBM Plex Mono",monospace; font-size:11px; color:var(--ink-3);
+  display:flex; gap:18px; justify-content:center; z-index:50; transition:opacity .3s; letter-spacing:.04em}
+#help.hide{opacity:0; pointer-events:none}
+#help b{color:var(--ink-2); font-weight:600}
+#progress{position:fixed; top:0; left:0; height:2px; background:var(--accent); z-index:60; transition:width .18s}
+
+@media print{
+  @page{size:1280px 720px; margin:0}
+  body,#viewport{overflow:visible; display:block; background:#fff}
+  #stage{transform:none!important; width:1280px; height:auto}
+  .slide{display:flex!important; position:relative; inset:auto; page-break-after:always; height:720px}
+  #help,#progress{display:none}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important; transition:none!important}}
+</style>
+</head>
+<body>
+
+<div id="progress"></div>
+<div id="viewport"><div id="stage">
+
+<!-- ═══════════ 1 · WHAT THE SWARM DOES ═══════════ -->
+<section class="slide">
+  <p class="kicker">the plan swarm · plan-swarm@2.1</p>
+  <h2>A swarm of role agents that drives one change from <em>idea to commit</em></h2>
+  <div class="body">
+    <svg class="dia" viewBox="0 0 1128 104" style="margin-bottom:26px" role="img" aria-label="The six phases of the swarm, left to right: phase 0 discover, phase 1 specify, phase 2 plan, phase 3 approve which is a human gate, phase 4 build, and phase 5 ship which ends at a second human gate for the commit.">
+      <defs><marker id="pa" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="currentColor"/></marker></defs>
+      <g color="var(--rule-2)">
+        <line class="edge" x1="170" y1="46" x2="186" y2="46" marker-end="url(#pa)"/>
+        <line class="edge" x1="358" y1="46" x2="374" y2="46" marker-end="url(#pa)"/>
+        <line class="edge" x1="546" y1="46" x2="562" y2="46" marker-end="url(#pa)"/>
+        <line class="edge" x1="734" y1="46" x2="750" y2="46" marker-end="url(#pa)"/>
+        <line class="edge" x1="922" y1="46" x2="938" y2="46" marker-end="url(#pa)"/>
+      </g>
+      <rect class="box" x="2" y="18" width="168" height="56" rx="2"/>
+      <text class="acctxt" x="86" y="38" text-anchor="middle">0 · DISCOVER</text>
+      <text class="sub" x="86" y="56" text-anchor="middle">research</text>
+      <rect class="box" x="190" y="18" width="168" height="56" rx="2"/>
+      <text class="acctxt" x="274" y="38" text-anchor="middle">1 · SPECIFY</text>
+      <text class="sub" x="274" y="56" text-anchor="middle">product-owner</text>
+      <rect class="box" x="378" y="18" width="168" height="56" rx="2"/>
+      <text class="acctxt" x="462" y="38" text-anchor="middle">2 · PLAN</text>
+      <text class="sub" x="462" y="56" text-anchor="middle">architect</text>
+      <rect class="box-gate" x="566" y="18" width="168" height="56" rx="2"/>
+      <text class="gatetxt" x="650" y="38" text-anchor="middle">3 · APPROVE</text>
+      <text class="sub" x="650" y="56" text-anchor="middle">human gate 🛑</text>
+      <rect class="box" x="754" y="18" width="168" height="56" rx="2"/>
+      <text class="acctxt" x="838" y="38" text-anchor="middle">4 · BUILD</text>
+      <text class="sub" x="838" y="56" text-anchor="middle">engineer ⇄ auditor</text>
+      <rect class="box-gate" x="942" y="18" width="184" height="56" rx="2"/>
+      <text class="gatetxt" x="1034" y="38" text-anchor="middle">5 · SHIP</text>
+      <text class="sub" x="1034" y="56" text-anchor="middle">commit gate 🛑 → release</text>
+      <text class="sub" x="2" y="96" text-anchor="start">one orchestrator — starter — dispatches every phase, holds both gates, and is the only role that runs git commit</text>
+    </svg>
+    <div class="cols c3">
+      <div class="card">
+        <span class="id">SWARM ROLES</span>
+        <span class="t">Do the work</span>
+        <span class="d"><code>product-owner</code> writes a Gherkin spec · <code>architect</code> writes a
+        micro-stepped plan, read-only on source · <code>engineer</code> builds it under TDD ·
+        <code>auditor</code> verifies against the plan and runs the suite.</span>
+      </div>
+      <div class="card">
+        <span class="id">ADVERSARIAL VALIDATORS</span>
+        <span class="t">Attack the artifact</span>
+        <span class="d">Three panels sit at the phase boundaries — spec, plan, diff. Each runs
+        <strong>3 skeptics on partitioned lenses</strong> and keeps only what a 2-of-3 majority confirms.</span>
+      </div>
+      <div class="card">
+        <span class="id">DELIBERATIVE PANELS</span>
+        <span class="t">Improve the artifact</span>
+        <span class="d">The generative counterpart: delegates holding deliberately <strong>disjoint
+        context</strong> argue to consensus on one revised spec or plan. Optional, before validation.</span>
+      </div>
+    </div>
+    <p class="punch" style="margin-top:24px">Files under <code>plans/</code> — never chat messages — are
+    the single source of truth. Agents are handed <em>file paths</em>, not summaries.</p>
+  </div>
+  <div class="foot"><span class="src">plugins/plan/README.md</span><span>spec → plan → execute → audit → commit</span></div>
+</section>
+
+<!-- ═══════════ 2 · THE GRAPH ENGINEERING LOOP ═══════════ -->
+<section class="slide">
+  <p class="kicker">the framework · the practice</p>
+  <h2 style="max-width:none">Graph engineering is a <em>loop</em>, not a diagram</h2>
+  <div class="body">
+    <svg class="dia" viewBox="0 0 1128 196" style="margin-bottom:22px" role="img" aria-label="The graph engineering loop as four stages left to right — declare, generate, validate, drift-check — with a return arc from drift-check back to declare, closing the cycle.">
+      <defs><marker id="lp" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="currentColor"/></marker></defs>
+      <g color="var(--rule-2)">
+        <line class="edge" x1="242" y1="44" x2="292" y2="44" marker-end="url(#lp)"/>
+        <line class="edge" x1="538" y1="44" x2="588" y2="44" marker-end="url(#lp)"/>
+        <line class="edge" x1="834" y1="44" x2="884" y2="44" marker-end="url(#lp)"/>
+        <path class="edge" d="M1008,80 C1008,142 1008,152 948,152 L180,152 C120,152 120,142 120,80" marker-end="url(#lp)"/>
+      </g>
+      <rect class="box-acc" x="0" y="8" width="240" height="72" rx="2"/>
+      <text class="acctxt" x="120" y="36" text-anchor="middle">01 · DECLARE</text>
+      <text class="sub" x="120" y="58" text-anchor="middle">nodes · edges · conditions</text>
+      <rect class="box" x="296" y="8" width="240" height="72" rx="2"/>
+      <text class="acctxt" x="416" y="36" text-anchor="middle">02 · GENERATE</text>
+      <text class="sub" x="416" y="58" text-anchor="middle">every view, from that file</text>
+      <rect class="box" x="592" y="8" width="240" height="72" rx="2"/>
+      <text class="acctxt" x="712" y="36" text-anchor="middle">03 · VALIDATE</text>
+      <text class="sub" x="712" y="58" text-anchor="middle">declaration vs. what is on disk</text>
+      <rect class="box" x="888" y="8" width="240" height="72" rx="2"/>
+      <text class="acctxt" x="1008" y="36" text-anchor="middle">04 · DRIFT-CHECK</text>
+      <text class="sub" x="1008" y="58" text-anchor="middle">CI re-runs 02 and 03</text>
+      <text class="sub" x="564" y="176" text-anchor="middle">the loop closes on every change — which is the only reason the declaration stays true</text>
+    </svg>
+    <div class="cols c4">
+      <div class="card sm">
+        <span class="id">01 · DECLARE</span>
+        <span class="t">One file, or none</span>
+        <span class="d">Every node, every edge, every routing condition — in one machine-readable
+        artifact. Anything else describing the shape is a copy.</span>
+      </div>
+      <div class="card sm">
+        <span class="id">02 · GENERATE</span>
+        <span class="t">Never transcribe</span>
+        <span class="d">Diagrams and docs are emitted from the declaration, between markers. A
+        hand-drawn diagram is a second source of truth waiting to drift.</span>
+      </div>
+      <div class="card sm">
+        <span class="id">03 · VALIDATE</span>
+        <span class="t">Resolve against disk</span>
+        <span class="d">Does every declared node exist? Does every edge land somewhere? Is every
+        node reachable? A violation is a non-zero exit, not a review comment.</span>
+      </div>
+      <div class="card sm">
+        <span class="id">04 · DRIFT-CHECK</span>
+        <span class="t">Close the loop</span>
+        <span class="d">CI regenerates and fails if the output differs. Skip this one step and the
+        declaration quietly decays back into documentation.</span>
+      </div>
+    </div>
+    <p class="punch" style="margin-top:22px">Nothing in this loop <em>executes</em> the graph.
+    Graph engineering is a <strong>build-time discipline</strong> — it makes the shape of a system
+    reviewable, not runnable.</p>
+  </div>
+  <div class="foot"><span class="src">graph-engineering.html</span><span>the general shape — no plan swarm on this slide</span></div>
+</section>
+
+<!-- ═══════════ 3 · WHAT GRAPH ENGINEERING REQUIRES ═══════════ -->
+<section class="slide">
+  <p class="kicker">the framework · the assertions</p>
+  <h2>Stripped of the vocabulary, graph engineering asserts <em>three things</em></h2>
+  <div class="body">
+    <div class="cols c3">
+      <div class="card">
+        <span class="id">TOPOLOGY · P1</span>
+        <span class="t">The topology is an explicit artifact</span>
+        <span class="d">Which nodes exist, what routes between them, under what condition — readable
+        as one thing, and <strong>generated rather than transcribed</strong>. A diagram you maintain
+        by hand is a second source of truth waiting to drift.</span>
+      </div>
+      <div class="card">
+        <span class="id">CONTEXT · P2</span>
+        <span class="t">Each node gets its own clean context</span>
+        <span class="d">Its own prompt, its own tools, its own evidence — so one agent's working
+        memory does not pollute another's. The unit of isolation is the node, not the conversation.</span>
+      </div>
+      <div class="card">
+        <span class="id">STATE · P3</span>
+        <span class="t">State crosses boundaries only through declared edges</span>
+        <span class="d">A schema, not a directory convention. What a node may read and write is
+        <strong>written down and checkable</strong> — not a sentence in a prompt asking it to behave.</span>
+      </div>
+    </div>
+    <div class="note" style="margin-top:26px; border-left-color:var(--flag); background:var(--flag-wash)">
+      <span class="tag2" style="color:var(--flag)">what it cannot express</span>
+      <p>A topology can show you that three branches run in parallel. It cannot show you whether
+      those branches are <strong>independent</strong> — and that is the property that decides whether
+      a voting gate means anything.</p>
+    </div>
+  </div>
+  <div class="foot"><span class="src">graph-engineering.html</span><span>P1 · P2 · P3 — these three labels run through the rest of the deck</span></div>
+</section>
+
+<!-- ═══════════ 4 · APPLIED TO THE PLAN SWARM ═══════════ -->
+<section class="slide">
+  <p class="kicker">applied · plan-swarm@2.1</p>
+  <div style="display:grid; grid-template-columns:330px 1fr; gap:44px; align-items:center; flex:1; min-height:0">
+    <div>
+      <h2 style="font-size:33px; margin-bottom:16px; max-width:none">Nobody drew this. <em>Step 02
+      emitted it.</em></h2>
+      <p style="font-size:16px; margin-bottom:12px">Every box and every arc here is generated from one
+      file, between markers, by <code style="font-size:.85em; white-space:nowrap">graph.py render</code>. The ASCII
+      lifecycle that two READMEs used to maintain by hand is gone.</p>
+      <p style="font-size:16px; margin-bottom:12px">The spine is the required path; optional nodes
+      branch right. The <strong style="color:var(--flag)">six red arcs on the left are the
+      cycles</strong> — a validator sending work back, the auditor routing a failure to the engineer
+      <em>or</em> the architect, the commit gate returning for the next execution group.</p>
+      <div class="note tight">
+        <span class="tag2">why this matters</span>
+        <p>Those cycles are why this is a <strong>graph and not a pipeline</strong> — and exactly what
+        the flat six-phase diagram on slide 1 can never show.</p>
+      </div>
+    </div>
+    <div>
+<!-- BEGIN GENERATED: lifecycle (python3 lib/graph/graph.py sync) -->
+<!-- graph_version: plan-swarm@2.1 — edit graph.json, then run sync. -->
+<svg class="graphsvg" viewBox="-62 0 822 822" role="img" aria-label="The complete plan swarm topology generated from graph.json: 16 nodes and 25 edges. A vertical spine of required nodes runs from request to release, optional nodes branch to the right, and feedback edges arc back on the left.">
+<defs>
+<marker id="gh" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="currentColor"/></marker>
+</defs>
+<line class="e-fwd" x1="300" y1="66" x2="300" y2="92" marker-end="url(#gh)"/>
+<line class="e-fwd" x1="300" y1="132" x2="300" y2="158" marker-end="url(#gh)"/>
+<path class="e-opt" d="M416,178 C445,178 445,178 474,178" marker-end="url(#gh)"/>
+<line class="e-fwd" x1="300" y1="198" x2="300" y2="224" marker-end="url(#gh)"/>
+<path class="e-fwd" d="M474,178 C445,178 445,244 416,244" marker-end="url(#gh)"/>
+<path class="e-back" d="M184,244 C147,244 147,178 184,178" marker-end="url(#gh)"/>
+<text class="e-lbl-back" x="143" y="211" text-anchor="end">fold in tightenings</text>
+<line class="e-fwd" x1="300" y1="264" x2="300" y2="290" marker-end="url(#gh)"/>
+<path class="e-opt" d="M416,310 C445,310 445,310 474,310" marker-end="url(#gh)"/>
+<line class="e-fwd" x1="300" y1="330" x2="300" y2="356" marker-end="url(#gh)"/>
+<path class="e-fwd" d="M474,310 C445,310 445,376 416,376" marker-end="url(#gh)"/>
+<path class="e-back" d="M184,376 C132,376 132,310 184,310" marker-end="url(#gh)"/>
+<text class="e-lbl-back" x="128" y="343" text-anchor="end">apply fixes · first_domino</text>
+<line class="e-fwd" x1="300" y1="396" x2="300" y2="422" marker-end="url(#gh)"/>
+<line class="e-fwd" x1="300" y1="462" x2="300" y2="488" marker-end="url(#gh)"/>
+<path class="e-opt" d="M416,508 C445,508 445,508 474,508" marker-end="url(#gh)"/>
+<line class="e-fwd" x1="300" y1="528" x2="300" y2="554" marker-end="url(#gh)"/>
+<path class="e-fwd" d="M474,508 C445,508 445,574 416,574" marker-end="url(#gh)"/>
+<path class="e-back" d="M184,574 C117,574 117,508 184,508" marker-end="url(#gh)"/>
+<text class="e-lbl-back" x="113" y="541" text-anchor="end">fix the failing task</text>
+<path class="e-back" d="M184,574 C102,574 102,310 184,310" marker-end="url(#gh)"/>
+<text class="e-lbl-back" x="98" y="442" text-anchor="end">step is impossible</text>
+<line class="e-fwd" x1="300" y1="594" x2="300" y2="620" marker-end="url(#gh)"/>
+<path class="e-back" d="M184,640 C87,640 87,508 184,508" marker-end="url(#gh)"/>
+<text class="e-lbl-back" x="83" y="574" text-anchor="end">fix at calibrated severity</text>
+<path class="e-opt" d="M416,640 C445,640 445,640 474,640" marker-end="url(#gh)"/>
+<line class="e-fwd" x1="300" y1="660" x2="300" y2="686" marker-end="url(#gh)"/>
+<path class="e-fwd" d="M474,640 C445,640 445,706 416,706" marker-end="url(#gh)"/>
+<path class="e-back" d="M184,706 C72,706 72,508 184,508" marker-end="url(#gh)"/>
+<text class="e-lbl-back" x="68" y="607" text-anchor="end">next execution group</text>
+<line class="e-fwd" x1="300" y1="726" x2="300" y2="752" marker-end="url(#gh)"/>
+<rect class="n-entry" x="184" y="26" width="232" height="40" rx="2"/>
+<text class="n-lbl" x="300" y="43" text-anchor="middle">request</text>
+<text class="n-sub" x="300" y="57" text-anchor="middle">feature · fix · refactor</text>
+<rect class="n-role" x="184" y="92" width="232" height="40" rx="2"/>
+<text class="n-lbl" x="300" y="109" text-anchor="middle">research</text>
+<text class="n-sub" x="300" y="123" text-anchor="middle">plans/research/*.md</text>
+<rect class="n-role" x="184" y="158" width="232" height="40" rx="2"/>
+<text class="n-lbl" x="300" y="175" text-anchor="middle">product-owner</text>
+<text class="n-sub" x="300" y="189" text-anchor="middle">spec.md · 00-ROADMAP.md</text>
+<rect class="n-delib" x="474" y="158" width="208" height="40" rx="2"/>
+<text class="n-lbl" x="578" y="175" text-anchor="middle">spec-deliberator</text>
+<text class="n-sub" x="578" y="189" text-anchor="middle">3 delegates · disjoint bundles</text>
+<rect class="n-panel" x="184" y="224" width="232" height="40" rx="2"/>
+<text class="n-lbl" x="300" y="241" text-anchor="middle">spec-validator</text>
+<text class="n-sub" x="300" y="255" text-anchor="middle">internal-consistency · missing-requirement · malicious-compliance</text>
+<rect class="n-role" x="184" y="290" width="232" height="40" rx="2"/>
+<text class="n-lbl" x="300" y="307" text-anchor="middle">architect</text>
+<text class="n-sub" x="300" y="321" text-anchor="middle">plan.md · parallel groups</text>
+<rect class="n-delib" x="474" y="290" width="208" height="40" rx="2"/>
+<text class="n-lbl" x="578" y="307" text-anchor="middle">plan-deliberator</text>
+<text class="n-sub" x="578" y="321" text-anchor="middle">intent · codebase · delivery</text>
+<rect class="n-panel" x="184" y="356" width="232" height="40" rx="2"/>
+<text class="n-lbl" x="300" y="373" text-anchor="middle">plan-validator</text>
+<text class="n-sub" x="300" y="387" text-anchor="middle">sequencing · ground-truth · blast-radius</text>
+<rect class="n-gate" x="184" y="422" width="232" height="40" rx="2"/>
+<text class="n-lbl" x="300" y="439" text-anchor="middle">HUMAN REVIEW GATE</text>
+<text class="n-sub" x="300" y="453" text-anchor="middle">user types &quot;approve&quot;</text>
+<rect class="n-role" x="184" y="488" width="232" height="40" rx="2"/>
+<text class="n-lbl" x="300" y="505" text-anchor="middle">engineer × N</text>
+<text class="n-sub" x="300" y="519" text-anchor="middle">≤ 4 concurrent · disjoint files</text>
+<rect class="n-role" x="474" y="488" width="208" height="40" rx="2"/>
+<text class="n-lbl" x="578" y="505" text-anchor="middle">simplifier</text>
+<text class="n-sub" x="578" y="519" text-anchor="middle">zero behavioral change</text>
+<rect class="n-role" x="184" y="554" width="232" height="40" rx="2"/>
+<text class="n-lbl" x="300" y="571" text-anchor="middle">auditor</text>
+<text class="n-sub" x="300" y="585" text-anchor="middle">AUDIT_[Plan_Name].md</text>
+<rect class="n-panel" x="184" y="620" width="232" height="40" rx="2"/>
+<text class="n-lbl" x="300" y="637" text-anchor="middle">implementation-validator</text>
+<text class="n-sub" x="300" y="651" text-anchor="middle">claim-vs-reality · failure-paths · blast-radius</text>
+<rect class="n-render" x="474" y="620" width="208" height="40" rx="2"/>
+<text class="n-lbl" x="578" y="637" text-anchor="middle">visual-implementation-recap</text>
+<text class="n-sub" x="578" y="651" text-anchor="middle">visual-recap.html</text>
+<rect class="n-gate" x="184" y="686" width="232" height="40" rx="2"/>
+<text class="n-lbl" x="300" y="703" text-anchor="middle">COMMIT GATE</text>
+<text class="n-sub" x="300" y="717" text-anchor="middle">green audit + explicit &quot;yes&quot;</text>
+<rect class="n-term" x="184" y="752" width="232" height="40" rx="2"/>
+<text class="n-lbl" x="300" y="769" text-anchor="middle">release · tag</text>
+<text class="n-sub" x="300" y="783" text-anchor="middle">product-owner marks Shipped</text>
+</svg>
+<!-- END GENERATED: lifecycle -->
+      <div class="gkey">
+        <span><i class="sw sw-role"></i> role</span>
+        <span><i class="sw sw-panel"></i> lens-partitioned panel</span>
+        <span><i class="sw sw-gate"></i> human gate</span>
+        <span><i class="sw sw-opt"></i> optional</span>
+        <span><i class="sw sw-back"></i> feedback edge</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ 5 · THE INVENTORY ═══════════ -->
+<section class="slide">
+  <p class="kicker">the inventory</p>
+  <h2 style="font-size:35px; max-width:none; margin-bottom:16px">Everything the declaration names, <em>enumerated</em></h2>
+  <div class="body">
+    <div style="display:grid; grid-template-columns:1fr 306px; gap:26px; align-items:start">
+      <div class="tblwrap">
+        <table class="inv">
+          <thead>
+            <tr>
+              <th class="ix"></th>
+              <th style="width:192px">Node</th>
+              <th style="width:92px">Kind</th>
+              <th>Writes</th>
+              <th style="width:134px">Must not write</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td class="ix">1</td><td class="nd">request</td><td class="kd">entry</td><td class="wr">—</td><td class="nv"></td></tr>
+            <tr><td class="ix">2</td><td class="nd">research</td><td class="kd">role</td><td class="wr">plans/research/{topic}_context.md</td><td class="nv"></td></tr>
+            <tr><td class="ix">3</td><td class="nd">product-owner</td><td class="kd">role</td><td class="wr">spec.md · context.md · plans/00-ROADMAP.md</td><td class="nv"></td></tr>
+            <tr><td class="ix">4</td><td class="nd">spec-deliberator</td><td class="kd">deliberation</td><td class="wr">spec.md · deliberations/spec-deliberation.md</td><td class="nv"></td></tr>
+            <tr><td class="ix">5</td><td class="nd">spec-validator</td><td class="kd k-panel">panel ×3</td><td class="wr">adversarial-reviews/spec-validation.md</td><td class="nv"></td></tr>
+            <tr><td class="ix">6</td><td class="nd">architect</td><td class="kd">role</td><td class="wr">plan.md · data-model.md · api-contracts.md</td><td class="nv">repo source</td></tr>
+            <tr><td class="ix">7</td><td class="nd">plan-deliberator</td><td class="kd">deliberation</td><td class="wr">plan.md · deliberations/plan-deliberation.md</td><td class="nv"></td></tr>
+            <tr><td class="ix">8</td><td class="nd">plan-validator</td><td class="kd k-panel">panel ×3</td><td class="wr">adversarial-reviews/plan-validation.md</td><td class="nv"></td></tr>
+            <tr class="gate-row"><td class="ix">9</td><td class="nd">human-review-gate</td><td class="kd k-gate">human gate</td><td class="wr">state.json#gates.plan-approval</td><td class="nv"></td></tr>
+            <tr><td class="ix">10</td><td class="nd">engineer</td><td class="kd">role</td><td class="wr">&lt;repo source&gt; · plan.md#todos</td><td class="nv">git commit</td></tr>
+            <tr><td class="ix">11</td><td class="nd">simplifier</td><td class="kd">role</td><td class="wr">&lt;repo source&gt;</td><td class="nv"></td></tr>
+            <tr><td class="ix">12</td><td class="nd">auditor</td><td class="kd">role</td><td class="wr">plans/audit/AUDIT_[Plan_Name].md</td><td class="nv">repo source · commit</td></tr>
+            <tr><td class="ix">13</td><td class="nd">implementation-validator</td><td class="kd k-panel">panel ×3</td><td class="wr">adversarial-reviews/implementation-validation.md</td><td class="nv"></td></tr>
+            <tr><td class="ix">14</td><td class="nd">visual-implementation-recap</td><td class="kd">renderer</td><td class="wr">visual-recap.html</td><td class="nv"></td></tr>
+            <tr class="gate-row"><td class="ix">15</td><td class="nd">commit-gate</td><td class="kd k-gate">human gate</td><td class="wr">git commit · state.json#groups[].committed</td><td class="nv"></td></tr>
+            <tr><td class="ix">16</td><td class="nd">release</td><td class="kd">terminal</td><td class="wr">plans/00-ROADMAP.md · git tag</td><td class="nv"></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div>
+        <p class="caplbl">25 edges, by class</p>
+        <div class="tblwrap" style="margin-bottom:16px">
+          <table class="mini">
+            <tr><td class="q">15</td><td class="k">required<em>The spine. Taken on every run.</em></td></tr>
+            <tr><td class="q">4</td><td class="k">optional<em>Two deliberators, the simplifier, the recap renderer.</em></td></tr>
+            <tr class="back"><td class="q">6</td><td class="k">feedback<em>Send-backs. These are why it is a graph and not a pipeline.</em></td></tr>
+          </table>
+        </div>
+        <p class="caplbl">2 human gates</p>
+        <div class="tblwrap" style="margin-bottom:16px">
+          <table class="mini">
+            <tr><td class="q">1</td><td class="k">plan-approval<em>Reversible. Fires once, before any code is written.</em></td></tr>
+            <tr><td class="q" style="color:var(--gate)">2</td><td class="k">commit<em><strong style="color:var(--gate)">Irreversible.</strong> Fires once per execution group.</em></td></tr>
+          </table>
+        </div>
+        <div class="note tight">
+          <span class="tag2">read the last two columns</span>
+          <p>They are not decoration. <code>panel ×3</code> is what makes the lens invariant
+          checkable; <strong>must not write</strong> is what makes the commit and source-write
+          invariants checkable. Slide 8 is these two columns, enforced.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span class="src">plugins/plan/graph.json</span><span>paths are relative to plans/active_milestones/{moniker}/ unless shown otherwise</span></div>
+</section>
+
+<!-- ═══════════ 6 · GRAPH.JSON ═══════════ -->
+<section class="slide">
+  <p class="kicker">the declaration</p>
+  <h2>Who writes <code style="font-size:.78em">graph.json</code>, and what it actually is</h2>
+  <div class="body">
+    <div class="cols c2" style="grid-template-columns:1fr .95fr; gap:34px; align-items:center">
+      <div>
+        <svg class="dia" viewBox="0 0 460 300" role="img" aria-label="The dependency direction around graph.json. It is hand-authored at the top and feeds two tools: graph.py render, which generates the README diagrams, and graph.py validate, which resolves the declaration against the SKILL.md files on disk. The reverse arrow from disk back to the declaration is crossed out.">
+          <defs><marker id="g4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="currentColor"/></marker></defs>
+          <rect class="box-acc" x="140" y="4" width="180" height="46" rx="2"/>
+          <text class="lbl" x="230" y="24" text-anchor="middle">graph.json</text>
+          <text class="acctxt" x="230" y="40" text-anchor="middle">hand-authored · the source</text>
+          <g color="var(--rule-2)">
+            <line class="edge" x1="200" y1="50" x2="108" y2="98" marker-end="url(#g4)"/>
+            <line class="edge" x1="260" y1="50" x2="352" y2="98" marker-end="url(#g4)"/>
+          </g>
+          <rect class="box-plain" x="14" y="100" width="172" height="38" rx="2"/>
+          <text class="sub" x="100" y="124" text-anchor="middle">graph.py render</text>
+          <rect class="box-plain" x="274" y="100" width="172" height="38" rx="2"/>
+          <text class="sub" x="360" y="124" text-anchor="middle">graph.py validate</text>
+          <g color="var(--accent)">
+            <line class="edge" x1="100" y1="138" x2="100" y2="196" marker-end="url(#g4)" stroke="var(--accent)"/>
+            <line class="edge" x1="322" y1="138" x2="322" y2="196" marker-end="url(#g4)" stroke="var(--accent)"/>
+          </g>
+          <text class="acctxt" x="112" y="172" text-anchor="start">emits</text>
+          <text class="acctxt" x="334" y="172" text-anchor="start">resolves</text>
+          <g color="var(--flag)">
+            <line class="edge" x1="416" y1="196" x2="416" y2="140" stroke="var(--flag)" stroke-dasharray="5 4" marker-end="url(#g4)"/>
+          </g>
+          <line x1="406" y1="180" x2="426" y2="160" stroke="var(--flag)" stroke-width="2"/>
+          <line x1="406" y1="160" x2="426" y2="180" stroke="var(--flag)" stroke-width="2"/>
+          <rect class="box" x="14" y="198" width="172" height="48" rx="2"/>
+          <text class="sub" x="100" y="218" text-anchor="middle">README diagrams</text>
+          <text class="acctxt" x="100" y="234" text-anchor="middle">GENERATED</text>
+          <rect class="box" x="274" y="198" width="172" height="48" rx="2"/>
+          <text class="sub" x="360" y="218" text-anchor="middle">skills/*/SKILL.md</text>
+          <text class="flagtxt" x="360" y="234" text-anchor="middle">HAND-AUTHORED TOO</text>
+          <text class="flagtxt" x="446" y="266" text-anchor="end">nothing checks this way</text>
+          <text class="sub" x="14" y="288" text-anchor="start">declaration → disk.  never disk → declaration.</text>
+        </svg>
+      </div>
+      <div>
+        <div class="card" style="margin-bottom:11px">
+          <span class="id">WHO · a human, by hand</span>
+          <span class="d">It is <strong>not generated from anything</strong>. Someone edits it when the
+          swarm's shape changes, then runs <code>sync</code>. Its own header says so: <em>“edit this file,
+          then regenerate — never hand-edit a rendered diagram.”</em></span>
+        </div>
+        <div class="card" style="margin-bottom:11px">
+          <span class="id">WHY · to break a three-way tie</span>
+          <span class="d">The topology used to live in two READMEs <em>and</em> in the orchestrator's
+          control flow. All three claimed to describe the same lifecycle; none was authoritative, so
+          nothing could detect that they had drifted apart.</span>
+        </div>
+        <div class="card gate">
+          <span class="id">WHAT · a manifest, not a runtime</span>
+          <span class="d">Nothing executes it. <code>graph.json</code> is the <strong>AST</strong>,
+          <code>starter</code> is the <strong>eval loop</strong> (it is not a node — it is what walks
+          the graph), <code>graph.py</code> is the <strong>type checker</strong>. An edge is enforced
+          at review time by CI, not at runtime by construction.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span class="src">plugins/plan/graph.json · 503 lines of JSON, nothing else</span><span>step 01 of the loop — everything else on this slide is step 02 and 03</span></div>
+</section>
+
+<!-- ═══════════ 7 · COVERAGE ═══════════ -->
+<section class="slide">
+  <p class="kicker">coverage</p>
+  <h2 style="font-size:36px; max-width:none; margin-bottom:16px">Which file plays which <em>role</em> for each principle</h2>
+  <div class="body">
+    <div class="tblwrap">
+      <table class="mx2">
+        <thead>
+          <tr>
+            <th style="width:186px">File</th>
+            <th class="p pa"><span class="pn">Topology</span><span class="pp">(P1)</span><span class="pg">declared once</span></th>
+            <th class="p"><span class="pn">Context</span><span class="pp">(P2)</span><span class="pg">clean per node</span></th>
+            <th class="p pz"><span class="pn">State</span><span class="pp">(P3)</span><span class="pg">schema, not convention</span></th>
+            <th>What this file contributes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="grp"><td colspan="5">new — the declaration and its tooling</td></tr>
+          <tr>
+            <td class="f">plan/<strong>graph.json</strong></td>
+            <td class="p pa"><span class="chip c-def">defines</span></td>
+            <td class="p"><span class="chip c-na">n/a</span></td>
+            <td class="p pz"><span class="chip c-def">defines</span></td>
+            <td class="n">16 nodes, 25 edges, 2 gates, 5 invariants, every node's read/write contract</td>
+          </tr>
+          <tr>
+            <td class="f">lib/graph/<strong>graph.py</strong></td>
+            <td class="p pa"><span class="chip c-enf">enforces</span></td>
+            <td class="p"><span class="chip c-enf">enforces</span></td>
+            <td class="p pz"><span class="chip c-enf">enforces</span></td>
+            <td class="n">Turns all three principles from prose into exit codes</td>
+          </tr>
+          <tr>
+            <td class="f">lib/graph/<strong>STATE.md</strong></td>
+            <td class="p pa"><span class="chip c-na">—</span></td>
+            <td class="p"><span class="chip c-na">—</span></td>
+            <td class="p pz"><span class="chip c-def">defines</span></td>
+            <td class="n">The <code>state.json</code> schema — the phase is <em>read</em>, not re-derived</td>
+          </tr>
+          <tr class="grp"><td colspan="5">updated — the prompts and the docs</td></tr>
+          <tr>
+            <td class="f">skills/<strong>starter</strong></td>
+            <td class="p pa"><span class="chip c-obey">obeys</span></td>
+            <td class="p"><span class="chip c-na">—</span></td>
+            <td class="p pz"><span class="chip c-obey">obeys</span></td>
+            <td class="n">Dispatches every declared node — including gates it previously skipped</td>
+          </tr>
+          <tr>
+            <td class="f">agents/<strong>supervisor</strong></td>
+            <td class="p pa"><span class="chip c-obey">obeys</span></td>
+            <td class="p"><span class="chip c-na">—</span></td>
+            <td class="p pz"><span class="chip c-obey">obeys</span></td>
+            <td class="n">Reconciles <code>state.json</code> against <code>graph.json</code> before acting</td>
+          </tr>
+          <tr>
+            <td class="f">skills/<strong>3 × validator</strong></td>
+            <td class="p pa"><span class="chip c-na">—</span></td>
+            <td class="p"><span class="chip c-obey">obeys</span></td>
+            <td class="p pz"><span class="chip c-obey">obeys</span></td>
+            <td class="n">3 lenses over <strong>disjoint evidence</strong>, not one prompt sent three times</td>
+          </tr>
+          <tr>
+            <td class="f">2 × <strong>README.md</strong></td>
+            <td class="p pa"><span class="chip c-der">derives</span></td>
+            <td class="p"><span class="chip c-na">n/a</span></td>
+            <td class="p pz"><span class="chip c-na">n/a</span></td>
+            <td class="n">Lifecycle diagrams generated between markers; hand-drawn ASCII gone</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="gkey" style="margin-top:11px; gap:6px 16px">
+      <span><span class="chip c-def">defines</span> the principle lives here, as data</span>
+      <span><span class="chip c-enf">enforces</span> turns it into an exit code</span>
+      <span><span class="chip c-obey">obeys</span> reads the declaration and acts on it</span>
+      <span><span class="chip c-der">derives</span> generated from it — no hand copy left</span>
+      <span><span class="chip c-na">—</span> untouched</span>
+      <span><span class="chip c-na">n/a</span> nothing this file can say</span>
+    </div>
+    <p class="punch" style="margin-top:15px">Exactly one file <strong>defines</strong>, exactly one
+    <strong>enforces</strong>, and everything else <strong>obeys</strong>. That is the whole change —
+    the swarm stopped having three files that each claimed to be the topology.</p>
+  </div>
+  <div class="foot"><span class="src">plan-skills-graph-engineering.html</span><span>defining a rule is not enforcing it — that is the next slide</span></div>
+</section>
+
+<!-- ═══════════ 8 · ENFORCEMENT ═══════════ -->
+<section class="slide">
+  <p class="kicker">enforcement</p>
+  <h2 style="font-size:36px; max-width:none; margin-bottom:16px">Every invariant sits on one of <em>three rungs</em></h2>
+  <div class="body">
+    <div class="rungs" style="margin-bottom:18px">
+      <div class="rung r1">
+        <span class="num">5</span>
+        <span><span class="rn">declared</span><span class="rd">Written into <code style="font-size:.92em">graph.json</code> as a named invariant.</span></span>
+      </div>
+      <div class="rung">
+        <span class="num">3</span>
+        <span><span class="rn">checked</span><span class="rd"><code style="font-size:.92em">graph.py</code> exits 1 the moment it is broken.</span></span>
+      </div>
+      <div class="rung r3">
+        <span class="num">2</span>
+        <span><span class="rn">trusted</span><span class="rd">Declared and labelled as prose — no check exists.</span></span>
+      </div>
+    </div>
+    <div class="cols c2" style="grid-template-columns:1.1fr .9fr; gap:30px">
+      <div>
+        <p class="caplbl">the five, and the rung each lands on</p>
+        <div class="ledger">
+          <div class="lrow">
+            <span class="mk2">✔</span>
+            <div>
+              <span class="inv">Only <code>starter</code> runs <code>git commit</code>.</span>
+              <span class="by">violating it → <em>node 'x' declares it commits but is not held by starter</em> · exit 1</span>
+            </div>
+          </div>
+          <div class="lrow">
+            <span class="mk2">✔</span>
+            <div>
+              <span class="inv">Only <code>engineer</code> and <code>simplifier</code> write repository source.</span>
+              <span class="by">violating it → <em>node 'x' declares it writes repository source</em> · exit 1</span>
+            </div>
+          </div>
+          <div class="lrow">
+            <span class="mk2">✔</span>
+            <div>
+              <span class="inv">Every panel declares <code>n</code> distinct lenses — identical prompts are a defect, not a config.</span>
+              <span class="by">violating it → <em>lens declared but absent from &lt;prompt_file&gt;</em> · exit 1</span>
+            </div>
+          </div>
+          <div class="lrow prose">
+            <span class="mk2">○</span>
+            <div>
+              <span class="inv">Human gates cannot run inside a scripted workflow.</span>
+              <span class="by">unenforceable — no file records <em>how</em> the swarm was invoked</span>
+            </div>
+          </div>
+          <div class="lrow prose">
+            <span class="mk2">○</span>
+            <div>
+              <span class="inv">Agents are dispatched with file paths, never a prose summary.</span>
+              <span class="by">unenforceable — the violation is a message, and messages are not on disk</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <p class="caplbl">what rung 2 sounds like</p>
+<pre><span class="dim">$</span> <span class="cmd">python3 lib/graph/graph.py validate</span>
+<span class="ok">graph.json OK — 16 nodes, 25 edges,</span>
+<span class="ok">3 lens-partitioned panels, 2 human gates</span>
+<span class="dim">$</span> <span class="cmd">python3 lib/graph/graph.py sync --check</span>
+<span class="ok">all generated blocks are up to date</span></pre>
+        <p style="font-size:12.5px; line-height:1.45; margin:10px 0 0; color:var(--ink-3)">Structural
+        checks ride along on rung 2: unknown node · unreachable node · missing <code>SKILL.md</code> ·
+        a gate that is not a human-gate · a stale generated block.</p>
+        <div class="note" style="margin-top:12px">
+          <span class="tag2">what moving a rung feels like</span>
+          <p>“Read-only on source” stopped being something a model is <em>asked to remember</em> and
+          became something a script <strong>refuses to let pass</strong>.</p>
+        </div>
+      </div>
+    </div>
+    <p class="punch" style="margin-top:16px">One test decides the rung: <strong>does breaking it leave
+    a mark in a file?</strong> The last two can only be broken in transit — in a dispatch message that
+    nobody writes down.</p>
+  </div>
+  <div class="foot"><span class="src">plugins/plan/lib/graph/graph.py · stdlib only</span><span>declared ≠ checked</span></div>
+</section>
+
+<!-- ═══════════ 9 · THE EDGE OF ENFORCEMENT ═══════════ -->
+<section class="slide">
+  <p class="kicker">the edge of enforcement</p>
+  <h2 style="max-width:none">Three ways past the ladder <em>entirely</em></h2>
+  <div class="body">
+    <div class="cols c3">
+      <div class="card flag">
+        <span class="id">01 · NOT DECLARED</span>
+        <span class="t">The check runs one way</span>
+        <span class="d"><code>validate</code> walks the declaration and asks “is this on disk?”
+        Nothing walks disk and asks “is this declared?” <strong>20 skills exist; 13 are declared.</strong>
+        Add one, forget to declare it, and the build stays green.</span>
+      </div>
+      <div class="card flag">
+        <span class="id">02 · NOT EXPRESSIBLE</span>
+        <span class="t">Independence has no syntax</span>
+        <span class="d">The highest-value change here — giving each panel's three skeptics
+        <strong>disjoint evidence</strong> — is not something any topology language can express.
+        Independence is a property of the information flowing through the edges, not of their shape.</span>
+      </div>
+      <div class="card flag">
+        <span class="id">03 · NOT MEASURED</span>
+        <span class="t">The payoff is an inference</span>
+        <span class="d">That partitioned lenses catch more than identical ones is <strong>believed,
+        not shown</strong>. Falsify it: re-run one shipped milestone both ways and diff the confirmed
+        findings. If <code>cross_lens</code> is zero, the partition bought nothing.</span>
+      </div>
+    </div>
+    <p class="punch" style="margin-top:24px">Graph engineering named two real defects here — a drifted
+    topology and undeclared state — and both are now on rung 2. It was silent on the third, which is
+    the one most likely to change what the gates actually catch.</p>
+  </div>
+  <div class="foot"><span class="src">plan-skills-graph-engineering.html</span><span>questions →</span></div>
+</section>
+
+</div></div>
+
+<div id="help">
+  <span><b>← →</b> navigate</span><span><b>o</b> overview</span><span><b>f</b> fullscreen</span>
+  <span><b>t</b> theme</span><span><b>p</b> print / pdf</span>
+</div>
+
+<script>
+(function(){
+  var stage=document.getElementById('stage');
+  var slides=Array.prototype.slice.call(stage.querySelectorAll('.slide'));
+  var help=document.getElementById('help'), prog=document.getElementById('progress');
+  var i=0, W=1280, H=720;
+
+  slides.forEach(function(s,n){
+    var tag=document.createElement('div');
+    tag.className='slideno'; tag.textContent=(n+1)+' / '+slides.length;
+    s.appendChild(tag);
+    s.addEventListener('click',function(){
+      if(document.body.classList.contains('overview')){ go(n); setOverview(false); }
+    });
+  });
+
+  function fit(){
+    if(document.body.classList.contains('overview')) return;
+    stage.style.transform='scale('+Math.min(window.innerWidth/W,(window.innerHeight-26)/H)+')';
+  }
+  function go(n){
+    i=Math.max(0,Math.min(slides.length-1,n));
+    slides.forEach(function(s,k){ s.classList.toggle('is-active',k===i); });
+    prog.style.width=((i+1)/slides.length*100)+'%';
+    if(location.hash!=='#'+(i+1)) history.replaceState(null,'','#'+(i+1));
+  }
+  function setOverview(on){
+    document.body.classList.toggle('overview',on);
+    if(on){ stage.style.transform='none'; } else { fit(); }
+    if(on && slides[i]) slides[i].scrollIntoView({block:'center'});
+  }
+  var t;
+  function nudge(){ help.classList.remove('hide'); clearTimeout(t); t=setTimeout(function(){help.classList.add('hide');},2600); }
+
+  document.addEventListener('keydown',function(e){
+    if(e.metaKey||e.ctrlKey||e.altKey) return;
+    var k=e.key;
+    if(k==='ArrowRight'||k==='PageDown'||k===' '||k==='n'){ go(i+1); nudge(); e.preventDefault(); }
+    else if(k==='ArrowLeft'||k==='PageUp'||k==='b'){ go(i-1); nudge(); e.preventDefault(); }
+    else if(k==='Home'){ go(0); nudge(); }
+    else if(k==='End'){ go(slides.length-1); nudge(); }
+    else if(k==='o'||k==='Escape'){ setOverview(!document.body.classList.contains('overview')); nudge(); }
+    else if(k==='f'){ if(document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen(); }
+    else if(k==='p'){ window.print(); }
+    else if(k==='t'){
+      var cur=document.documentElement.getAttribute('data-theme');
+      var dark=cur?cur==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches;
+      document.documentElement.setAttribute('data-theme',dark?'light':'dark');
+    }
+  });
+  window.addEventListener('resize',fit);
+  window.addEventListener('mousemove',nudge);
+
+  var start=parseInt((location.hash||'').slice(1),10);
+  go(isNaN(start)?0:start-1); fit(); nudge();
+})();
+</script>
+</body>
+</html>

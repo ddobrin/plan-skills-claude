@@ -1,0 +1,1341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Graph Engineering — from idea to commit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap">
+<style>
+:root{
+  --ground:#F6F8F9; --surface:#FFFFFF; --surface-2:#EDF1F3; --code-bg:#F1F5F6;
+  --ink:#131A1F; --ink-2:#4C5A64; --ink-3:#6E7C86;
+  --rule:#D7DFE3; --rule-2:#C2CDD3;
+  --accent:#0E7385; --accent-ink:#0A5261; --accent-wash:#E0EFF2;
+  --gate:#8A5A12; --gate-wash:#F6EEDC;
+  --flag:#9E3348; --flag-wash:#F7E6E9;
+  --shadow:0 1px 2px rgba(19,26,31,.05), 0 8px 24px -16px rgba(19,26,31,.28);
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --ground:#0F1418; --surface:#161C21; --surface-2:#1C232A; --code-bg:#12181D;
+  --ink:#E3E9ED; --ink-2:#98A6B0; --ink-3:#7C8A94;
+  --rule:#262F36; --rule-2:#33404A;
+  --accent:#4EC5D8; --accent-ink:#8FDDE9; --accent-wash:#0D2A31;
+  --gate:#DDA94C; --gate-wash:#2A2113;
+  --flag:#E3808F; --flag-wash:#2E181D;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.7);
+}}
+:root[data-theme="dark"]{
+  --ground:#0F1418; --surface:#161C21; --surface-2:#1C232A; --code-bg:#12181D;
+  --ink:#E3E9ED; --ink-2:#98A6B0; --ink-3:#7C8A94;
+  --rule:#262F36; --rule-2:#33404A;
+  --accent:#4EC5D8; --accent-ink:#8FDDE9; --accent-wash:#0D2A31;
+  --gate:#DDA94C; --gate-wash:#2A2113;
+  --flag:#E3808F; --flag-wash:#2E181D;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.7);
+}
+*{box-sizing:border-box}
+body{background:var(--ground); color:var(--ink); margin:0;
+  font-family:"IBM Plex Sans","Helvetica Neue",Arial,sans-serif; font-size:16.5px; line-height:1.62; -webkit-font-smoothing:antialiased}
+.wrap{max-width:1020px; margin:0 auto; padding:0 28px 96px}
+header.mast{padding:64px 0 34px; border-bottom:1px solid var(--rule); display:flex; flex-direction:column; gap:18px}
+.kicker{font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:11.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--accent-ink)}
+h1{font-family:"Newsreader",Georgia,serif; font-weight:500; font-size:clamp(2.2rem,5vw,3.4rem); line-height:1.06; letter-spacing:-.018em; margin:0; text-wrap:balance; max-width:18ch}
+.standfirst{font-family:"Newsreader",Georgia,serif; font-size:1.18rem; line-height:1.55; color:var(--ink-2); max-width:62ch; margin:0}
+.meta{font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:11.5px; color:var(--ink-3); letter-spacing:.04em; display:flex; flex-wrap:wrap; gap:6px 18px}
+section{padding:46px 0; border-bottom:1px solid var(--rule)}
+section:last-of-type{border-bottom:0}
+.eyebrow{font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:11px; letter-spacing:.15em; text-transform:uppercase; color:var(--ink-3); margin:0 0 12px}
+.eyebrow b{color:var(--accent-ink); font-weight:600}
+h2{font-family:"Newsreader",Georgia,serif; font-weight:500; font-size:clamp(1.55rem,3vw,2.1rem); line-height:1.16; margin:0 0 20px; text-wrap:balance; max-width:30ch}
+h2 em{font-style:italic; color:var(--accent-ink)}
+p{margin:0 0 16px; max-width:70ch}
+a{color:var(--accent-ink); text-underline-offset:2.5px}
+a:focus-visible{outline:2px solid var(--accent); outline-offset:3px; border-radius:2px}
+code{font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:.855em; background:var(--surface-2); padding:.1em .34em; border-radius:3px; border:1px solid var(--rule)}
+pre{background:var(--code-bg); border:1px solid var(--rule); border-radius:2px; padding:16px 18px; overflow-x:auto; margin:18px 0; font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:12.5px; line-height:1.6}
+pre code{background:none;border:0;padding:0;font-size:inherit}
+pre .ok{color:var(--accent-ink)} pre .dim{color:var(--ink-3)}
+.punch{font-family:"Newsreader",Georgia,serif; font-size:1.32rem; line-height:1.42; color:var(--ink); max-width:64ch; margin:26px 0 0; text-wrap:balance}
+.punch strong{font-weight:500; color:var(--accent-ink)}
+
+/* principle legend */
+.legend{display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:14px; margin:24px 0 8px}
+.pr{background:var(--surface); border:1px solid var(--rule); border-left:3px solid var(--accent); border-radius:2px; padding:16px 18px; display:flex; flex-direction:column; gap:6px; box-shadow:var(--shadow)}
+.pr .id{font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:11px; letter-spacing:.12em; color:var(--accent-ink); font-weight:600}
+.pr .t{font-weight:600; font-size:.98rem}
+.pr .d{font-size:.875rem; color:var(--ink-2)}
+.pr.flag{border-left-color:var(--flag)} .pr.flag .id{color:var(--flag)}
+.pr.gate{border-left-color:var(--gate)} .pr.gate .id{color:var(--gate)}
+.legend.four{grid-template-columns:repeat(auto-fit,minmax(212px,1fr))}
+.legend.four .pr{padding:14px 16px}
+.legend.four .t{font-size:.93rem}
+.legend.four .d{font-size:.83rem}
+
+/* conformance matrix */
+.matrix{overflow-x:auto; margin:26px 0 10px; border:1px solid var(--rule); border-radius:2px; background:var(--surface); box-shadow:var(--shadow)}
+table.mx{border-collapse:collapse; width:100%; min-width:660px; font-size:.9rem}
+table.mx th,table.mx td{padding:12px 14px; border-bottom:1px solid var(--rule); text-align:left; vertical-align:middle}
+table.mx thead th{font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:10.5px; letter-spacing:.11em; text-transform:uppercase; color:var(--ink-3); background:var(--surface-2); font-weight:500}
+table.mx tbody tr:last-child td{border-bottom:0}
+table.mx td.f{font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:.86rem}
+table.mx td.n{font-size:.845rem; color:var(--ink-2)}
+.mx th.p,.mx td.p{text-align:center; width:132px; background:var(--surface-2); padding:9px 10px}
+.mx th.pa,.mx td.pa{border-left:1px solid var(--rule-2)}
+.mx th.pz,.mx td.pz{border-right:1px solid var(--rule-2)}
+.mx th.p .pn{display:block; font-family:"IBM Plex Sans",sans-serif; font-size:13px; font-weight:600; letter-spacing:0; text-transform:none; color:var(--ink); line-height:1.2}
+.mx th.p .pp{display:block; font-family:"IBM Plex Mono",monospace; font-size:10px; letter-spacing:.1em; color:var(--accent-ink); margin-top:1px; line-height:1.3}
+.mx th.p .pg{display:block; font-family:"IBM Plex Sans",sans-serif; font-size:10px; font-weight:400; letter-spacing:0; text-transform:none; color:var(--ink-3); margin-top:3px; line-height:1.25}
+.mx tr.grp td{background:var(--surface-2); font-family:"IBM Plex Mono",monospace; font-size:9.5px; letter-spacing:.15em; text-transform:uppercase; color:var(--ink-3); padding:6px 14px}
+
+/* the defines / enforces / obeys / derives vocabulary */
+.chip{display:inline-block; min-width:76px; padding:2px 8px; border-radius:11px; border:1px solid;
+  font-family:"IBM Plex Mono",monospace; font-size:10px; letter-spacing:.1em;
+  text-transform:uppercase; font-weight:600; line-height:1.6}
+.c-def{color:var(--gate); background:var(--gate-wash); border-color:var(--gate)}
+.c-enf{color:var(--accent-ink); background:var(--accent-wash); border-color:var(--accent)}
+.c-obey{color:var(--ink-2); background:transparent; border-color:var(--rule-2)}
+.c-der{color:var(--ink-3); background:transparent; border-color:var(--rule); font-weight:400}
+.c-na{color:var(--ink-3); background:transparent; border-color:transparent; font-weight:400; letter-spacing:.05em; min-width:36px}
+.key{display:flex; flex-wrap:wrap; gap:8px 22px; font-size:.83rem; color:var(--ink-2); margin:8px 0 0; font-family:"IBM Plex Mono",ui-monospace,monospace}
+.key span{display:flex; align-items:center; gap:8px}
+
+/* inventory */
+.inv-grid{margin:26px 0 10px}
+.minis{display:grid; grid-template-columns:1.32fr 1fr 1fr; gap:22px; align-items:start; margin:20px 0 10px}
+@media (max-width:880px){.minis{grid-template-columns:1fr}}
+.tblwrap{border:1px solid var(--rule); border-radius:2px; background:var(--surface); box-shadow:var(--shadow); overflow-x:auto}
+table.inv{border-collapse:collapse; width:100%; font-size:12px}
+.inv th,.inv td{padding:3.4px 10px; border-bottom:1px solid var(--rule); text-align:left; vertical-align:middle}
+.inv thead th{font-family:"IBM Plex Mono",monospace; font-size:9.5px; letter-spacing:.13em; text-transform:uppercase; color:var(--ink-3); background:var(--surface-2); font-weight:500; padding-top:8px; padding-bottom:8px}
+.inv tbody tr:last-child td{border-bottom:0}
+.inv td.ix{font-family:"IBM Plex Mono",monospace; font-size:10px; color:var(--ink-3); width:24px; text-align:right; padding-right:2px}
+.inv td.nd{font-family:"IBM Plex Mono",monospace; font-size:11.5px; color:var(--ink); width:196px; white-space:nowrap}
+.inv td.kd{font-family:"IBM Plex Mono",monospace; font-size:9.5px; letter-spacing:.09em; text-transform:uppercase; color:var(--ink-3); width:88px; white-space:nowrap}
+.inv td.kd.k-gate{color:var(--gate); font-weight:600}
+.inv td.kd.k-panel{color:var(--accent-ink); font-weight:600}
+.inv td.wr{font-family:"IBM Plex Mono",monospace; font-size:10.2px; color:var(--ink-2); white-space:nowrap}
+.inv td.nv{font-family:"IBM Plex Mono",monospace; font-size:10px; color:var(--flag); width:146px; white-space:nowrap}
+.inv tr.gate-row td{background:var(--gate-wash)}
+.caplbl{font-family:"IBM Plex Mono",monospace; font-size:10.5px; letter-spacing:.13em; text-transform:uppercase; color:var(--ink-3); margin:0 0 8px}
+table.mini{border-collapse:collapse; width:100%; font-size:11.5px}
+.mini td{padding:6px 11px; border-bottom:1px solid var(--rule); vertical-align:top}
+.mini tr:last-child td{border-bottom:0}
+.mini td.q{font-family:"Newsreader",Georgia,serif; font-size:20px; line-height:1; color:var(--accent-ink); width:36px; text-align:right; padding-top:6px}
+.mini td.k{font-family:"IBM Plex Mono",monospace; font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink); font-weight:600}
+.mini td.k em{display:block; font-style:normal; font-family:"IBM Plex Sans",sans-serif; font-size:11.5px; letter-spacing:0; text-transform:none; color:var(--ink-2); font-weight:400; margin-top:2px; line-height:1.36}
+.mini .back td.q{color:var(--flag)}
+
+/* the enforcement ladder */
+.rungs{display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin:24px 0 22px}
+@media (max-width:760px){.rungs{grid-template-columns:1fr}}
+.rung{display:grid; grid-template-columns:auto 1fr; gap:14px; align-items:center;
+  border:1px solid var(--rule); border-left:3px solid var(--accent); border-radius:2px;
+  background:var(--surface); padding:12px 16px; box-shadow:var(--shadow)}
+.rung .num{font-family:"Newsreader",Georgia,serif; font-size:34px; line-height:1; color:var(--accent-ink)}
+.rung .rn{display:block; font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink); font-weight:600}
+.rung .rd{display:block; font-size:12.5px; line-height:1.36; color:var(--ink-2); margin-top:2px}
+.rung.r1{border-left-color:var(--gate)} .rung.r1 .num{color:var(--gate)}
+.rung.r3{border-left-color:var(--rule-2)} .rung.r3 .num{color:var(--ink-3)}
+.ledger{border:1px solid var(--rule); border-radius:2px; background:var(--surface); box-shadow:var(--shadow); overflow:hidden; margin:22px 0 10px}
+.lrow{display:grid; grid-template-columns:20px 1fr; gap:12px; padding:11px 16px; border-bottom:1px solid var(--rule); border-left:3px solid var(--accent)}
+.lrow:last-child{border-bottom:0}
+.lrow.prose{background:var(--surface-2); border-left-color:var(--rule-2)}
+.lrow .mk2{font-family:"IBM Plex Mono",monospace; font-size:14px; font-weight:600; color:var(--accent); line-height:1.4}
+.lrow.prose .mk2{color:var(--ink-3)}
+.lrow .invt{display:block; font-size:.93rem; line-height:1.42; color:var(--ink)}
+.lrow .by{display:block; font-family:"IBM Plex Mono",monospace; font-size:11px; line-height:1.5; color:var(--accent-ink); margin-top:3px}
+.lrow.prose .by{color:var(--ink-3)}
+.lrow code{font-size:.88em; padding:.05em .3em}
+
+/* skill cards */
+.skills{display:flex; flex-direction:column; gap:16px; margin:26px 0}
+.sk{background:var(--surface); border:1px solid var(--rule); border-radius:2px; box-shadow:var(--shadow); overflow:hidden}
+.sk > .hd{display:flex; flex-wrap:wrap; align-items:baseline; gap:10px 14px; padding:16px 20px; border-bottom:1px solid var(--rule); background:var(--surface-2)}
+.sk .name{font-family:"IBM Plex Mono",ui-monospace,monospace; font-weight:600; font-size:.95rem}
+.sk .kind{font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-3)}
+.tags{margin-left:auto; display:flex; gap:6px}
+.tag{font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:10px; letter-spacing:.08em; padding:2px 7px; border-radius:2px; border:1px solid var(--accent); color:var(--accent-ink); white-space:nowrap}
+.sk .bd{padding:18px 20px; display:grid; grid-template-columns:1fr 1fr; gap:18px 26px}
+@media (max-width:720px){.sk .bd{grid-template-columns:1fr}}
+.sk h4{margin:0 0 7px; font-size:.78rem; font-family:"IBM Plex Mono",ui-monospace,monospace; letter-spacing:.11em; text-transform:uppercase; color:var(--ink-3); font-weight:500}
+.sk p{margin:0; font-size:.9rem; color:var(--ink-2); max-width:none}
+.io{list-style:none; margin:0; padding:0; font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:.79rem; display:flex; flex-direction:column; gap:4px}
+.io li{display:flex; gap:8px; align-items:baseline}
+.io .ar{color:var(--ink-3); flex:none; width:12px}
+.io .deny{color:var(--flag)}
+.io .deny .ar{color:var(--flag)}
+.span2{grid-column:1/-1; border-top:1px solid var(--rule); padding-top:14px}
+.chk{font-size:.85rem; color:var(--ink-2)}
+.chk code{font-size:.9em}
+
+/* generated full-graph svg */
+.graphsvg{max-width:100%; height:auto; display:block; margin:0 auto; color:var(--rule-2)}
+.graphsvg .n-lbl{font-family:"IBM Plex Sans",sans-serif; font-size:12.5px; fill:var(--ink)}
+.graphsvg .n-sub{font-family:"IBM Plex Mono",monospace; font-size:9.5px; fill:var(--ink-3)}
+.graphsvg .n-entry,.graphsvg .n-term{fill:var(--surface-2); stroke:var(--rule-2); stroke-width:1.2}
+.graphsvg .n-role{fill:var(--surface-2); stroke:var(--rule-2); stroke-width:1.2}
+.graphsvg .n-panel{fill:var(--accent-wash); stroke:var(--accent); stroke-width:1.5}
+.graphsvg .n-gate{fill:var(--gate-wash); stroke:var(--gate); stroke-width:1.5}
+.graphsvg .n-delib{fill:none; stroke:var(--accent); stroke-width:1.2; stroke-dasharray:4 3}
+.graphsvg .n-render{fill:none; stroke:var(--rule-2); stroke-width:1.2; stroke-dasharray:4 3}
+.graphsvg .e-fwd{stroke:var(--rule-2); stroke-width:1.4; fill:none}
+.graphsvg .e-opt{stroke:var(--rule-2); stroke-width:1.2; fill:none; stroke-dasharray:4 3}
+.graphsvg .e-back{stroke:var(--flag); stroke-width:1.2; fill:none; opacity:.75}
+.graphsvg .e-lbl{font-family:"IBM Plex Mono",monospace; font-size:9px; fill:var(--ink-3)}
+.graphsvg .e-lbl-back{font-family:"IBM Plex Mono",monospace; font-size:8.5px; fill:var(--flag)}
+.gkey{display:flex; flex-wrap:wrap; gap:8px 20px; font-size:.78rem; color:var(--ink-2);
+      margin:14px 0 0; font-family:"IBM Plex Mono",ui-monospace,monospace}
+.gkey span{display:flex; align-items:center; gap:7px}
+.sw{width:22px; height:12px; border-radius:2px; display:inline-block; flex:none}
+.sw-role{background:var(--surface-2); border:1.2px solid var(--rule-2)}
+.sw-panel{background:var(--accent-wash); border:1.5px solid var(--accent)}
+.sw-gate{background:var(--gate-wash); border:1.5px solid var(--gate)}
+.sw-opt{background:transparent; border:1.2px dashed var(--accent)}
+.sw-back{background:transparent; border-top:1.5px solid var(--flag); height:2px; border-radius:0}
+
+/* figures */
+figure{margin:30px 0; padding:0}
+.figbox{background:var(--surface); border:1px solid var(--rule); border-radius:2px; padding:24px 20px 16px; overflow-x:auto; box-shadow:var(--shadow)}
+figure svg{max-width:100%; height:auto; display:block; margin:0 auto; color:var(--ink-2)}
+figcaption{font-size:.855rem; color:var(--ink-2); margin-top:13px; max-width:70ch; line-height:1.55}
+.dia text{font-family:"IBM Plex Sans",sans-serif; fill:var(--ink)}
+.dia .lbl{font-size:12.5px; fill:var(--ink)}
+.dia .sub{font-size:10.5px; fill:var(--ink-3); font-family:"IBM Plex Mono",monospace}
+.dia .edge{stroke:var(--rule-2); stroke-width:1.4; fill:none}
+.dia .box{fill:var(--surface-2); stroke:var(--rule-2); stroke-width:1.2}
+.dia .box-acc{fill:var(--accent-wash); stroke:var(--accent); stroke-width:1.5}
+.dia .box-gate{fill:var(--gate-wash); stroke:var(--gate); stroke-width:1.5}
+.dia .box-plain{fill:var(--surface); stroke:var(--rule-2); stroke-width:1}
+.dia .acctxt{fill:var(--accent-ink); font-size:10.5px; font-family:"IBM Plex Mono",monospace}
+.dia .gatetxt{fill:var(--gate); font-size:10.5px; font-family:"IBM Plex Mono",monospace}
+.dia .flagtxt{fill:var(--flag); font-size:10.5px; font-family:"IBM Plex Mono",monospace}
+.note{background:var(--gate-wash); border:1px solid var(--rule); border-left:3px solid var(--gate); padding:16px 18px; margin:22px 0; border-radius:2px; font-size:.945rem}
+.note p{margin-bottom:0; color:var(--ink-2)}
+.note .tag2{font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:10.5px; letter-spacing:.13em; text-transform:uppercase; color:var(--gate); display:block; margin-bottom:6px}
+.note.warn{background:var(--flag-wash); border-left-color:var(--flag)}
+.note.warn .tag2{color:var(--flag)}
+footer{padding:38px 0 0; color:var(--ink-3); font-size:.85rem; font-family:"IBM Plex Mono",ui-monospace,monospace}
+@media (max-width:640px){.wrap{padding:0 20px 72px} header.mast{padding:44px 0 30px}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="mast">
+  <div class="kicker">materials · plan-swarm@2.1</div>
+  <h1>Graph Engineering — from idea to commit</h1>
+  <p class="standfirst">A swarm of role agents drives one change from a sentence to a commit. This is the file that declares its shape, the tool that enforces the declaration, and an honest account of where the enforcement stops.</p>
+  <div class="meta">
+    <span>graph_version plan-swarm@2.1</span>
+    <span>16 nodes · 25 edges · 2 human gates · 5 invariants</span>
+    <span>figure 3 generated from graph.json</span>
+    <span>in this folder: <a href="graph-adherence.html">Graph Conformance</a> · <a href="graph-engineering.html">the original note</a> · <a href="plan-swarm-primer-graph-engineering.html">the primer deck</a></span>
+  </div>
+</header>
+
+<!-- ══════════════════ 1 · THE LOOP ══════════════════ -->
+<section>
+  <p class="eyebrow">The practice</p>
+  <h2>Graph engineering is a <em>loop</em>, not a diagram</h2>
+
+  <p>The name suggests a picture. It is not a picture — it is four steps that run on every change, and
+  the fourth is the one that makes the other three worth doing. Skip it and the declaration quietly
+  decays back into documentation.</p>
+
+  <figure>
+    <div class="figbox">
+      <svg class="dia" viewBox="0 0 960 190" role="img" aria-label="The graph engineering loop as four stages left to right — declare, generate, validate, drift-check — with a return arc from drift-check back to declare, closing the cycle.">
+        <defs><marker id="lp" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="currentColor"/></marker></defs>
+        <g color="var(--rule-2)">
+          <line class="edge" x1="210" y1="42" x2="248" y2="42" marker-end="url(#lp)"/>
+          <line class="edge" x1="460" y1="42" x2="498" y2="42" marker-end="url(#lp)"/>
+          <line class="edge" x1="710" y1="42" x2="748" y2="42" marker-end="url(#lp)"/>
+          <path class="edge" d="M855,74 C855,124 855,134 800,134 L160,134 C105,134 105,124 105,74" marker-end="url(#lp)"/>
+        </g>
+        <rect class="box-acc" x="0" y="10" width="210" height="64" rx="2"/>
+        <text class="acctxt" x="105" y="36" text-anchor="middle">01 · DECLARE</text>
+        <text class="sub" x="105" y="56" text-anchor="middle">nodes · edges · conditions</text>
+        <rect class="box" x="250" y="10" width="210" height="64" rx="2"/>
+        <text class="acctxt" x="355" y="36" text-anchor="middle">02 · GENERATE</text>
+        <text class="sub" x="355" y="56" text-anchor="middle">every view, from that file</text>
+        <rect class="box" x="500" y="10" width="210" height="64" rx="2"/>
+        <text class="acctxt" x="605" y="36" text-anchor="middle">03 · VALIDATE</text>
+        <text class="sub" x="605" y="56" text-anchor="middle">declaration vs. disk</text>
+        <rect class="box" x="750" y="10" width="210" height="64" rx="2"/>
+        <text class="acctxt" x="855" y="36" text-anchor="middle">04 · DRIFT-CHECK</text>
+        <text class="sub" x="855" y="56" text-anchor="middle">CI re-runs 02 and 03</text>
+        <text class="sub" x="480" y="170" text-anchor="middle">the loop closes on every change — which is the only reason the declaration stays true</text>
+      </svg>
+    </div>
+    <figcaption><strong>Figure 1 — the loop.</strong> Nothing here <em>executes</em> the graph. Graph
+    engineering is a build-time discipline: it makes the shape of a system reviewable, not runnable.
+    Everything downstream in this document is one of these four steps applied to one swarm.</figcaption>
+  </figure>
+
+  <div class="legend four">
+    <div class="pr">
+      <span class="id">01 · DECLARE</span>
+      <span class="t">One file, or none</span>
+      <span class="d">Every node, every edge, every routing condition in one machine-readable artifact.
+      Anything else that describes the shape is a copy.</span>
+    </div>
+    <div class="pr">
+      <span class="id">02 · GENERATE</span>
+      <span class="t">Never transcribe</span>
+      <span class="d">Diagrams and docs are emitted from the declaration, between markers. A hand-drawn
+      diagram is a second source of truth waiting to drift.</span>
+    </div>
+    <div class="pr">
+      <span class="id">03 · VALIDATE</span>
+      <span class="t">Resolve against disk</span>
+      <span class="d">Does every declared node exist? Does every edge land somewhere? A violation is a
+      non-zero exit, not a review comment.</span>
+    </div>
+    <div class="pr">
+      <span class="id">04 · DRIFT-CHECK</span>
+      <span class="t">Close the loop</span>
+      <span class="d">CI regenerates and fails if the output differs. This is the step that converts a
+      convention into a constraint.</span>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ 2 · THE THREE ASSERTIONS ══════════════════ -->
+<section>
+  <p class="eyebrow">The assertions</p>
+  <h2>Stripped of the vocabulary, it asserts <em>three things</em></h2>
+
+  <p>Three principles, referred to throughout this document as <b>Topology&nbsp;(P1)</b>,
+  <b>Context&nbsp;(P2)</b> and <b>State&nbsp;(P3)</b>. Every claim below is tagged with the one it
+  serves — and one important property of this system serves none of them, which is stated rather than
+  hidden.</p>
+
+  <div class="legend">
+    <div class="pr">
+      <span class="id">TOPOLOGY (P1)</span>
+      <span class="t">The topology is an explicit artifact</span>
+      <span class="d">Which nodes exist, what routes between them, under what condition — readable as one
+      thing, and <strong>generated rather than transcribed</strong>.</span>
+    </div>
+    <div class="pr">
+      <span class="id">CONTEXT (P2)</span>
+      <span class="t">Each node gets its own clean context</span>
+      <span class="d">Its own prompt, its own tools, its own evidence — so one agent's working memory does
+      not pollute another's. The unit of isolation is the node, not the conversation.</span>
+    </div>
+    <div class="pr">
+      <span class="id">STATE (P3)</span>
+      <span class="t">State crosses boundaries only through declared edges</span>
+      <span class="d">A schema, not a directory convention. What a node may read and write is
+      <strong>written down and checkable</strong> — not a sentence in a prompt asking it to behave.</span>
+    </div>
+  </div>
+
+  <div class="note warn">
+    <span class="tag2">what a topology cannot express</span>
+    <p>A topology can show you that three branches run in parallel. It cannot show you whether those
+    branches are <strong>independent</strong> — and that is the property that decides whether a voting
+    gate means anything. Hold on to this; it returns at the end.</p>
+  </div>
+</section>
+
+<!-- ══════════════════ 3 · APPLIED — THE SWARM ══════════════════ -->
+<section>
+  <p class="eyebrow">Applied · what the swarm is</p>
+  <h2>One change, six phases, two places a human has to say yes</h2>
+
+  <p>The subject of the rest of this document is a swarm of role agents that takes a request — a feature,
+  a fix, a refactor — and drives it to a commit. Files under <code>plans/</code>, never chat messages, are
+  the single source of truth; agents are handed <em>file paths</em>, not summaries.</p>
+
+  <figure>
+    <div class="figbox">
+      <svg class="dia" viewBox="0 0 960 108" role="img" aria-label="The six phases of the swarm, left to right: phase 0 discover, phase 1 specify, phase 2 plan, phase 3 approve which is a human gate, phase 4 build, and phase 5 ship which ends at a second human gate for the commit.">
+        <defs><marker id="pa" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="currentColor"/></marker></defs>
+        <g color="var(--rule-2)">
+          <line class="edge" x1="142" y1="46" x2="158" y2="46" marker-end="url(#pa)"/>
+          <line class="edge" x1="302" y1="46" x2="318" y2="46" marker-end="url(#pa)"/>
+          <line class="edge" x1="462" y1="46" x2="478" y2="46" marker-end="url(#pa)"/>
+          <line class="edge" x1="622" y1="46" x2="638" y2="46" marker-end="url(#pa)"/>
+          <line class="edge" x1="782" y1="46" x2="798" y2="46" marker-end="url(#pa)"/>
+        </g>
+        <rect class="box" x="0" y="18" width="142" height="56" rx="2"/>
+        <text class="acctxt" x="71" y="40" text-anchor="middle">0 · DISCOVER</text>
+        <text class="sub" x="71" y="58" text-anchor="middle">research</text>
+        <rect class="box" x="160" y="18" width="142" height="56" rx="2"/>
+        <text class="acctxt" x="231" y="40" text-anchor="middle">1 · SPECIFY</text>
+        <text class="sub" x="231" y="58" text-anchor="middle">product-owner</text>
+        <rect class="box" x="320" y="18" width="142" height="56" rx="2"/>
+        <text class="acctxt" x="391" y="40" text-anchor="middle">2 · PLAN</text>
+        <text class="sub" x="391" y="58" text-anchor="middle">architect</text>
+        <rect class="box-gate" x="480" y="18" width="142" height="56" rx="2"/>
+        <text class="gatetxt" x="551" y="40" text-anchor="middle">3 · APPROVE</text>
+        <text class="sub" x="551" y="58" text-anchor="middle">human gate</text>
+        <rect class="box" x="640" y="18" width="142" height="56" rx="2"/>
+        <text class="acctxt" x="711" y="40" text-anchor="middle">4 · BUILD</text>
+        <text class="sub" x="711" y="58" text-anchor="middle">engineer ⇄ auditor</text>
+        <rect class="box-gate" x="800" y="18" width="160" height="56" rx="2"/>
+        <text class="gatetxt" x="880" y="40" text-anchor="middle">5 · SHIP</text>
+        <text class="sub" x="880" y="58" text-anchor="middle">commit gate → tag</text>
+        <text class="sub" x="0" y="100" text-anchor="start">one orchestrator — starter — dispatches every phase, holds both gates, and is the only role that runs git commit</text>
+      </svg>
+    </div>
+    <figcaption><strong>Figure 2 — the swarm at the resolution people usually describe it.</strong> Three
+    kinds of node do the work: <strong>roles</strong> that produce artifacts (<code>product-owner</code>,
+    <code>architect</code>, <code>engineer</code>, <code>auditor</code>); <strong>adversarial
+    panels</strong> that attack an artifact at each phase boundary, three skeptics on partitioned lenses,
+    keeping only what a 2-of-3 majority confirms; and optional <strong>deliberative panels</strong> whose
+    delegates hold deliberately disjoint context and argue to consensus on one revised artifact. This
+    diagram is flat, which is its limitation — see the next section.</figcaption>
+  </figure>
+</section>
+
+<!-- ══════════════════ 4 · TOPOLOGY (P1) — THE COMPLETE GRAPH ══════════════════ -->
+<section>
+  <p class="eyebrow"><b>Topology (P1)</b> · step 02 of the loop</p>
+  <h2>Nobody drew this. <em>Generate emitted it.</em></h2>
+
+  <p>Every box and every arc below is generated from one file by
+  <code>graph.py render svg</code> — 16 nodes, 25 edges, every label and lens read out of the
+  declaration. Re-run the command after editing the file and this picture changes with it; there is no
+  version of it that can be right while the declaration is wrong. The ASCII lifecycle that two READMEs
+  used to maintain by hand is gone.</p>
+
+  <figure>
+    <div class="figbox">
+<!-- BEGIN GENERATED: lifecycle (python3 lib/graph/graph.py sync) -->
+<!-- graph_version: plan-swarm@2.1 — edit graph.json, then run sync. -->
+<!-- viewBox widened to -62 0 822 822 so the left-hand feedback labels are not clipped; geometry untouched. -->
+
+<svg class="graphsvg" viewBox="-62 0 822 822" role="img" aria-label="The complete plan swarm topology generated from graph.json: 16 nodes and 25 edges. A vertical spine of required nodes runs from request to release, optional nodes branch to the right, and feedback edges arc back on the left.">
+<defs>
+<marker id="gh" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="currentColor"/></marker>
+</defs>
+<line class="e-fwd" x1="300" y1="66" x2="300" y2="92" marker-end="url(#gh)"/>
+<line class="e-fwd" x1="300" y1="132" x2="300" y2="158" marker-end="url(#gh)"/>
+<path class="e-opt" d="M416,178 C445,178 445,178 474,178" marker-end="url(#gh)"/>
+<line class="e-fwd" x1="300" y1="198" x2="300" y2="224" marker-end="url(#gh)"/>
+<path class="e-fwd" d="M474,178 C445,178 445,244 416,244" marker-end="url(#gh)"/>
+<path class="e-back" d="M184,244 C147,244 147,178 184,178" marker-end="url(#gh)"/>
+<text class="e-lbl-back" x="143" y="211" text-anchor="end">fold in tightenings</text>
+<line class="e-fwd" x1="300" y1="264" x2="300" y2="290" marker-end="url(#gh)"/>
+<path class="e-opt" d="M416,310 C445,310 445,310 474,310" marker-end="url(#gh)"/>
+<line class="e-fwd" x1="300" y1="330" x2="300" y2="356" marker-end="url(#gh)"/>
+<path class="e-fwd" d="M474,310 C445,310 445,376 416,376" marker-end="url(#gh)"/>
+<path class="e-back" d="M184,376 C132,376 132,310 184,310" marker-end="url(#gh)"/>
+<text class="e-lbl-back" x="128" y="343" text-anchor="end">apply fixes · first_domino</text>
+<line class="e-fwd" x1="300" y1="396" x2="300" y2="422" marker-end="url(#gh)"/>
+<line class="e-fwd" x1="300" y1="462" x2="300" y2="488" marker-end="url(#gh)"/>
+<path class="e-opt" d="M416,508 C445,508 445,508 474,508" marker-end="url(#gh)"/>
+<line class="e-fwd" x1="300" y1="528" x2="300" y2="554" marker-end="url(#gh)"/>
+<path class="e-fwd" d="M474,508 C445,508 445,574 416,574" marker-end="url(#gh)"/>
+<path class="e-back" d="M184,574 C117,574 117,508 184,508" marker-end="url(#gh)"/>
+<text class="e-lbl-back" x="113" y="541" text-anchor="end">fix the failing task</text>
+<path class="e-back" d="M184,574 C102,574 102,310 184,310" marker-end="url(#gh)"/>
+<text class="e-lbl-back" x="98" y="442" text-anchor="end">step is impossible</text>
+<line class="e-fwd" x1="300" y1="594" x2="300" y2="620" marker-end="url(#gh)"/>
+<path class="e-back" d="M184,640 C87,640 87,508 184,508" marker-end="url(#gh)"/>
+<text class="e-lbl-back" x="83" y="574" text-anchor="end">fix at calibrated severity</text>
+<path class="e-opt" d="M416,640 C445,640 445,640 474,640" marker-end="url(#gh)"/>
+<line class="e-fwd" x1="300" y1="660" x2="300" y2="686" marker-end="url(#gh)"/>
+<path class="e-fwd" d="M474,640 C445,640 445,706 416,706" marker-end="url(#gh)"/>
+<path class="e-back" d="M184,706 C72,706 72,508 184,508" marker-end="url(#gh)"/>
+<text class="e-lbl-back" x="68" y="607" text-anchor="end">next execution group</text>
+<line class="e-fwd" x1="300" y1="726" x2="300" y2="752" marker-end="url(#gh)"/>
+<rect class="n-entry" x="184" y="26" width="232" height="40" rx="2"/>
+<text class="n-lbl" x="300" y="43" text-anchor="middle">request</text>
+<text class="n-sub" x="300" y="57" text-anchor="middle">feature · fix · refactor</text>
+<rect class="n-role" x="184" y="92" width="232" height="40" rx="2"/>
+<text class="n-lbl" x="300" y="109" text-anchor="middle">research</text>
+<text class="n-sub" x="300" y="123" text-anchor="middle">plans/research/*.md</text>
+<rect class="n-role" x="184" y="158" width="232" height="40" rx="2"/>
+<text class="n-lbl" x="300" y="175" text-anchor="middle">product-owner</text>
+<text class="n-sub" x="300" y="189" text-anchor="middle">spec.md · 00-ROADMAP.md</text>
+<rect class="n-delib" x="474" y="158" width="208" height="40" rx="2"/>
+<text class="n-lbl" x="578" y="175" text-anchor="middle">spec-deliberator</text>
+<text class="n-sub" x="578" y="189" text-anchor="middle">3 delegates · disjoint bundles</text>
+<rect class="n-panel" x="184" y="224" width="232" height="40" rx="2"/>
+<text class="n-lbl" x="300" y="241" text-anchor="middle">spec-validator</text>
+<text class="n-sub" x="300" y="255" text-anchor="middle">internal-consistency · missing-requirement · malicious-compliance</text>
+<rect class="n-role" x="184" y="290" width="232" height="40" rx="2"/>
+<text class="n-lbl" x="300" y="307" text-anchor="middle">architect</text>
+<text class="n-sub" x="300" y="321" text-anchor="middle">plan.md · parallel groups</text>
+<rect class="n-delib" x="474" y="290" width="208" height="40" rx="2"/>
+<text class="n-lbl" x="578" y="307" text-anchor="middle">plan-deliberator</text>
+<text class="n-sub" x="578" y="321" text-anchor="middle">intent · codebase · delivery</text>
+<rect class="n-panel" x="184" y="356" width="232" height="40" rx="2"/>
+<text class="n-lbl" x="300" y="373" text-anchor="middle">plan-validator</text>
+<text class="n-sub" x="300" y="387" text-anchor="middle">sequencing · ground-truth · blast-radius</text>
+<rect class="n-gate" x="184" y="422" width="232" height="40" rx="2"/>
+<text class="n-lbl" x="300" y="439" text-anchor="middle">HUMAN REVIEW GATE</text>
+<text class="n-sub" x="300" y="453" text-anchor="middle">user types &quot;approve&quot;</text>
+<rect class="n-role" x="184" y="488" width="232" height="40" rx="2"/>
+<text class="n-lbl" x="300" y="505" text-anchor="middle">engineer × N</text>
+<text class="n-sub" x="300" y="519" text-anchor="middle">≤ 4 concurrent · disjoint files</text>
+<rect class="n-role" x="474" y="488" width="208" height="40" rx="2"/>
+<text class="n-lbl" x="578" y="505" text-anchor="middle">simplifier</text>
+<text class="n-sub" x="578" y="519" text-anchor="middle">zero behavioral change</text>
+<rect class="n-role" x="184" y="554" width="232" height="40" rx="2"/>
+<text class="n-lbl" x="300" y="571" text-anchor="middle">auditor</text>
+<text class="n-sub" x="300" y="585" text-anchor="middle">AUDIT_[Plan_Name].md</text>
+<rect class="n-panel" x="184" y="620" width="232" height="40" rx="2"/>
+<text class="n-lbl" x="300" y="637" text-anchor="middle">implementation-validator</text>
+<text class="n-sub" x="300" y="651" text-anchor="middle">claim-vs-reality · failure-paths · blast-radius</text>
+<rect class="n-render" x="474" y="620" width="208" height="40" rx="2"/>
+<text class="n-lbl" x="578" y="637" text-anchor="middle">visual-implementation-recap</text>
+<text class="n-sub" x="578" y="651" text-anchor="middle">visual-recap.html</text>
+<rect class="n-gate" x="184" y="686" width="232" height="40" rx="2"/>
+<text class="n-lbl" x="300" y="703" text-anchor="middle">COMMIT GATE</text>
+<text class="n-sub" x="300" y="717" text-anchor="middle">green audit + explicit &quot;yes&quot;</text>
+<rect class="n-term" x="184" y="752" width="232" height="40" rx="2"/>
+<text class="n-lbl" x="300" y="769" text-anchor="middle">release · tag</text>
+<text class="n-sub" x="300" y="783" text-anchor="middle">product-owner marks Shipped</text>
+</svg>
+
+<!-- END GENERATED: lifecycle -->
+    </div>
+    <div class="gkey">
+      <span><i class="sw sw-role"></i> role · entry · terminal</span>
+      <span><i class="sw sw-panel"></i> lens-partitioned panel</span>
+      <span><i class="sw sw-gate"></i> human gate</span>
+      <span><i class="sw sw-opt"></i> optional node</span>
+      <span><i class="sw sw-back"></i> feedback edge</span>
+    </div>
+    <figcaption><strong>Figure 3 — the swarm as it is actually declared.</strong> The spine is the
+    required path; optional deliberators, the simplifier and the recap renderer branch right. The
+    <strong>six red arcs on the left are the cycles</strong> — a validator sending work back, the auditor
+    routing a failure to either the engineer or the architect, and the commit gate returning for the next
+    execution group. Those cycles are why this is a <strong>graph and not a pipeline</strong>, and they are
+    exactly what the flat six-phase diagram above can never show.</figcaption>
+  </figure>
+
+  <p class="punch">Nothing in this figure was typed by hand — which is the entire claim of
+  <strong>Topology (P1)</strong>, made checkable: <code>graph.py sync --check</code> fails the build when a
+  generated block and its source disagree.</p>
+</section>
+
+<!-- ══════════════════ 5 · THE INVENTORY ══════════════════ -->
+<section>
+  <p class="eyebrow">The inventory</p>
+  <h2>Everything the declaration names, <em>enumerated</em></h2>
+
+  <p>The figure above is the readable form. This is the same content in the form you can check a claim
+  against. Paths are relative to <code>plans/active_milestones/{moniker}/</code> unless shown otherwise.</p>
+
+  <div class="inv-grid">
+    <div class="tblwrap">
+      <table class="inv">
+        <thead>
+          <tr>
+            <th class="ix"></th>
+            <th style="width:196px">Node</th>
+            <th style="width:88px">Kind</th>
+            <th>Writes</th>
+            <th style="width:146px">Must not write</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="ix">1</td><td class="nd">request</td><td class="kd">entry</td><td class="wr">—</td><td class="nv"></td></tr>
+          <tr><td class="ix">2</td><td class="nd">research</td><td class="kd">role</td><td class="wr">plans/research/{topic}_context.md</td><td class="nv"></td></tr>
+          <tr><td class="ix">3</td><td class="nd">product-owner</td><td class="kd">role</td><td class="wr">spec.md · context.md · plans/00-ROADMAP.md</td><td class="nv"></td></tr>
+          <tr><td class="ix">4</td><td class="nd">spec-deliberator</td><td class="kd">deliberation</td><td class="wr">spec.md · deliberations/spec-deliberation.md</td><td class="nv"></td></tr>
+          <tr><td class="ix">5</td><td class="nd">spec-validator</td><td class="kd k-panel">panel ×3</td><td class="wr">adversarial-reviews/spec-validation.md</td><td class="nv"></td></tr>
+          <tr><td class="ix">6</td><td class="nd">architect</td><td class="kd">role</td><td class="wr">plan.md · data-model.md · api-contracts.md</td><td class="nv">repo source</td></tr>
+          <tr><td class="ix">7</td><td class="nd">plan-deliberator</td><td class="kd">deliberation</td><td class="wr">plan.md · deliberations/plan-deliberation.md</td><td class="nv"></td></tr>
+          <tr><td class="ix">8</td><td class="nd">plan-validator</td><td class="kd k-panel">panel ×3</td><td class="wr">adversarial-reviews/plan-validation.md</td><td class="nv"></td></tr>
+          <tr class="gate-row"><td class="ix">9</td><td class="nd">human-review-gate</td><td class="kd k-gate">human gate</td><td class="wr">state.json#gates.plan-approval</td><td class="nv"></td></tr>
+          <tr><td class="ix">10</td><td class="nd">engineer</td><td class="kd">role</td><td class="wr">&lt;repo source&gt; · plan.md#todos</td><td class="nv">git commit</td></tr>
+          <tr><td class="ix">11</td><td class="nd">simplifier</td><td class="kd">role</td><td class="wr">&lt;repo source&gt;</td><td class="nv"></td></tr>
+          <tr><td class="ix">12</td><td class="nd">auditor</td><td class="kd">role</td><td class="wr">plans/audit/AUDIT_[Plan_Name].md</td><td class="nv">repo source · commit</td></tr>
+          <tr><td class="ix">13</td><td class="nd">implementation-validator</td><td class="kd k-panel">panel ×3</td><td class="wr">adversarial-reviews/implementation-validation.md</td><td class="nv"></td></tr>
+          <tr><td class="ix">14</td><td class="nd">visual-implementation-recap</td><td class="kd">renderer</td><td class="wr">visual-recap.html</td><td class="nv"></td></tr>
+          <tr class="gate-row"><td class="ix">15</td><td class="nd">commit-gate</td><td class="kd k-gate">human gate</td><td class="wr">git commit · state.json#groups[].committed</td><td class="nv"></td></tr>
+          <tr><td class="ix">16</td><td class="nd">release</td><td class="kd">terminal</td><td class="wr">plans/00-ROADMAP.md · git tag</td><td class="nv"></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="minis">
+    <div>
+      <p class="caplbl">25 edges, by class</p>
+      <div class="tblwrap">
+        <table class="mini">
+          <tr><td class="q">15</td><td class="k">required<em>The spine. Taken on every run.</em></td></tr>
+          <tr><td class="q">4</td><td class="k">optional<em>Two deliberators, the simplifier, the recap renderer.</em></td></tr>
+          <tr class="back"><td class="q">6</td><td class="k">feedback<em>Send-backs. These are why it is a graph and not a pipeline.</em></td></tr>
+        </table>
+      </div>
+    </div>
+    <div>
+      <p class="caplbl">2 human gates</p>
+      <div class="tblwrap">
+        <table class="mini">
+          <tr><td class="q">1</td><td class="k">plan-approval<em>Reversible. Fires once, before any code is written.</em></td></tr>
+          <tr><td class="q" style="color:var(--gate)">2</td><td class="k">commit<em><strong style="color:var(--gate)">Irreversible.</strong> Fires once per execution group.</em></td></tr>
+        </table>
+      </div>
+    </div>
+    <div>
+      <p class="caplbl">7 node kinds</p>
+      <div class="tblwrap">
+        <table class="mini">
+          <tr><td class="q" style="font-size:14px; padding-top:8px">·</td><td class="k">entry · role · panel<em>deliberation · human-gate · renderer · terminal</em></td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="note">
+    <span class="tag2">read the last two columns</span>
+    <p>They are not decoration. <code>panel ×3</code> is what makes the lens invariant checkable, and
+    <strong>must not write</strong> is what makes the commit and source-write invariants checkable. Only
+    three of sixteen nodes carry a <code>must_not_write</code> entry, and each one corresponds to a rule
+    that <code>graph.py</code> exits non-zero on. The enforcement section further down is these two
+    columns, enforced.</p>
+  </div>
+</section>
+
+<!-- ══════════════════ 6 · TOPOLOGY (P1) — THE DECLARATION ══════════════════ -->
+<section>
+  <p class="eyebrow"><b>Topology (P1)</b> · step 01 of the loop</p>
+  <h2>What is inside <code>graph.json</code>, and what each part binds to</h2>
+
+  <p>The file is not documentation that happens to be machine-readable. Every field below resolves to
+  something on disk, and <code>validate</code> fails when the resolution fails.</p>
+
+  <figure>
+    <div class="figbox">
+      <svg class="dia" viewBox="0 0 720 470" role="img" aria-label="The anatomy of graph.json. The left column lists the file's top-level keys: graph_version, node_kinds, nodes with their subfields, edges, gates and invariants. Arrows from each key point to what it binds to on disk: skill names resolve to SKILL.md files, agent names to agent markdown files, panel prompt_file to a skeptic prompt file, lens names to strings that must appear inside that file, edge endpoints to node ids, and gate nodes to human-gate kinds. Each binding is labelled with the check that enforces it.">
+        <defs>
+          <marker id="ja" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="currentColor"/></marker>
+        </defs>
+
+        <text class="sub" x="16" y="16" text-anchor="start">graph.json</text>
+        <text class="sub" x="404" y="16" text-anchor="start">RESOLVES TO — checked by graph.py validate</text>
+
+        <rect x="16" y="24" width="290" height="424" rx="3" fill="var(--surface-2)" stroke="var(--rule-2)" stroke-width="1.2"/>
+
+        <rect class="box-plain" x="30" y="36" width="262" height="26" rx="2"/>
+        <text class="sub" x="42" y="53" text-anchor="start">graph_version</text>
+        <rect class="box-plain" x="30" y="68" width="262" height="26" rx="2"/>
+        <text class="sub" x="42" y="85" text-anchor="start">node_kinds { 7 }</text>
+
+        <rect x="30" y="100" width="262" height="212" rx="2" fill="none" stroke="var(--accent)" stroke-width="1.3"/>
+        <text class="acctxt" x="42" y="118" text-anchor="start">nodes [ 16 ]</text>
+        <text class="sub" x="52" y="140" text-anchor="start">id · kind · phase · label</text>
+        <rect class="box-plain" x="46" y="150" width="234" height="24" rx="2"/>
+        <text class="sub" x="58" y="166" text-anchor="start">skill</text>
+        <rect class="box-plain" x="46" y="180" width="234" height="24" rx="2"/>
+        <text class="sub" x="58" y="196" text-anchor="start">agent</text>
+        <rect class="box-plain" x="46" y="210" width="234" height="24" rx="2"/>
+        <text class="sub" x="58" y="226" text-anchor="start">reads · writes · must_not_write</text>
+        <rect x="46" y="240" width="234" height="62" rx="2" fill="none" stroke="var(--accent)" stroke-width="1.1" stroke-dasharray="4 3"/>
+        <text class="acctxt" x="58" y="256" text-anchor="start">panel { n, gate,</text>
+        <text class="sub" x="70" y="272" text-anchor="start">prompt_file</text>
+        <text class="sub" x="70" y="288" text-anchor="start">lenses [ 3 ]  }</text>
+
+        <rect class="box-plain" x="30" y="320" width="262" height="26" rx="2"/>
+        <text class="sub" x="42" y="337" text-anchor="start">edges [ 25 ] — from · to · when</text>
+        <rect class="box-plain" x="30" y="352" width="262" height="26" rx="2"/>
+        <text class="sub" x="42" y="369" text-anchor="start">gates [ 2 ] — node · irreversible</text>
+        <rect class="box-plain" x="30" y="384" width="262" height="26" rx="2"/>
+        <text class="sub" x="42" y="401" text-anchor="start">invariants [ 5 ]</text>
+
+        <g color="var(--accent)">
+          <line class="edge" x1="292" y1="49"  x2="400" y2="40"  marker-end="url(#ja)" stroke="var(--accent)"/>
+          <line class="edge" x1="280" y1="162" x2="400" y2="88"  marker-end="url(#ja)" stroke="var(--accent)"/>
+          <line class="edge" x1="280" y1="192" x2="400" y2="136" marker-end="url(#ja)" stroke="var(--accent)"/>
+          <line class="edge" x1="280" y1="222" x2="400" y2="184" marker-end="url(#ja)" stroke="var(--accent)"/>
+          <line class="edge" x1="280" y1="272" x2="400" y2="232" marker-end="url(#ja)" stroke="var(--accent)"/>
+          <line class="edge" x1="280" y1="288" x2="400" y2="280" marker-end="url(#ja)" stroke="var(--accent)"/>
+          <line class="edge" x1="292" y1="333" x2="400" y2="328" marker-end="url(#ja)" stroke="var(--accent)"/>
+          <line class="edge" x1="292" y1="365" x2="400" y2="376" marker-end="url(#ja)" stroke="var(--accent)"/>
+          <line class="edge" x1="292" y1="397" x2="400" y2="424" marker-end="url(#ja)" stroke="var(--accent)"/>
+        </g>
+
+        <rect class="box-plain" x="402" y="26"  width="304" height="28" rx="2"/>
+        <text class="sub" x="414" y="44"  text-anchor="start">state.json.graph_version — mismatch is reported</text>
+        <rect class="box-plain" x="402" y="74"  width="304" height="28" rx="2"/>
+        <text class="sub" x="414" y="92"  text-anchor="start">skills/&lt;name&gt;/SKILL.md must exist</text>
+        <rect class="box-plain" x="402" y="122" width="304" height="28" rx="2"/>
+        <text class="sub" x="414" y="140" text-anchor="start">agents/&lt;name&gt;.md must exist</text>
+        <rect class="box-plain" x="402" y="170" width="304" height="28" rx="2"/>
+        <text class="sub" x="414" y="188" text-anchor="start">only engineer + simplifier write source;</text>
+        <text class="sub" x="414" y="200" text-anchor="start">only starter commits</text>
+        <rect class="box-plain" x="402" y="218" width="304" height="28" rx="2"/>
+        <text class="sub" x="414" y="236" text-anchor="start">references/skeptic-prompt.md must exist</text>
+        <rect x="402" y="266" width="304" height="40" rx="2" fill="var(--accent-wash)" stroke="var(--accent)" stroke-width="1.4"/>
+        <text class="acctxt" x="414" y="283" text-anchor="start">each lens string must appear in that file —</text>
+        <text class="acctxt" x="414" y="297" text-anchor="start">and the file must not dispatch identically</text>
+        <rect class="box-plain" x="402" y="314" width="304" height="28" rx="2"/>
+        <text class="sub" x="414" y="332" text-anchor="start">from/to resolve to a node id; none orphaned</text>
+        <rect class="box-plain" x="402" y="362" width="304" height="28" rx="2"/>
+        <text class="sub" x="414" y="380" text-anchor="start">gate.node must be of kind human-gate</text>
+        <rect x="402" y="410" width="304" height="28" rx="2" fill="none" stroke="var(--rule-2)" stroke-width="1.2" stroke-dasharray="4 3"/>
+        <text class="sub" x="414" y="428" text-anchor="start">prose — enforced only where checkable</text>
+      </svg>
+    </div>
+    <figcaption><strong>Figure 4 — the declaration is load-bearing.</strong> Eight of the nine bindings are
+    hard failures; only the invariants are partly prose, and they are marked as such rather than presented
+    as guarantees. The highlighted binding is the strongest one in the file: a lens named in
+    <code>graph.json</code> must appear in the prompt file, and that prompt file must not have reverted to
+    dispatching identical skeptics.</figcaption>
+  </figure>
+
+  <h2 style="font-size:1.3rem; margin-top:36px">Who writes it, and what it actually is</h2>
+
+  <div class="legend">
+    <div class="pr gate">
+      <span class="id">WHO · a human, by hand</span>
+      <span class="d">It is <strong>not generated from anything</strong>. Someone edits it when the swarm's
+      shape changes, then runs <code>sync</code>. Its own header says so: <em>“edit this file, then
+      regenerate — never hand-edit a rendered diagram.”</em></span>
+    </div>
+    <div class="pr">
+      <span class="id">WHY · to break a three-way tie</span>
+      <span class="d">The topology can otherwise live in two READMEs <em>and</em> in the orchestrator's
+      control flow. All three describe the same lifecycle; none is authoritative, so nothing can detect
+      that they have drifted apart.</span>
+    </div>
+    <div class="pr">
+      <span class="id">WHAT · a manifest, not a runtime</span>
+      <span class="d">Nothing executes it. <code>graph.json</code> is the <strong>AST</strong>,
+      <code>starter</code> is the <strong>eval loop</strong> — it is not a node, it is what walks the graph
+      — and <code>graph.py</code> is the <strong>type checker</strong>. An edge is enforced at review time
+      by CI, not at runtime by construction.</span>
+    </div>
+  </div>
+
+  <pre><code>$ python3 plugins/plan/lib/graph/graph.py render svg   <span class="dim"># figure 3, regenerated</span>
+$ python3 plugins/plan/lib/graph/graph.py validate     <span class="dim"># every binding above</span></code></pre>
+</section>
+
+<!-- ══════════════════ 7 · STATE (P3) ══════════════════ -->
+<section>
+  <p class="eyebrow"><b>State (P3)</b> · mechanism</p>
+  <h2>A skill is a node with <em>declared edges</em></h2>
+
+  <p>A skill's authority can live in prose — “read-only on source”, “never commits”. Those sentences are
+  still in the skill files, but the same facts are declared in <code>graph.json</code> where a script can
+  read them. <code>architect</code> is the clearest case: it reads two things, writes three, and is
+  explicitly denied one.</p>
+
+  <figure>
+    <div class="figbox">
+      <svg class="dia" viewBox="0 0 700 250" role="img" aria-label="The architect skill drawn as a graph node. Two inbound read edges arrive from spec.md and the repository. Three outbound write edges go to plan.md, data-model.md and api-contracts.md. A fourth edge to repository source is crossed out and labelled must_not_write, enforced by graph.py validate.">
+        <defs>
+          <marker id="k1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="currentColor"/></marker>
+        </defs>
+
+        <text class="sub" x="16" y="18" text-anchor="start">READS</text>
+        <rect class="box-plain" x="16" y="60" width="150" height="30" rx="2"/>
+        <text class="sub" x="91" y="79" text-anchor="middle">spec.md</text>
+        <rect class="box-plain" x="16" y="106" width="150" height="30" rx="2"/>
+        <text class="sub" x="91" y="125" text-anchor="middle">&lt;repo&gt;</text>
+
+        <g color="var(--rule-2)">
+          <line class="edge" x1="166" y1="75" x2="256" y2="105" marker-end="url(#k1)"/>
+          <line class="edge" x1="166" y1="121" x2="256" y2="119" marker-end="url(#k1)"/>
+        </g>
+
+        <rect class="box-acc" x="258" y="90" width="140" height="44" rx="2"/>
+        <text class="lbl" x="328" y="109" text-anchor="middle">architect</text>
+        <text class="acctxt" x="328" y="124" text-anchor="middle">kind: role</text>
+
+        <text class="sub" x="466" y="18" text-anchor="start">WRITES</text>
+        <g color="var(--accent)">
+          <line class="edge" x1="398" y1="103" x2="464" y2="52" marker-end="url(#k1)" stroke="var(--accent)"/>
+          <line class="edge" x1="398" y1="112" x2="464" y2="98" marker-end="url(#k1)" stroke="var(--accent)"/>
+          <line class="edge" x1="398" y1="121" x2="464" y2="144" marker-end="url(#k1)" stroke="var(--accent)"/>
+        </g>
+        <rect class="box-plain" x="466" y="36" width="218" height="30" rx="2"/>
+        <text class="sub" x="575" y="55" text-anchor="middle">plan.md</text>
+        <rect class="box-plain" x="466" y="82" width="218" height="30" rx="2"/>
+        <text class="sub" x="575" y="101" text-anchor="middle">data-model.md</text>
+        <rect class="box-plain" x="466" y="128" width="218" height="30" rx="2"/>
+        <text class="sub" x="575" y="147" text-anchor="middle">api-contracts.md</text>
+
+        <g color="var(--flag)">
+          <line class="edge" x1="398" y1="130" x2="464" y2="196" stroke="var(--flag)" stroke-dasharray="5 4"/>
+        </g>
+        <line x1="418" y1="176" x2="446" y2="150" stroke="var(--flag)" stroke-width="2"/>
+        <line x1="418" y1="150" x2="446" y2="176" stroke="var(--flag)" stroke-width="2"/>
+        <rect x="466" y="182" width="218" height="30" rx="2" fill="none" stroke="var(--flag)" stroke-width="1.2" stroke-dasharray="5 4"/>
+        <text class="flagtxt" x="575" y="201" text-anchor="middle">&lt;repo source&gt;</text>
+        <text class="flagtxt" x="575" y="228" text-anchor="middle">must_not_write</text>
+        <text class="sub" x="328" y="176" text-anchor="middle">declared in graph.json</text>
+        <text class="sub" x="328" y="190" text-anchor="middle">checked by graph.py validate</text>
+      </svg>
+    </div>
+    <figcaption><strong>Figure 5 — the contract, not the reminder.</strong> The denied edge is the point:
+    <code>validate</code> fails if any node other than <code>engineer</code> or <code>simplifier</code>
+    declares it writes repository source, and if any node declares <code>git commit</code> without being
+    held by <code>starter</code>. “Read-only on source” is not something a model is asked to remember; it
+    is something a script refuses to let pass.</figcaption>
+  </figure>
+
+  <p><strong>The other half of State (P3) is the run itself.</strong> <code>state.json</code>, whose schema
+  lives in <code>lib/graph/STATE.md</code>, records the phase, both gate decisions, per-node status with
+  report paths, and per-group tasks, audit rounds and commit SHAs. It is written only by
+  <code>starter</code> and read by everyone resuming — which is what lets the phase be <em>read</em>
+  rather than re-derived by inspecting a directory.</p>
+</section>
+
+<!-- ══════════════════ 8 · CONTEXT (P2) ══════════════════ -->
+<section>
+  <p class="eyebrow"><b>Context (P2)</b> · mechanism</p>
+  <h2>Clean context, extended <em>inside the fan-out</em></h2>
+
+  <p>Per-node isolation is this swarm's strongest property. The part that is easy to miss is isolation
+  <em>within</em> a node's fan-out. A panel that dispatches one prompt three times has three branches
+  sharing one prompt, one model and one reading assignment — a fan-out that is wide but not independent.
+  Each panel here hands its three skeptics disjoint evidence instead.</p>
+
+  <figure>
+    <div class="figbox">
+      <svg class="dia" viewBox="0 0 700 260" role="img" aria-label="The plan-validator panel. One plan.md fans out to three lenses. Each lens is fed by a different evidence source: the plan's own step graph feeds the sequencing lens, the source files the plan names feed the ground-truth lens, and the callers, tests and CI config feed the blast-radius lens. The three findings sets join at a two-of-three quorum that records which lenses agreed.">
+        <defs>
+          <marker id="k2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="currentColor"/></marker>
+        </defs>
+
+        <rect class="box-acc" x="280" y="14" width="140" height="30" rx="2"/>
+        <text class="lbl" x="350" y="34" text-anchor="middle">plan-validator</text>
+
+        <g color="var(--rule-2)">
+          <line class="edge" x1="350" y1="44" x2="120" y2="72" marker-end="url(#k2)"/>
+          <line class="edge" x1="350" y1="44" x2="350" y2="72" marker-end="url(#k2)"/>
+          <line class="edge" x1="350" y1="44" x2="580" y2="72" marker-end="url(#k2)"/>
+        </g>
+
+        <text class="sub" x="16" y="66" text-anchor="start">ASSIGNED EVIDENCE — disjoint</text>
+        <rect class="box" x="30" y="74" width="180" height="38" rx="2"/>
+        <text class="sub" x="120" y="90" text-anchor="middle">the plan's step graph</text>
+        <text class="sub" x="120" y="104" text-anchor="middle">produces / consumes</text>
+        <rect class="box" x="260" y="74" width="180" height="38" rx="2"/>
+        <text class="sub" x="350" y="90" text-anchor="middle">source files it names</text>
+        <text class="sub" x="350" y="104" text-anchor="middle">opened, not inferred</text>
+        <rect class="box" x="490" y="74" width="180" height="38" rx="2"/>
+        <text class="sub" x="580" y="90" text-anchor="middle">callers · tests · CI</text>
+        <text class="sub" x="580" y="104" text-anchor="middle">migration tooling</text>
+
+        <g color="var(--accent)">
+          <line class="edge" x1="120" y1="112" x2="120" y2="136" marker-end="url(#k2)" stroke="var(--accent)"/>
+          <line class="edge" x1="350" y1="112" x2="350" y2="136" marker-end="url(#k2)" stroke="var(--accent)"/>
+          <line class="edge" x1="580" y1="112" x2="580" y2="136" marker-end="url(#k2)" stroke="var(--accent)"/>
+        </g>
+
+        <rect class="box-acc" x="46" y="138" width="148" height="32" rx="2"/>
+        <text class="acctxt" x="120" y="158" text-anchor="middle">lens · sequencing</text>
+        <rect class="box-acc" x="276" y="138" width="148" height="32" rx="2"/>
+        <text class="acctxt" x="350" y="158" text-anchor="middle">lens · ground-truth</text>
+        <rect class="box-acc" x="506" y="138" width="148" height="32" rx="2"/>
+        <text class="acctxt" x="580" y="158" text-anchor="middle">lens · blast-radius</text>
+
+        <g color="var(--rule-2)">
+          <line class="edge" x1="120" y1="170" x2="300" y2="200" marker-end="url(#k2)"/>
+          <line class="edge" x1="350" y1="170" x2="350" y2="200" marker-end="url(#k2)"/>
+          <line class="edge" x1="580" y1="170" x2="400" y2="200" marker-end="url(#k2)"/>
+        </g>
+        <text class="sub" x="196" y="192" text-anchor="middle">findings + lens</text>
+
+        <rect class="box" x="230" y="202" width="240" height="34" rx="2"/>
+        <text class="lbl" x="350" y="218" text-anchor="middle">2-of-3 quorum</text>
+        <text class="acctxt" x="350" y="231" text-anchor="middle">records which lenses agreed → cross_lens</text>
+
+        <text class="sub" x="350" y="252" text-anchor="middle">→ adversarial-reviews/plan-validation.md</text>
+      </svg>
+    </div>
+    <figcaption><strong>Figure 6 — same width, different information.</strong> The fan-out count and the
+    join rule are ordinary. What matters is that the three branches are fed from disjoint evidence, so two
+    of them agreeing means two readings of <em>different material</em> converged — recorded as
+    <code>cross_lens</code> and ranked above two votes from readers who saw the same thing.</figcaption>
+  </figure>
+
+  <div class="note">
+    <span class="tag2">the pre-flight check that keeps it honest</span>
+    <p>Every panel run must first pass the <strong>asymmetry test</strong>: name one finding only that lens
+    could reach. If you cannot, merge it and run two — a panel of near-clones is worse than an honest pair,
+    because it manufactures corroboration. The test is lifted in spirit from
+    <code>plan-deliberator</code>'s Core Principle 1.</p>
+  </div>
+</section>
+
+<!-- ══════════════════ 9 · COVERAGE ══════════════════ -->
+<section>
+  <p class="eyebrow">At a glance</p>
+  <h2>Which file plays which <em>role</em> for each principle</h2>
+
+  <p>The useful question about a file is not “how well does it comply”. It is <em>what job does it hold</em>:
+  does the principle live in it as data, does it turn the principle into an exit code, does it read the
+  declaration and act on it, or is it generated from the declaration?</p>
+
+  <div class="matrix">
+  <table class="mx">
+    <thead>
+      <tr>
+        <th style="width:180px">File</th>
+        <th class="p pa"><span class="pn">Topology</span><span class="pp">(P1)</span><span class="pg">declared once</span></th>
+        <th class="p"><span class="pn">Context</span><span class="pp">(P2)</span><span class="pg">clean per node</span></th>
+        <th class="p pz"><span class="pn">State</span><span class="pp">(P3)</span><span class="pg">schema, not convention</span></th>
+        <th>What this file contributes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="grp"><td colspan="5">the declaration and its tooling</td></tr>
+      <tr>
+        <td class="f">plugins/plan/<strong>graph.json</strong></td>
+        <td class="p pa"><span class="chip c-def">defines</span></td>
+        <td class="p"><span class="chip c-na">n/a</span></td>
+        <td class="p pz"><span class="chip c-def">defines</span></td>
+        <td class="n">16 nodes, 25 edges, 2 gates, 5 invariants, every node's read/write contract</td>
+      </tr>
+      <tr>
+        <td class="f">lib/graph/<strong>graph.py</strong></td>
+        <td class="p pa"><span class="chip c-enf">enforces</span></td>
+        <td class="p"><span class="chip c-enf">enforces</span></td>
+        <td class="p pz"><span class="chip c-enf">enforces</span></td>
+        <td class="n">Turns all three principles from prose into exit codes: <code>validate</code>, <code>render</code>, <code>sync --check</code></td>
+      </tr>
+      <tr>
+        <td class="f">lib/graph/<strong>STATE.md</strong></td>
+        <td class="p pa"><span class="chip c-na">—</span></td>
+        <td class="p"><span class="chip c-na">—</span></td>
+        <td class="p pz"><span class="chip c-def">defines</span></td>
+        <td class="n">The <code>state.json</code> schema — the phase is <em>read</em>, not re-derived</td>
+      </tr>
+      <tr class="grp"><td colspan="5">the prompts and the docs</td></tr>
+      <tr>
+        <td class="f">skills/<strong>starter</strong></td>
+        <td class="p pa"><span class="chip c-obey">obeys</span></td>
+        <td class="p"><span class="chip c-na">—</span></td>
+        <td class="p pz"><span class="chip c-obey">obeys</span></td>
+        <td class="n">Dispatches every declared node and reads its phase from <code>state.json</code></td>
+      </tr>
+      <tr>
+        <td class="f">agents/<strong>supervisor</strong></td>
+        <td class="p pa"><span class="chip c-obey">obeys</span></td>
+        <td class="p"><span class="chip c-na">—</span></td>
+        <td class="p pz"><span class="chip c-obey">obeys</span></td>
+        <td class="n">Reconciles <code>state.json</code> against <code>graph.json</code> before acting</td>
+      </tr>
+      <tr>
+        <td class="f">skills/<strong>3 × validator</strong></td>
+        <td class="p pa"><span class="chip c-na">—</span></td>
+        <td class="p"><span class="chip c-obey">obeys</span></td>
+        <td class="p pz"><span class="chip c-obey">obeys</span></td>
+        <td class="n">3 lenses over <strong>disjoint evidence</strong>, not one prompt sent three times</td>
+      </tr>
+      <tr>
+        <td class="f">2 × <strong>README.md</strong></td>
+        <td class="p pa"><span class="chip c-der">derives</span></td>
+        <td class="p"><span class="chip c-na">n/a</span></td>
+        <td class="p pz"><span class="chip c-na">n/a</span></td>
+        <td class="n">Lifecycle diagrams generated between markers; no hand-drawn ASCII left</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+  <div class="key">
+    <span><span class="chip c-def">defines</span> the principle lives here, as data</span>
+    <span><span class="chip c-enf">enforces</span> turns it into an exit code</span>
+    <span><span class="chip c-obey">obeys</span> reads the declaration and acts on it</span>
+    <span><span class="chip c-der">derives</span> generated from it — no hand copy left</span>
+    <span><span class="chip c-na">—</span> not this file's concern</span>
+    <span><span class="chip c-na">n/a</span> nothing this file can say</span>
+  </div>
+
+  <p class="punch">Exactly one file <strong>defines</strong>, exactly one <strong>enforces</strong>, and
+  everything else <strong>obeys</strong> or <strong>derives</strong>. That single-writer property is the
+  whole point: the alternative is three files that each claim to be the topology.</p>
+</section>
+
+<!-- ══════════════════ 10 · FILE BY FILE ══════════════════ -->
+<section>
+  <p class="eyebrow">File by file</p>
+  <h2>What each file declares, and what fails when it stops being true</h2>
+
+  <div class="skills">
+
+    <div class="sk">
+      <div class="hd">
+        <span class="name">plugins/plan/graph.json</span><span class="kind">declaration</span>
+        <span class="tags"><span class="tag">P1 · TOPOLOGY</span><span class="tag">P3 · STATE</span></span>
+      </div>
+      <div class="bd">
+        <div>
+          <h4>What it holds</h4>
+          <p>16 nodes with kind, phase, skill, agent and alternatives; 25 edges with conditions and labels;
+          2 gates; 5 invariants; per-node <code>reads</code>, <code>writes</code> and
+          <code>must_not_write</code>; and each panel's lens roster with its asymmetry statement. 503 lines
+          of JSON and nothing else — no code, no imports, no runtime.</p>
+        </div>
+        <div>
+          <h4>Invariants declared</h4>
+          <ul class="io">
+            <li><span class="ar">·</span> only starter commits</li>
+            <li><span class="ar">·</span> only engineer + simplifier write source</li>
+            <li><span class="ar">·</span> identical prompts are a defect, not a config</li>
+            <li><span class="ar">·</span> human gates cannot run inside a workflow</li>
+            <li><span class="ar">·</span> dispatch file paths, never summaries</li>
+          </ul>
+        </div>
+        <div class="span2 chk">
+          <strong>Why not in the skill frontmatter:</strong> the obvious alternative is a
+          <code>reads:</code>/<code>writes:</code> block in each <code>SKILL.md</code>. Putting them in both
+          places would create a second hand-maintained copy of the same facts — which is exactly the defect
+          <strong>Topology (P1)</strong> exists to prevent.
+        </div>
+      </div>
+    </div>
+
+    <div class="sk">
+      <div class="hd">
+        <span class="name">lib/graph/graph.py</span><span class="kind">tooling · the enforcer</span>
+        <span class="tags"><span class="tag">P1</span><span class="tag">P2</span><span class="tag">P3</span></span>
+      </div>
+      <div class="bd">
+        <div>
+          <h4>What it does</h4>
+          <p>Stdlib only, so it runs wherever the plugin is installed and on either harness.
+          <code>validate</code> checks the declaration against disk; <code>render ascii|mermaid|svg</code>
+          draws the graph; <code>sync</code> rewrites the generated blocks in both READMEs;
+          <code>sync --check</code> exits non-zero when one is stale. That last flag is step 04 of the
+          loop.</p>
+        </div>
+        <div>
+          <h4>Failures it produces</h4>
+          <ul class="io">
+            <li><span class="ar">✗</span> declared skill or agent missing from disk</li>
+            <li><span class="ar">✗</span> edge pointing at an unknown node</li>
+            <li><span class="ar">✗</span> node with no inbound edge</li>
+            <li><span class="ar">✗</span> node claiming write authority it lacks</li>
+            <li><span class="ar">✗</span> lens declared but absent from its prompt</li>
+            <li class="deny"><span class="ar">✗</span> prompt file reverted to identical dispatch</li>
+          </ul>
+        </div>
+        <div class="span2 chk">
+          <strong>Both lens checks were negative-tested.</strong> Renaming a lens in <code>graph.json</code>,
+          and appending “dispatch this three times, unchanged” to a prompt file, each produce a named error
+          and exit 1.
+        </div>
+      </div>
+    </div>
+
+    <div class="sk">
+      <div class="hd">
+        <span class="name">lib/graph/STATE.md</span><span class="kind">schema</span>
+        <span class="tags"><span class="tag">P3 · STATE</span></span>
+      </div>
+      <div class="bd">
+        <div>
+          <h4>What it defines</h4>
+          <p><code>state.json</code> per milestone: <code>run_id</code>, <code>phase</code>, gate decisions,
+          per-node status with report paths, and per-group tasks, audit rounds and commit SHAs. Written only
+          by <code>starter</code>; read by everyone resuming.</p>
+        </div>
+        <div>
+          <h4>Two fields worth knowing</h4>
+          <p><code>cross_lens</code> — how many confirmed findings were reached by more than one lens. The
+          number that says whether a panel produced independent corroboration or one opinion twice.</p>
+          <p style="margin-top:8px"><code>reason</code> — required whenever a node's status is
+          <code>skipped</code>. Absence of a report is otherwise ambiguous between not-run, crashed and
+          deliberately skipped.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="sk">
+      <div class="hd">
+        <span class="name">skills/starter</span><span class="kind">orchestrator · the eval loop</span>
+        <span class="tags"><span class="tag">P1</span><span class="tag">P3</span></span>
+      </div>
+      <div class="bd">
+        <div>
+          <h4>What it declares</h4>
+          <p>The state machine dispatches every node the declaration names — including the validators and
+          deliberators. Two clauses carry the weight: <em>the topology is declared, not remembered</em>
+          (follow <code>graph.json</code>) and <em>the phase is read, not inferred</em> (read
+          <code>state.json</code>). The engineer ⇄ auditor cycle carries a 3-round cap.</p>
+        </div>
+        <div>
+          <h4>Its boundary</h4>
+          <p style="margin-bottom:10px">“Never skip a gate silently. If you deliberately skip a validator or
+          a deliberator, say so and record it in <code>state.json</code>. An unrecorded skipped gate is
+          indistinguishable from a gate that passed.”</p>
+          <h4>Held exclusively</h4>
+          <ul class="io">
+            <li><span class="ar">✓</span> only node that runs git commit</li>
+            <li><span class="ar">✓</span> holds both human gates</li>
+            <li><span class="ar">✓</span> dispatches file paths, not summaries</li>
+          </ul>
+        </div>
+        <div class="span2 chk">
+          <strong>Why this file carries the most risk:</strong> by the Berkeley multi-agent failure taxonomy,
+          a documented-but-undispatched gate is a <em>system design</em> failure — the 44.2% category,
+          against 2.7% for anything aggregation-related. A gate that exists in the docs and not in the
+          dispatcher is the highest-leverage defect this architecture can have.
+        </div>
+      </div>
+    </div>
+
+    <div class="sk">
+      <div class="hd">
+        <span class="name">agents/supervisor</span><span class="kind">agent</span>
+        <span class="tags"><span class="tag">P1</span><span class="tag">P3</span></span>
+      </div>
+      <div class="bd">
+        <div>
+          <h4>What it declares</h4>
+          <p>The <code>initialPrompt</code> bootstrap does not inspect the milestone directory to guess a
+          phase. It reads <code>state.json</code>, reconciles it against <code>graph.json</code>, and reports
+          any gate recorded as <em>skipped</em> or <em>outstanding</em> before recommending an action.</p>
+        </div>
+        <div>
+          <h4>Its standing note</h4>
+          <p>“The topology is a file, not a memory.” Skipping a declared node is a decision to state out loud
+          and record — not one to make silently. The README diagrams are generated; never hand-edit
+          them.</p>
+        </div>
+        <div class="span2 chk">
+          <strong>Single-sourced:</strong> the body delegates to
+          <code>${CLAUDE_PLUGIN_ROOT}/skills/starter/SKILL.md</code>, so the state machine is shared between
+          the skill and agent families rather than restated in both.
+        </div>
+      </div>
+    </div>
+
+    <div class="sk">
+      <div class="hd">
+        <span class="name">skills/plan-validator</span><span class="kind">panel</span>
+        <span class="tags"><span class="tag">P2 · CONTEXT</span><span class="tag">P3 · STATE</span></span>
+      </div>
+      <div class="bd">
+        <div>
+          <h4>What it declares</h4>
+          <p><code>references/skeptic-prompt.md</code> is a shared preamble, three lens sections and a shared
+          tail. <code>SKILL.md</code> carries <em>partitioned lenses</em> as a core principle, an asymmetry
+          test before dispatch, cross-lens weighting at the gate, and a red-flag row. There is no instruction
+          anywhere to dispatch one prompt three times.</p>
+        </div>
+        <div>
+          <h4>Declared contract</h4>
+          <ul class="io">
+            <li><span class="ar">←</span> plan.md</li>
+            <li><span class="ar">←</span> &lt;repo&gt;</li>
+            <li><span class="ar">→</span> adversarial-reviews/plan-validation.md</li>
+          </ul>
+          <h4 style="margin-top:14px">Lenses</h4>
+          <ul class="io">
+            <li><span class="ar">1</span> sequencing — the step graph</li>
+            <li><span class="ar">2</span> ground-truth — the files it names</li>
+            <li><span class="ar">3</span> blast-radius — callers · tests · CI</li>
+          </ul>
+        </div>
+        <div class="span2 chk">
+          <strong>Enforced by:</strong> <code>graph.py validate</code> fails if a declared lens is absent from
+          the prompt file, if the lens count disagrees with <code>panel.n</code>, or if the file reverts to
+          identical dispatch. Ground-truth is the one lens where <code>evidence: file:line</code> is mandatory
+          rather than encouraged.
+        </div>
+      </div>
+    </div>
+
+    <div class="sk">
+      <div class="hd">
+        <span class="name">skills/spec-validator</span><span class="kind">panel</span>
+        <span class="tags"><span class="tag">P2 · CONTEXT</span><span class="tag">P3 · STATE</span></span>
+      </div>
+      <div class="bd">
+        <div>
+          <h4>What it declares</h4>
+          <p>Same structure. At spec stage there is no codebase to partition, so asymmetry comes from
+          <em>what each lens reads and in what order</em> — the spec against itself, the world outside the
+          spec, and the acceptance criteria alone. The malicious-compliance lens is deliberately told
+          <strong>not</strong> to read the prose rationale on its first pass.</p>
+        </div>
+        <div>
+          <h4>Declared contract</h4>
+          <ul class="io">
+            <li><span class="ar">←</span> spec.md</li>
+            <li><span class="ar">←</span> context.md</li>
+            <li><span class="ar">→</span> adversarial-reviews/spec-validation.md</li>
+          </ul>
+          <h4 style="margin-top:14px">Lenses</h4>
+          <ul class="io">
+            <li><span class="ar">1</span> internal-consistency</li>
+            <li><span class="ar">2</span> missing-requirement</li>
+            <li><span class="ar">3</span> malicious-compliance</li>
+          </ul>
+        </div>
+        <div class="span2 chk">
+          <strong>Honest limit:</strong> the asymmetry here is weaker than at plan stage — three lenses
+          reading one document share more than three lenses reading three sources. The skill says so, and
+          tells you to merge lens 2 and run two when there is no context report for it to read.
+        </div>
+      </div>
+    </div>
+
+    <div class="sk">
+      <div class="hd">
+        <span class="name">skills/implementation-validator</span><span class="kind">panel</span>
+        <span class="tags"><span class="tag">P2 · CONTEXT</span><span class="tag">P3 · STATE</span></span>
+      </div>
+      <div class="bd">
+        <div>
+          <h4>What it declares</h4>
+          <p>Same structure across both modes — claim-refutation dispatches once per claim <em>per lens</em>,
+          which is the independence a repeated identical prompt cannot give. The blast-radius lens is told to
+          read the files the diff does <strong>not</strong> contain, first.</p>
+        </div>
+        <div>
+          <h4>Declared contract</h4>
+          <ul class="io">
+            <li><span class="ar">←</span> &lt;repo&gt;</li>
+            <li><span class="ar">←</span> git diff BASE..HEAD</li>
+            <li><span class="ar">→</span> adversarial-reviews/implementation-validation.md</li>
+          </ul>
+          <h4 style="margin-top:14px">Lenses</h4>
+          <ul class="io">
+            <li><span class="ar">1</span> claim-vs-reality</li>
+            <li><span class="ar">2</span> failure-paths</li>
+            <li><span class="ar">3</span> blast-radius</li>
+          </ul>
+        </div>
+        <div class="span2 chk">
+          <strong>Its highest-value output is not the finding list</strong> — it is the calibrated severity.
+          A 2-of-3 majority over disjoint readings is what makes “the majority becomes ≥2 lenses independently
+          landing on the same defect” mean something, and <code>cross_lens</code> in
+          <code>state.json</code> is where that count is recorded.
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════════ 11 · ENFORCEMENT ══════════════════ -->
+<section>
+  <p class="eyebrow">Enforcement · step 03 and 04 of the loop</p>
+  <h2>Every invariant sits on one of <em>three rungs</em></h2>
+
+  <p>Declaring a rule is not enforcing it. Five invariants are written into <code>graph.json</code>; three of
+  them produce an exit code; two are prose and are labelled as prose. The distance between rung 1 and rung 2
+  is the entire value of the tooling.</p>
+
+  <div class="rungs">
+    <div class="rung r1">
+      <span class="num">5</span>
+      <span><span class="rn">declared</span><span class="rd">Written into <code>graph.json</code> as a named invariant.</span></span>
+    </div>
+    <div class="rung">
+      <span class="num">3</span>
+      <span><span class="rn">checked</span><span class="rd"><code>graph.py</code> exits 1 the moment it is broken.</span></span>
+    </div>
+    <div class="rung r3">
+      <span class="num">2</span>
+      <span><span class="rn">trusted</span><span class="rd">Declared and labelled as prose — no check exists.</span></span>
+    </div>
+  </div>
+
+  <div class="ledger">
+    <div class="lrow">
+      <span class="mk2">✔</span>
+      <div>
+        <span class="invt">Only <code>starter</code> runs <code>git commit</code> — it is the only node holding a user-facing turn in which approval can be obtained.</span>
+        <span class="by">violating it → <em>node 'x' declares it commits but is not held by starter</em> · exit 1</span>
+      </div>
+    </div>
+    <div class="lrow">
+      <span class="mk2">✔</span>
+      <div>
+        <span class="invt">Only <code>engineer</code> and <code>simplifier</code> write repository source.</span>
+        <span class="by">violating it → <em>node 'x' declares it writes repository source</em> · exit 1</span>
+      </div>
+    </div>
+    <div class="lrow">
+      <span class="mk2">✔</span>
+      <div>
+        <span class="invt">Every <code>panel</code> node declares <code>n</code> distinct lenses — identical prompts are a defect, not a configuration.</span>
+        <span class="by">violating it → <em>lens declared but absent from &lt;prompt_file&gt;</em> · exit 1</span>
+      </div>
+    </div>
+    <div class="lrow prose">
+      <span class="mk2">○</span>
+      <div>
+        <span class="invt">Human gates cannot run inside a scripted workflow — a workflow run takes no mid-run user input.</span>
+        <span class="by">unenforceable — no file records <em>how</em> the swarm was invoked</span>
+      </div>
+    </div>
+    <div class="lrow prose">
+      <span class="mk2">○</span>
+      <div>
+        <span class="invt">Agents are dispatched with file paths, never with a prose summary of an artifact.</span>
+        <span class="by">unenforceable — the violation is a message, and messages are not on disk</span>
+      </div>
+    </div>
+  </div>
+
+  <p style="font-size:.9rem; color:var(--ink-3)">Structural checks ride along on rung 2 alongside the three
+  named invariants: unknown node · unreachable node · missing <code>SKILL.md</code> · a gate that is not of
+  kind <code>human-gate</code> · a stale generated block.</p>
+
+  <pre><code>$ python3 plugins/plan/lib/graph/graph.py validate
+<span class="ok">graph.json OK — 16 nodes, 25 edges, 3 lens-partitioned panels, 2 human gates</span>
+
+$ python3 plugins/plan/lib/graph/graph.py sync --check
+<span class="ok">all generated blocks are up to date</span></code></pre>
+
+  <p class="punch">One test decides the rung: <strong>does breaking it leave a mark in a file?</strong> The
+  last two can only be broken in transit — in a dispatch message that nobody writes down.</p>
+</section>
+
+<!-- ══════════════════ 12 · THE EDGE OF ENFORCEMENT ══════════════════ -->
+<section>
+  <p class="eyebrow">Honest accounting</p>
+  <h2>Three ways past the ladder <em>entirely</em></h2>
+
+  <p>Everything above describes what the declaration catches. This section is what it does not, stated
+  plainly, because a conformance claim that only lists its successes is not a conformance claim.</p>
+
+  <div class="legend">
+    <div class="pr flag">
+      <span class="id">01 · NOT DECLARED</span>
+      <span class="t">The check runs one way</span>
+      <span class="d"><code>validate</code> walks the declaration and asks “is this on disk?” Nothing walks
+      disk and asks “is this declared?” <strong>20 skills exist under
+      <code>plugins/plan/skills/</code>; 13 are named in <code>graph.json</code></strong> — the 11 node
+      skills plus two alternatives. Add a skill, forget to declare it, and the build stays green.</span>
+    </div>
+    <div class="pr flag">
+      <span class="id">02 · NOT EXPRESSIBLE</span>
+      <span class="t">Independence has no syntax</span>
+      <span class="d">Giving each panel's three skeptics <strong>disjoint evidence</strong> is not something
+      any topology language can express. Correlated judge panels run 8–22 points below the independent-voting
+      ideal, and no aggregation algorithm recovers more than 11% of that gap. That is a property of the
+      information flowing through the edges, not of their shape.</span>
+    </div>
+    <div class="pr flag">
+      <span class="id">03 · NOT MEASURED</span>
+      <span class="t">The payoff is an inference</span>
+      <span class="d">That partitioned lenses catch more than three identical ones is <strong>believed, not
+      shown</strong>. Falsify it: re-run one shipped milestone both ways and diff the confirmed finding sets.
+      If <code>cross_lens</code> comes back zero, the partition bought nothing.</span>
+    </div>
+  </div>
+
+  <p class="punch">Graph engineering names two real defects here — a drifted topology and undeclared state —
+  and both are now on rung 2. It is silent on the third, which is the one most likely to change what the
+  gates actually catch.</p>
+</section>
+
+<footer>
+  plan-skills-claude · branch <code>plan-graph</code> · materials/plan-skills-graph-engineering.html
+</footer>
+
+</div>
+</body>
+</html>
