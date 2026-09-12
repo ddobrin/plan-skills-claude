@@ -15,14 +15,5 @@
       "source": "./plugins/plan",
       "category": "development"
     },
-    {
-      "name": "orchestrator",
-      "description": "A Supervisor skill plus self-contained phase skills (research, discovery, planning, construction, release) that orchestrate the sibling 'plan' plugin's specialist skills into a single gated spec → plan → build → ship lifecycle.",
-      "author": {
-        "name": "ddobrin"
-      },
-      "source": "./plugins/orchestrator",
-      "category": "development"
-    }
   ]
 }
