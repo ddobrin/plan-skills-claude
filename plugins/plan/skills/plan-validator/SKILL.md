@@ -1,6 +1,6 @@
 ---
 name: plan-validator
-description: Use after an implementation plan is written and BEFORE executing it, to catch ordering bugs and false assumptions while they are still cheap. Dispatches independent skeptic agents that assume the plan WILL fail, read the codebase to check its assumptions, and find the first domino that topples the rest — keeping only findings confirmed by a 2-of-3 majority. Symptoms - "validate this plan", "will this plan work", "review the plan before we start", a freshly written plans/*.md from writing-plans, about to run executing-plans or subagent-driven-development.
+description: Use after an implementation plan is written and BEFORE executing it, to catch ordering bugs and false assumptions while they are still cheap. Dispatches independent skeptic agents that assume the plan WILL fail, read the codebase to check its assumptions, and find the first domino that topples the rest — keeping only findings confirmed by a 2-of-3 majority. Symptoms - "validate this plan", "will this plan work", "review the plan before we start", an implementation plan just written and about to be executed.
 ---
 
 # Adversarial Plan Validation
@@ -18,7 +18,7 @@ says edit `X.dispatch()` but that method does not exist."
 
 ## When to Use
 
-- A written implementation plan exists (e.g. from `architect` or `superpowers:writing-plans`) and you are about to execute it.
+- A written implementation plan exists (from `architect`, or any plan-writing skill) and you are about to execute it.
 - The user asks to "validate", "sanity-check", "stress-test", or "review" a plan before work starts.
 - The plan touches existing code whose shape the plan *assumes* — exactly where plans rot.
 

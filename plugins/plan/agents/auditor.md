@@ -8,25 +8,7 @@ description: |
   implementations), and writes a formal PASS/FAIL audit report. It never fixes
   code and never commits — its passing report is what unblocks the Supervisor's
   commit gate. Dispatch it after the Engineer completes tasks and before any
-  commit. Examples:
-
-  <example>
-  Context: Engineers just finished implementing an execution group.
-  user: "Group 1 is implemented — verify it before we commit."
-  assistant: "I'll use the auditor agent to statically verify each step against the plan, run the build and tests, scan for anti-shortcuts, and produce a PASS/FAIL audit report."
-  <commentary>
-  Evidence-based verification of completed work against plan and spec is the Auditor's core responsibility.
-  </commentary>
-  </example>
-
-  <example>
-  Context: The Engineer marked every task complete and the build looks green.
-  user: "Everything's checked off — are we actually done?"
-  assistant: "I'll use the auditor agent to check the claims against the code: cite file:line per step, run the build and suite once, and scan for TODOs, placeholders, and skipped tests before anyone calls this done."
-  <commentary>
-  A checked box is a claim, not evidence. Verifying claims against the actual code is exactly why the Auditor exists.
-  </commentary>
-  </example>
+  commit.
 model: inherit
 color: yellow
 tools: ["Read", "Write", "Edit", "Glob", "Grep", "Bash"]

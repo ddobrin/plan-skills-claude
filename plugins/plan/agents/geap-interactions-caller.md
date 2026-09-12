@@ -57,6 +57,13 @@ print-access-token)` command substitution inside curl. Never run
        system_instruction:$sys,
        generation_config:{max_output_tokens:$mot, temperature:$temp},
        store:false}' > /tmp/geap_ix_req_$$.json
+
+   # Claude 4.6 and later reject `temperature` with a 400. Drop it for claude-* rather
+   # than sending it and retrying.
+   case "$MODEL" in claude-*)
+     jq 'del(.generation_config.temperature)' /tmp/geap_ix_req_$$.json > /tmp/geap_ix_req_$$.tmp \
+       && mv /tmp/geap_ix_req_$$.tmp /tmp/geap_ix_req_$$.json ;;
+   esac
    ```
 
    (When the input file already contains the "Validate the following document"
@@ -76,7 +83,8 @@ print-access-token)` command substitution inside curl. Never run
    - `401` / `403` / `404` → fall back to step 4 (Vertex), and record
      `meta.transport = "vertex"`.
    - `400` whose body mentions `temperature` → resend once with
-     `jq 'del(.generation_config.temperature)'` applied to the request file.
+     `jq 'del(.generation_config.temperature)'` applied to the request file. (Only
+     reachable for a non-Claude model that also rejects the parameter.)
    - Any other status → retry the call up to 2 more times with exponential backoff
      (`sleep 2`, then `sleep 4`); if still failing, return
      `{"error": "<status>: <first 200 chars of body>"}` in a fenced JSON block.
@@ -99,19 +107,21 @@ print-access-token)` command substitution inside curl. Never run
 
      ```bash
      jq -n --rawfile doc /tmp/geap_ix_input_$$.txt --rawfile sys /tmp/geap_ix_sys_$$.txt \
-       --argjson mot "$MAX_OUTPUT_TOKENS" --argjson temp "$TEMPERATURE" \
+       --argjson mot "$MAX_OUTPUT_TOKENS" \
        '{anthropic_version:"vertex-2023-10-16",
          messages:[{role:"user",content:("Validate the following document:\n\n"+$doc)}],
-         system:$sys, max_tokens:$mot, temperature:$temp}' > /tmp/geap_ix_req_$$.json
+         system:$sys, max_tokens:$mot}' > /tmp/geap_ix_req_$$.json
      ```
+
+     No `temperature`: Claude 4.6 and later reject the parameter with a 400.
 
      Reply text: `jq -r '[.content[]? | select(.type=="text") | .text] | join("")'`
      (some Claude models prepend a `thinking` block — never assume the text is
      at `.content[0]`).
 
-   - Same auth header pattern (no `x-goog-user-project` needed), same
-     400-temperature retry (gemini: `jq 'del(.generationConfig.temperature)'`;
-     claude: `jq 'del(.temperature)'`), same backoff rules.
+   - Same auth header pattern (no `x-goog-user-project` needed), same backoff rules.
+     Gemini keeps the 400-temperature retry (`jq 'del(.generationConfig.temperature)'`);
+     Claude never sends the parameter, so there is nothing to retry.
    - Any other model prefix → return `{"error": "unsupported model prefix"}`.
 
 5. **Validate the verdict.** Extract the fenced ```json block from the reply text (if
@@ -122,8 +132,9 @@ print-access-token)` command substitution inside curl. Never run
    way to `consolidated_findings`.
 
 6. **Repair loop.** On a validation failure, re-call (same transport that last
-   succeeded) with temperature 0 and this appended to the system-prompt file, for a
-   total of at most 3 attempts:
+   succeeded) with this appended to the system-prompt file, for a total of at most 3
+   attempts. Lower the temperature to 0 only for a model that accepts the parameter —
+   for `claude-*` the request shape is unchanged:
 
    > REMINDER: You must output your response as a single, valid JSON block matching
    > the requested schema inside a ```json ... ``` block. Ensure all fields are

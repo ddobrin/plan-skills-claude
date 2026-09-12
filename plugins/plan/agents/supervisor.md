@@ -8,34 +8,6 @@ description: |
   single source of truth, enforces the human approval gate before execution, and
   is the only role permitted to run git commit. Load this role before running any
   swarm operation or when resuming a milestone in plans/active_milestones/.
-  Examples:
-
-  <example>
-  Context: The user wants a feature taken from idea all the way to a commit.
-  user: "Be the supervisor and drive this OAuth login feature from idea to commit."
-  assistant: "I'll run the supervisor agent. It will kick off Phase 0 research, hand off to the Product Owner for the spec, then the Architect for the plan, and stop at the human review gate before execution."
-  <commentary>
-  "Be the supervisor" and "idea to commit" are direct triggers for the orchestration role that manages the full lifecycle.
-  </commentary>
-  </example>
-
-  <example>
-  Context: A plan already exists and the user approves execution.
-  user: "Approve — run the swarm on milestone auth-mvp."
-  assistant: "I'll use the supervisor agent to enter the Construction Loop: dispatch Engineers concurrently per Execution Group, verify with the Auditor, then stop and ask before each git commit."
-  <commentary>
-  Running the swarm through the Engineer ⇄ Auditor → Git loop is the Supervisor's Phase 4 responsibility.
-  </commentary>
-  </example>
-
-  <example>
-  Context: The user returns to a partially completed milestone.
-  user: "Resume the milestone in plans/active_milestones/checkout-redesign/."
-  assistant: "I'll launch the supervisor agent to read the milestone artifacts, determine the current lifecycle state, and continue from the correct phase."
-  <commentary>
-  Resuming a milestone requires the Supervisor to reconstruct project state from artifacts and re-enter the state machine.
-  </commentary>
-  </example>
 model: inherit
 color: cyan
 initialPrompt: |

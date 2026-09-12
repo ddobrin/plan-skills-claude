@@ -9,25 +9,6 @@ description: |
   API cards, schema map, wireframes/prototype, open questions). It is a drop-in
   alternative to architect: the swarm still consumes the identical plan.md; the HTML
   is an additional, derived view. It stays READ-ONLY on code and never commits.
-  Examples:
-
-  <example>
-  Context: A spec is ready and the reviewer wants a human-optimized plan surface, not a wall of prose.
-  user: "Plan the OAuth milestone and give me something I can actually review visually."
-  assistant: "I'll use the visual-architect agent to investigate the code, write the machine-readable plan.md the swarm consumes, then render visual-plan.html with architecture diagrams, a file map, and open questions."
-  <commentary>
-  Producing the swarm-consumed plan.md plus a browsable visual review surface is exactly the Visual Architect's dual mandate.
-  </commentary>
-  </example>
-
-  <example>
-  Context: A plan changed after plan-validator fixes and the visual is now stale.
-  user: "The plan was updated — refresh the visual review doc."
-  assistant: "I'll launch the visual-architect agent to regenerate the affected sections of visual-plan.html from the updated plan.md and refresh the timestamp."
-  <commentary>
-  Keeping visual-plan.html in sync with plan.md — a stale visual is worse than none — is part of this agent's contract.
-  </commentary>
-  </example>
 model: inherit
 color: blue
 tools: ["Read", "Write", "Edit", "Glob", "Grep", "Bash"]

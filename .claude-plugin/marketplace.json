@@ -16,12 +16,12 @@
       "category": "development"
     },
     {
-      "name": "orchestrator",
-      "description": "A Supervisor skill plus self-contained phase skills (research, discovery, planning, construction, release) that orchestrate the sibling 'plan' plugin's specialist skills into a single gated spec → plan → build → ship lifecycle.",
+      "name": "research",
+      "description": "A web research specialist agent and skill that resolve questions against live external sources using two independent search paths — Gemini Flash on Vertex AI with Google Search grounding, plus native web search — then cross-check them and report verified facts separately from unverified assertions. Standalone: requires gcloud ADC, and the other plugins do not depend on it.",
       "author": {
         "name": "ddobrin"
       },
-      "source": "./plugins/orchestrator",
+      "source": "./plugins/research",
       "category": "development"
     }
   ]

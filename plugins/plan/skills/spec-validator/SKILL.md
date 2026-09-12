@@ -1,6 +1,6 @@
 ---
 name: spec-validator
-description: Use after a spec or design doc is drafted and BEFORE writing an implementation plan, to find defects while they are still cheap to fix. Dispatches independent skeptic agents that attack the spec for ambiguity, missing or contradictory requirements, and untestable acceptance criteria, then keeps only findings confirmed by a 2-of-3 majority. Symptoms - "validate this spec", "poke holes in this design", "is this spec ready to plan against", finishing brainstorming before writing-plans, a freshly written specs/*.md.
+description: Use after a spec or design doc is drafted and BEFORE writing an implementation plan, to find defects while they are still cheap to fix. Dispatches independent skeptic agents that attack the spec for ambiguity, missing or contradictory requirements, and untestable acceptance criteria, then keeps only findings confirmed by a 2-of-3 majority. Symptoms - "validate this spec", "poke holes in this design", "is this spec ready to plan against", a spec or design doc just drafted and about to be planned against.
 ---
 
 # Adversarial Spec Validation

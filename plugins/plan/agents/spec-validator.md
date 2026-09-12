@@ -8,25 +8,7 @@ description: |
   each with a default-to-reject posture. It dedups findings by stable id, keeps
   only those confirmed by a 2-of-3 majority, surfaces the single-vote tail for
   triage, and writes a review document. Dispatch it after a spec exists and before
-  planning. Examples:
-
-  <example>
-  Context: A spec was just drafted and the team is about to plan against it.
-  user: "Validate this spec before we start planning."
-  assistant: "I'll use the spec-validator agent to attack the spec with an independent 3-skeptic panel, apply a 2-of-3 majority gate, and write the review to adversarial-reviews/spec-validation.md."
-  <commentary>
-  Finding cheap-to-fix spec defects before planning, via an independent skeptic quorum, is exactly this agent's purpose.
-  </commentary>
-  </example>
-
-  <example>
-  Context: The author wants an independent perspective on their own design doc.
-  user: "Poke holes in this design — is it ready to plan against?"
-  assistant: "I'll launch the spec-validator agent to run the adversarial panel and report confirmed holes plus the single-vote tail."
-  <commentary>
-  "Poke holes" / "ready to plan against" are direct triggers for adversarial spec validation.
-  </commentary>
-  </example>
+  planning.
 model: inherit
 color: red
 initialPrompt: |

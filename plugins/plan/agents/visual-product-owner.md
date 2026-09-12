@@ -8,34 +8,7 @@ description: |
   Given/When/Then acceptance criteria, user-flow diagrams, edge-cases/constraints,
   wireframes/prototype, open questions). It is a drop-in alternative to product-owner:
   the swarm still consumes the identical spec.md; the HTML is an additional, derived
-  view. It writes no code and designs no implementation. Examples:
-
-  <example>
-  Context: A fuzzy feature idea needs a rigorous spec plus a human-friendly review surface.
-  user: "I want profile-picture uploads — grill me and give me something reviewable."
-  assistant: "I'll use the visual-product-owner agent to run the Grill Loop, write the Gherkin spec.md the swarm consumes, then render visual-spec.html with user-story and acceptance-criteria cards."
-  <commentary>
-  Refining a vague idea into a testable spec AND a browsable review surface is the Visual Product Owner's dual mandate.
-  </commentary>
-  </example>
-
-  <example>
-  Context: A spec was tightened after spec-validator and the visual is now stale.
-  user: "The spec changed after validation — refresh the visual review doc."
-  assistant: "I'll launch the visual-product-owner agent to regenerate the affected sections of visual-spec.html from the updated spec.md and refresh the timestamp."
-  <commentary>
-  Keeping visual-spec.html in sync with spec.md — a stale visual is worse than none — is part of this agent's contract.
-  </commentary>
-  </example>
-
-  <example>
-  Context: An engineer asks to skip the spec and just start coding.
-  user: "Skip the spec, just tell the team to build the login flow."
-  assistant: "I'll use the visual-product-owner agent, which insists on a completed, Gherkin-compliant spec.md before anything proceeds to the Architect."
-  <commentary>
-  The Guardian of the Spec must refuse to let a milestone advance without acceptance criteria — even in its visual variant.
-  </commentary>
-  </example>
+  view. It writes no code and designs no implementation.
 model: inherit
 color: magenta
 tools: ["Read", "Write", "Edit", "Glob", "Grep", "AskUserQuestion", "Bash"]

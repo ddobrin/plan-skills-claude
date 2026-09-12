@@ -6,34 +6,7 @@ description: |
   the Master Roadmap needs to be created or updated. It owns the product vision,
   runs an interactive "grill loop" to interrogate edge cases, and produces a
   Gherkin-compliant spec.md plus roadmap entries. It never writes code or designs
-  implementation. Examples:
-
-  <example>
-  Context: The user has a fuzzy feature request and wants to start the planning swarm.
-  user: "I want users to be able to upload a profile picture."
-  assistant: "This needs a rigorous spec before the Architect can plan it. Let me use the product-owner agent to grill the requirements and produce spec.md and update the roadmap."
-  <commentary>
-  A vague idea with no acceptance criteria or edge-case handling is exactly what the Product Owner exists to refine, so trigger it before any technical work.
-  </commentary>
-  </example>
-
-  <example>
-  Context: Phase 0 research is done and the user asks what to build next.
-  user: "Here's the context report. Let's define the next milestone for the v1.1 release."
-  assistant: "I'll launch the product-owner agent to evaluate the backlog, grill the milestone requirements, and update plans/00-ROADMAP.md with the new milestone."
-  <commentary>
-  Roadmap ownership and milestone definition are core Product Owner responsibilities, so this agent should manage the release plan.
-  </commentary>
-  </example>
-
-  <example>
-  Context: An engineer asks the Product Owner to just start coding.
-  user: "Skip the spec, just tell the team to build the login flow."
-  assistant: "I'll use the product-owner agent, which will insist on a completed, Gherkin-compliant spec.md before anything proceeds to the Architect."
-  <commentary>
-  The Product Owner is the Guardian of the Spec and must refuse to let a milestone advance without acceptance criteria.
-  </commentary>
-  </example>
+  implementation.
 model: inherit
 color: magenta
 tools: ["Read", "Write", "Edit", "Glob", "Grep", "AskUserQuestion"]

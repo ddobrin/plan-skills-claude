@@ -8,25 +8,7 @@ description: |
   mode), with a default-to-reject posture. It dedups by file:line+id, keeps findings
   confirmed by a 2-of-3 majority, and — its highest-value output — calibrates
   corrected severity, then writes a review document. It reasons about code; it does
-  not run the app. Dispatch it after a feature/task is complete. Examples:
-
-  <example>
-  Context: A feature branch is complete and about to merge.
-  user: "Did this actually work? Validate the implementation before merge."
-  assistant: "I'll use the implementation-validator agent to attack the diff with a 3-skeptic panel, apply the 2-of-3 gate, calibrate severity, and write implementation-validation.md."
-  <commentary>
-  Confirming the implementation does what it claims — and calibrating severity — before merge is this agent's purpose.
-  </commentary>
-  </example>
-
-  <example>
-  Context: The user has acceptance criteria the code must satisfy.
-  user: "Verify these acceptance claims hold against the diff."
-  assistant: "I'll launch the implementation-validator agent in claim-refutation mode; each skeptic will try to refute each claim, and a claim survives only on a 2-of-3 no-refute majority."
-  <commentary>
-  Refuting explicit acceptance claims against the actual code is the claim-refutation variant of this agent.
-  </commentary>
-  </example>
+  not run the app. Dispatch it after a feature/task is complete.
 model: inherit
 color: red
 initialPrompt: |

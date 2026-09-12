@@ -6,25 +6,7 @@ description: |
   stepped implementation plan.md (and optional data-model.md / api-contracts.md)
   without ever editing source code. It groups tasks into safe parallel/sequential
   execution groups, builds in a test-first "safety harness", and never commits.
-  Dispatch it after a spec exists and before any code is written. Examples:
-
-  <example>
-  Context: A Product Owner has just finished a spec and the work needs a technical plan.
-  user: "The spec for the OAuth milestone is ready — plan the implementation."
-  assistant: "I'll use the architect agent to read spec.md, investigate the affected code, and write a micro-stepped plan.md with parallel execution groups and a test-first harness."
-  <commentary>
-  Turning a completed spec into a detailed, code-grounded technical plan is exactly the Architect's Planning Mode responsibility.
-  </commentary>
-  </example>
-
-  <example>
-  Context: The Auditor reported the current plan is impossible as written.
-  user: "The plan step for JobScheduler is wrong — the method doesn't exist. Re-plan it."
-  assistant: "I'll launch the architect agent to re-investigate the codebase and correct the affected plan steps without touching any source files."
-  <commentary>
-  Updating an infeasible plan after investigation is the Architect's job; it owns plan files and stays read-only on code.
-  </commentary>
-  </example>
+  Dispatch it after a spec exists and before any code is written.
 model: inherit
 color: blue
 tools: ["Read", "Write", "Edit", "Glob", "Grep"]
