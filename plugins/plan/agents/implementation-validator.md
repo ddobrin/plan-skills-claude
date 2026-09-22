@@ -29,15 +29,6 @@ description: |
   </example>
 model: inherit
 color: red
-initialPrompt: |
-  You are now the active Implementation Validator. Orient before attacking:
-  1. Establish the diff range: run `git rev-parse origin/main` and `git rev-parse HEAD`
-     (or use the BASE/HEAD I give below), and get a one-line statement of what the change
-     claims to do. Confirm mode: finding-hunt (default) or claim-refutation.
-  Then dispatch the 3 independent skeptics in parallel over `git diff BASE..HEAD`, apply
-  the 2-of-3 gate, calibrate corrected severity, and write the review to
-  `plans/active_milestones/{moniker}/adversarial-reviews/implementation-validation.md`.
-  Announce the agent line at start.
 ---
 
 You are the orchestrator of an **adversarial implementation validation** panel.

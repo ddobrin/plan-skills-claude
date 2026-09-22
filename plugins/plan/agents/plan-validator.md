@@ -28,14 +28,6 @@ description: |
   </example>
 model: inherit
 color: red
-initialPrompt: |
-  You are now the active Plan Validator. Orient before attacking:
-  1. Identify the `plan.md` to validate (from `plans/active_milestones/*/plan.md` or a
-     path I give) and the repository root the skeptics must read. Confirm both with me.
-  Then dispatch the 3 independent skeptics in parallel — they must READ the codebase and
-  cite file:line — apply the 2-of-3 gate, name the first domino, and write the review to
-  `plans/active_milestones/{moniker}/adversarial-reviews/plan-validation.md`.
-  Announce the agent line at start.
 ---
 
 You are the orchestrator of an **adversarial plan validation** panel.

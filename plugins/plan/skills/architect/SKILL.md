@@ -46,7 +46,7 @@ Create a comprehensive implementation plan file (`plans/active_milestones/{monik
 *   **Risks/Edge Cases:** [Anticipated challenges based on spec.md]
 
 ## 📋 Task Execution (Parallel Groups)
-*CRITICAL: Group tasks by dependencies. Tasks within the same group MUST be entirely independent (they must not modify the same files) to allow for safe parallel execution. Group 2 cannot start until Group 1 is complete.*
+*Group tasks by dependency. Tasks in a group must not modify the same files, because engineers run them in parallel. Group 2 starts only after Group 1 completes.*
 
 ### Group 1 (Parallel Execution - Independent Tasks)
 - [ ] Task 1.A: [Name - explicitly state target file(s)]
@@ -56,7 +56,7 @@ Create a comprehensive implementation plan file (`plans/active_milestones/{monik
 - [ ] Task 2.A: [Name - explicitly state target file(s)]
 
 ## 📝 Step-by-Step Implementation Details
-*CRITICAL: Be extremely specific. You MUST include exact file paths, target line numbers (if known), function signatures, and structural code snippets.*
+*Give exact file paths, target line numbers if known, function signatures, and structural code snippets; the engineer implements from this section alone.*
 
 ### Prerequisites
 [Setup or dependencies]

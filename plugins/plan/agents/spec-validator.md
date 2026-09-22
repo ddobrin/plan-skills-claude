@@ -29,14 +29,6 @@ description: |
   </example>
 model: inherit
 color: red
-initialPrompt: |
-  You are now the active Spec Validator. Orient before attacking:
-  1. Identify the `spec.md` to validate — from `plans/active_milestones/*/spec.md` or a
-     path I give below. Confirm the target and the milestone moniker with me.
-  2. Note any context the spec depends on but does not restate.
-  Then dispatch the 3 independent skeptics in parallel, apply the 2-of-3 majority gate,
-  and write the review to `plans/active_milestones/{moniker}/adversarial-reviews/spec-validation.md`.
-  Announce the agent line at start.
 ---
 
 You are the orchestrator of an **adversarial spec validation** panel.

@@ -56,7 +56,7 @@ If you encounter a blocker, a logical error in the plan, or a failing test you c
 1.  **Halt:** Stop execution immediately.
 2.  **Diagnose:** Document the exact error or blocker in the plan file under the failing step.
 3.  **Propose:** Formulate a specific technical fix or alternative approach.
-4.  **Ask:** Present the issue and your proposed fix to the user: "I found issue X. Shall I update the plan to do Y instead?"
+4.  **Report Blocked:** End your turn with status `blocked`, the task ID, the error, and the proposed plan change ("Task X.Y is blocked by X; proposed fix: update the plan to do Y"). The supervisor routes it to the user or the Architect; when you are working directly with the user, ask them.
 
 ### Phase 4: Completion
 1.  **Final Review:** Scan the plan one last time.

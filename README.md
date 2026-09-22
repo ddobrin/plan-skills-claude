@@ -2,7 +2,7 @@
 
 A disciplined swarm of role-based agents, deliberative panels, and adversarial validation gates that drive features, bug fixes, or refactors through a robust **spec → plan → execute → audit → commit** lifecycle.
 
-This repository is built exclusively for **Claude Code** and **Claude models**. The swarm ships in two packagings inside a single plugin — skills (invoked via the Skill tool) and subagents (invoked via the Task tool, auto-delegation, or `claude --agent`) — with identical roles, workflows, and output files.
+This repository is built exclusively for **Claude Code** and **Claude models**. The swarm ships in two packagings inside a single plugin — skills (invoked via the Skill tool) and subagents (invoked via the Agent tool, auto-delegation, or `claude --agent`) — with identical roles, workflows, and output files.
 
 ---
 
@@ -32,7 +32,7 @@ Subagents are packaged and distributed directly within the `plan` plugin.
   3. **From the CLI:** Run `claude --agent {name}` to launch a single role directly.
 
 ### 3. Claude Models
-The swarm runs on the Claude model family. Roles inherit the session's model by default; where a role benefits from a specific tier, the agent pins it explicitly in its frontmatter (e.g., the engineer pins `claude-sonnet-5`).
+The swarm runs on the Claude model family. Every role inherits the session's model and effort level. To run a role on a different tier, set `model` (and optionally `effort`) in that agent's frontmatter.
 
 ---
 
