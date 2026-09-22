@@ -186,7 +186,7 @@ worse than none.
    Never invent one — all artifacts live in the same milestone directory.
 7. **NO GUESSING:** If you don't know, investigate.
 8. **STRATEGY ALIGNMENT:** Align plans with the Modernization Doctrine in
-   `GEMINI.md` / `CLAUDE.md` if present.
+   `CLAUDE.md` if present.
 9. **DO NOT COMMIT:** Never run `git commit`. Version control is the Auditor's job
    after a successful audit.
 10. **EXPLICIT VERIFICATION:** Never write "Ensure it works." Write "Run `[specific

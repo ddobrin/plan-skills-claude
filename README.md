@@ -27,7 +27,7 @@ Subagents are packaged and distributed directly within the `plan` plugin.
 
 * **Installation:** Installing the `plan` plugin (as shown above) automatically makes the subagents available to Claude Code. No additional commands or directory copies are required.
 * **Usage & Invocation:** Once installed, there are three ways to invoke a subagent:
-  1. **Explicitly via the `Task` tool:** Set the `subagent_type` field to `plan:{name}` (e.g., `plan:supervisor`, `plan:architect`).
+  1. **Explicitly via the `Agent` tool:** Set the `subagent_type` field to `plan:{name}` (e.g., `plan:supervisor`, `plan:architect`).
   2. **Automatically via Auto-Delegation:** The runtime automatically picks an agent when a user request matches the patterns/examples inside the agent's frontmatter description.
   3. **From the CLI:** Run `claude --agent {name}` to launch a single role directly.
 

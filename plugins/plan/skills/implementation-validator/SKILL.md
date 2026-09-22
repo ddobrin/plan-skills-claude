@@ -30,7 +30,7 @@ Two modes, same machinery:
 
 - The artifact is a spec (use `spec-validator`) or a plan (use `plan-validator`).
 - A trivial diff (typo, comment, version bump) — overhead exceeds benefit.
-- You need to confirm the app *runs* end-to-end — that's a manual/`verify`-style task; this skill reasons about the code, it does not launch the app.
+- You need to confirm the app *runs* end-to-end — that is the auditor's dynamic check; this skill reasons about the code, it does not launch the app.
 
 ## Core Principle
 
@@ -75,17 +75,15 @@ Make **three `Agent` calls in a single message**, `subagent_type: "general-purpo
 ### 4. Collect verdicts
 Parse each agent's fenced JSON. Re-dispatch any agent that returns prose.
 
-### 5. Dedup by identity
-**This is the hard part.** Group findings by a stable identity: `file:location` + the
-`id` slug. Three skeptics will phrase "NPE on empty list in `parseTasks`" three ways; if
-you tally on raw text, nothing reaches quorum. Normalize to `file:line::id` before counting.
-
-### 6. Apply the majority gate + severity calibration
-- **Finding-hunt:** a finding is **confirmed** when **≥ 2 of 3** skeptics report it with `isReal=true`. Its severity is the **most common `correctedSeverity`** among the agreeing skeptics (tie → higher).
-- **Claim-refutation:** a claim **survives** when **≥ 2 of 3** skeptics return `refuted=false`. A claim **fails** (the code is broken) when ≥2 return `refuted=true` — those become defects to fix.
-- **Unconfirmed (1 vote):** never silently drop. List under "Unconfirmed (FYI)".
-
-> **Tuning the gate:** 2-of-3 is the default. For a security-critical change, drop to **any-one** so a single skeptic's real catch isn't lost. When fix-churn is expensive, raise to **unanimous**.
+### 5–6. Dedup, gate, and calibrate
+Save each skeptic's JSON to a file and run
+`python3 ${CLAUDE_PLUGIN_ROOT}/lib/tally.py --gate 2 s1.json s2.json s3.json`.
+Finding-hunt: it groups by `file` + `id`, counts only `isReal=true` votes, and takes the majority
+`correctedSeverity` (tie → higher). Claim-refutation: pass the per-claim verdict files
+instead; a claim fails when `refuted=true` reaches the gate and survives when
+`refuted=false` does. Read the confirmed, failed, and unconfirmed lists from its output;
+do not tally by hand. Use `--gate 1` for security-critical changes and `--gate 3` when
+fix-churn is expensive.
 
 ### 7. Persist the review
 Write the aggregated result as a Markdown report to
@@ -284,7 +282,7 @@ _(repeat per confirmed defect)_
 - [ ] Re-validated after fixes → `implementation-validation-r2.md` _(or: not needed)_
 ```
 
-## Worked Example
+## Worked Example (illustrative only — do not match its length, domain, or wording)
 
 > Change claims: *"Planner walks precompiled steps; safe under concurrent deliberations."*
 > Finding-hunt, 3 skeptics over `git diff origin/main..HEAD`.
@@ -306,17 +304,13 @@ After dedup + majority gate + calibration:
 | "The diff is small, one reviewer is enough." | Small diffs hide concurrency and failure-path bugs. Run the panel. |
 | "All three rated it Critical, so it's Critical." | Check the *corrected* severity and the reasoning — adversarial framing over-rates. Calibration is the point. |
 | "One skeptic flagged a race, two didn't." | Concurrency bugs are easy to miss. Keep it unconfirmed and look at the evidence. |
-| "I'll tally findings by their titles." | Titles differ across agents. Normalize to `file:line::id` or quorum never forms. |
+| "I'll tally findings by their titles." | Titles differ across agents. Run `lib/tally.py`, which counts by `file` + stable `id`, or quorum never forms. |
 | "The agent said it's broken — fix it." | Read the cited `evidence` first. A finding without a real `file:line` is a guess, not a defect. |
 | "I verified the code, so the feature works." | This skill reasons about code; it does not run the app. For runtime confirmation, do a manual `verify` pass too. |
 
 ## Calibration Note
 
-Your own past runs show the highest-value output of this stage is **severity calibration,
-not deletion**. In a real review, three findings entered at **Critical** and *all three
-survived as real* — but every one was **downgraded to High** because the impact was
-conditional (a cross-request race on a singleton, not corruption on every call). Zero were
-deleted; zero stayed Critical. That Critical→High move is the signal: it separates
-"guaranteed on every call" from "serious but gated," which is exactly what a single
-aggressive reviewer gets wrong. Always surface the calibration delta to the user — it is
-more decision-useful than the raw verdict.
+The highest-value output of this stage is **severity calibration, not deletion**.
+Adversarial framing over-rates: a defect that is real but conditional (for example a
+cross-request race, not corruption on every call) is High, not Critical. Always surface
+the calibration delta to the user; it is more decision-useful than the raw verdict.

@@ -109,7 +109,7 @@ Badges: `<span class="badge new">new</span>` · `<span class="badge mod">modifie
 
 ## 4. Key Changes — the centerpiece
 
-The 3–8 changes that carry the most meaning, each as an annotated diff card. **Lines come
+The handful of changes that carry the most meaning, each as an annotated diff card. **Lines come
 verbatim from `git diff`** — only redact secrets and clip with a stated note.
 
 Each line is a `<span class="ln …">` inside `<pre class="diff">`. Line classes:
@@ -149,7 +149,7 @@ directly in the card. When clipped, add a note:
 <p class="clip">Showing the salient hunk of 2 in this file.</p>
 ```
 
-Budgets: 3–8 cards total; prefer ≤ ~150 diff lines per card. Pick the hunks that change
+Size each card so a reviewer can read it without scrolling, and pick the hunks that change
 behavior, not boilerplate.
 
 ---

@@ -102,14 +102,14 @@ Replace the demo content between each paired marker (`<!-- VIR:OVERVIEW -->` …
 `<!-- /VIR:OVERVIEW -->`, etc.) with content authored from the grounding. Use the
 skill's `references/component-catalog.md` for the exact HTML fragment per surface and
 `references/exemplar.md` for a worked example. Map evidence → surface:
-- Outcome + headline numbers → **Overview** (1–3-sentence brief + metric cards: files
+- Outcome + headline numbers → **Overview** (short brief + metric cards: files
   changed, +insertions/−deletions, tasks X/Y, audit PASS/FAIL).
 - `plan.md` checklist × audit verdict → **Tasks Completed** (each task → ✅ Done /
   ⚠️ Partial / ❌ Failed with the files it touched).
 - `git diff --stat` + `git status` → **Changed Files** (file tree with
   new/modified/deleted badges and a per-file `+X/−Y` diffstat).
-- The most important hunks of `git diff` → **Key Changes** (*the centerpiece* — 3–8
-  annotated diff cards; lines verbatim from the diff).
+- The most important hunks of `git diff` → **Key Changes** (*the centerpiece* — a
+  handful of annotated diff cards; lines verbatim from the diff).
 - System structure as it now stands → **Architecture** (Mermaid `flowchart`/`sequenceDiagram`).
 - Contract / data-model changes → **API & Schema** (endpoint cards + `erDiagram`, with change flags).
 - User-facing surface changes → **UI Changes** (before/after lo-fi wireframes).
@@ -155,8 +155,9 @@ than none.
    (implementation + fixes + tests + generated artifacts); exclude unrelated
    pre-existing dirty work. If you clip a long diff, **state what was clipped** — never
    present a partial diff as complete.
-6. **BUDGETS:** 3–8 cards in Key Changes; prefer ≤ ~150 diff lines per card; the
-   Overview brief is 1–3 sentences. Choose the changes that carry the most meaning.
+6. **SELECTIVITY:** Key Changes shows the hunks that carry the most meaning, each
+   sized so a reviewer can read the card without scrolling; the Overview brief is
+   one short paragraph a reviewer can scan.
 7. **HONEST REFLECTION:** Do not inflate. If the audit is `FAIL` or a step is
    `⚠️ Partial`, the verdict banner and Tasks surface must say so. The recap's value is trust.
 8. **SELF-CONTAINED:** One HTML file — the only external dependencies are the pinned CDN

@@ -80,12 +80,13 @@ malicious compliance (laziest passing implementation that is useless).
    shared scratchpad.
 4. **Collect verdicts:** parse each fenced JSON block; re-dispatch any agent that
    returns prose.
-5. **Dedup by identity:** group by stable `id` (kebab-case slug) + quoted `clause`,
-   not raw wording.
-6. **Apply the majority gate:** confirmed = ≥2 of 3; exactly-1-vote → "Unconfirmed
-   (FYI)", never silently dropped; severity = most common among agreeing skeptics
-   (tie → higher). Default gate is 2-of-3; drop to any-one for security-sensitive
-   specs, raise to unanimous when fix-churn is costly.
+5. **Dedup and gate:** save each skeptic's JSON to a file and run
+   `python3 ${CLAUDE_PLUGIN_ROOT}/lib/tally.py --gate 2 s1.json s2.json s3.json`; it
+   groups by stable `id`, counts votes, and takes the majority severity (tie →
+   higher). Do not tally by hand. `--gate 1` for security-sensitive specs, `--gate 3`
+   when fix-churn is costly.
+6. **Read the result:** confirmed = at or above the gate; 1-vote → "Unconfirmed
+   (FYI)", never silently dropped.
 7. **Persist the review** to
    `plans/active_milestones/{moniker}/adversarial-reviews/spec-validation.md` (create
    the folder). Derive `{moniker}` from the spec path; a bare spec with no milestone
@@ -188,5 +189,5 @@ Order confirmed findings highest-severity first. Keep every section, even when e
 - One skeptic is NOT enough — the vote needs ≥3 independent runs.
 - Never let the skeptics collaborate; shared context collapses the vote.
 - A 1-vote finding is logged as unconfirmed, never silently dropped.
-- Dedup on stable `id` + quoted clause, not by re-summarizing.
+- Count votes with `lib/tally.py` on the stable `id`, not by re-summarizing.
 - An agent returning prose → re-dispatch for valid JSON; do not hand-guess.

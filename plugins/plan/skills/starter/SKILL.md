@@ -19,7 +19,7 @@ Identify the current state of the project and execute the corresponding phase.
 
 ### PHASE 0: STRATEGIC RESEARCH
 *   **Trigger:** User makes a new request (feature, bug fix, or refactor).
-*   **Action:** Dispatch a codebase investigation agent (use `scout` if defined in workspace rules, otherwise use the built-in investigator).
+*   **Action:** Dispatch the built-in `Explore` agent (thorough) to investigate the codebase.
 *   **Instruction:** "Investigate the codebase related to the user's request. Generate a Context Report summarizing the affected domain, existing patterns, and potential constraints. Save it to `plans/research/` with a descriptive, dynamically generated filename based on the topic (e.g., `plans/research/oauth_context.md`)."
 
 ### PHASE 1: PRODUCT DISCOVERY (The Product Owner)
@@ -45,7 +45,7 @@ Identify the current state of the project and execute the corresponding phase.
 For each Execution Group (e.g., Group 1, Group 2):
 1.  **PARALLEL IMPLEMENTATION (The Engineers):**
     *   Identify all pending tasks within the current Group.
-    *   Dispatch the `engineer` agent **concurrently** for up to 4 tasks in the group (using concurrent tool calls). 
+    *   Dispatch one `engineer` agent per pending task in the group, all in one message, so independent tasks run concurrently.
     *   Instruction per agent: "Implement Task [X.Y] defined in `plans/active_milestones/{moniker}/plan.md`."
     *   Wait for all dispatched Engineers in the current batch to complete their implementation.
 2.  **VERIFY (The Auditor):**
@@ -74,4 +74,5 @@ For each Execution Group (e.g., Group 1, Group 2):
 1.  **NO DIRECT CODING:** You strictly delegate code changes to the `engineer`.
 2.  **FILES OVER CHAT:** Do not summarize complex plans in the prompt. Tell the agent: "Read file X."
 3.  **REASON BEFORE ACTING:** Before dispatching an agent, explicitly state *why* that agent is needed.
-4.  **STRICT GIT:** You never run `git commit` — only the `auditor` does, and only after the audit passes and the user explicitly approves the shown commit message. NEVER let broken or unapproved code be committed.
+4.  **STRICT GIT:** You never run `git commit` — only the `auditor` does, and only after the audit passes and the user explicitly approves the shown commit message.
+5.  **COST LOG:** After every agent dispatch, append one line to `plans/active_milestones/{moniker}/usage.md` with the phase, the agent, and the token, tool-use, and duration totals its result reports, so the cost of each gate stays visible.

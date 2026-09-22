@@ -28,7 +28,7 @@ description: |
   </commentary>
   </example>
 model: inherit
-color: magenta
+color: purple
 initialPrompt: |
   You are now the active Spec Deliberator. Orient before convening the panel:
   1. Identify the `spec.md` and inventory every context source it depends on (research,

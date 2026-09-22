@@ -1,6 +1,6 @@
 ---
 name: spec-validator
-description: Use after a spec or design doc is drafted and BEFORE writing an implementation plan, to find defects while they are still cheap to fix. Dispatches independent skeptic agents that attack the spec for ambiguity, missing or contradictory requirements, and untestable acceptance criteria, then keeps only findings confirmed by a 2-of-3 majority. Symptoms - "validate this spec", "poke holes in this design", "is this spec ready to plan against", finishing brainstorming before writing-plans, a freshly written specs/*.md.
+description: Use after a spec or design doc is drafted and BEFORE writing an implementation plan, to find defects while they are still cheap to fix. Dispatches independent skeptic agents that attack the spec for ambiguity, missing or contradictory requirements, and untestable acceptance criteria, then keeps only findings confirmed by a 2-of-3 majority. Symptoms - "validate this spec", "poke holes in this design", "is this spec ready to plan against", finishing the product-owner grill loop before architect, a freshly written plans/active_milestones/*/spec.md.
 ---
 
 # Adversarial Spec Validation
@@ -68,18 +68,13 @@ Do **not** let them share a scratchpad — independence is what makes the vote m
 Each agent's final message is a fenced JSON block (see **Output Contract**). Parse all three.
 If an agent returns prose instead of JSON, re-dispatch that one — do not hand-guess its findings.
 
-### 5. Dedup by identity
-Three skeptics will phrase the same hole three different ways. Group findings by a **stable
-identity**, not by exact wording. Use `id` (a kebab-case slug each agent assigns) plus the
-quoted `clause`. If you tally on raw text you get three 1-vote findings and nothing reaches
-quorum.
-
-### 6. Apply the majority gate
-- A finding is **confirmed** when it appears in **≥ 2 of 3** skeptic outputs.
-- A finding with **exactly 1 vote** is **unconfirmed** — do not silently drop it; list it under "Unconfirmed (FYI)". A single skeptic spotting a real hole is exactly the recall you traded for precision.
-- For severity, take the **most common** severity among the agreeing skeptics; on a tie, take the higher.
-
-> **Tuning the gate:** 2-of-3 is the default. For a high-stakes or security-sensitive spec, drop to **any-one** (1 of 3) for maximum recall and triage the noise yourself. When fix-churn is expensive, raise to **unanimous** (3 of 3).
+### 5–6. Dedup and gate
+Save each skeptic's JSON to a file and run
+`python3 ${CLAUDE_PLUGIN_ROOT}/lib/tally.py --gate 2 s1.json s2.json s3.json`.
+It groups by stable `id`, counts votes, and picks the majority severity (tie → higher).
+Read the confirmed and unconfirmed lists from its output; do not tally by hand.
+Use `--gate 1` for high-stakes or security-sensitive artifacts and `--gate 3` when
+fix-churn is expensive.
 
 ### 7. Persist the review
 Write the aggregated result as a Markdown report to
@@ -217,7 +212,7 @@ _(repeat per confirmed finding)_
 - [ ] Re-ran panel on revision → `spec-validation-r2.md` _(or: not needed)_
 ```
 
-## Worked Example
+## Worked Example (illustrative only — do not match its length, domain, or wording)
 
 > Spec excerpt: *"The export endpoint returns the user's records as a downloadable file."*
 
@@ -239,7 +234,7 @@ The two confirmed holes get written into the spec before any plan is drafted.
 | "The spec looks thorough, one skeptic is enough." | One agent trends toward agreement. The vote needs ≥3 independent runs. |
 | "I'll let the three agents collaborate." | Shared context collapses them toward consensus; the vote becomes meaningless. |
 | "Only 1 skeptic flagged it, so ignore it." | Log it as unconfirmed. That tail is the recall you paid for. |
-| "I'll paraphrase their findings together." | Dedup on stable `id` + quoted clause, not by re-summarizing — or real holes vanish in the merge. |
+| "I'll paraphrase their findings together." | Run `lib/tally.py` on the raw verdicts; it counts by stable `id`. Re-summarizing first makes real holes vanish in the merge. |
 | "An agent returned prose, I'll interpret it." | Re-dispatch for valid JSON. Don't guess the contract. |
 
 ## Calibration Note

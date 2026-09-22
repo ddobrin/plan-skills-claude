@@ -4,7 +4,7 @@ A swarm of role-based agents and adversarial validation gates that drive a featu
 
 These skills are designed to be used together. A single orchestrator (`starter`) dispatches the role agents in sequence, stops for human approval at defined gates, and treats files in `plans/` — not chat messages — as the single source of truth. Three independent *validator* skills slot in at the boundary between each phase to attack the artifact (spec, plan, or diff) before the next phase consumes it.
 
-> **Skills or subagents?** This document describes the **skills** form (invoked with the `Skill` tool). The same swarm is also packaged as **subagents** under [`agents/`](agents/README.md) — dispatched with the `Task` tool (`subagent_type`), auto-delegated from each agent's `description`, or launched with `claude --agent <name>`. The two families are kept in sync; the agents add per-role `model`, `color`, `tools`, and an `initialPrompt` bootstrap. See [`agents/README.md`](agents/README.md) for the agent-specific details.
+> **Skills or subagents?** This document describes the **skills** form (invoked with the `Skill` tool). The same swarm is also packaged as **subagents** under [`agents/`](agents/README.md) — dispatched with the `Agent` tool (`subagent_type`), auto-delegated from each agent's `description`, or launched with `claude --agent <name>`. The two families are kept in sync; the agents add per-role `model`, `color`, `tools`, and an `initialPrompt` bootstrap. See [`agents/README.md`](agents/README.md) for the agent-specific details.
 
 ---
 
@@ -109,7 +109,7 @@ A **drop-in alternative to `architect`** for plans that deserve a human-optimize
 #### 4. `engineer` — The Expert Builder
 Implements the plan exactly, one atomic step at a time, under strict Test-Driven Development.
 
-- **Doctrine:** no untested changes; Red → Green → Refactor; characterization tests + seams for legacy code (Feathers); incrementalism, deep modules, DRY, fail-fast, Boy Scout rule.
+- **Doctrine:** no untested changes; Red → Green → Refactor; characterization tests + seams for legacy code (Feathers); small increments that keep the build green; the simplest code that fits existing patterns; fail fast; no tidying outside the task.
 - **Tracks progress** by checking off todos directly in `plan.md`; uses `git mv` to preserve history.
 - **Constraints:** strict scope — no unrequested refactors or features; no plan → no code; never hands off a broken build; never commits.
 
@@ -152,7 +152,7 @@ Runs **after a plan is drafted, before `plan-validator`**, when the plan spans m
 
 ### Adversarial Validators
 
-All three share the same machinery: dispatch **3 independent skeptic agents in parallel** (no shared scratchpad), each framed to *break* the artifact with a **default-to-reject** posture, then keep only findings confirmed by a **2-of-3 majority** (1-vote findings are surfaced as "Unconfirmed (FYI)", never silently dropped). Each skeptic returns a single fenced JSON block; the orchestrator dedups by a stable kebab-case `id` before tallying. The gate is tunable: drop to **any-one** for high-stakes work, raise to **unanimous** when re-work is costly. Every panel then writes a **human-readable Markdown report** to `plans/active_milestones/{moniker}/adversarial-reviews/{stage}-validation.md` — written on every run (even a clean pass), with re-runs preserved as `-r2`/`-r3` — so the verdict is browsable without opening an agent transcript.
+All three share the same machinery: dispatch **3 independent skeptic agents in parallel** (no shared scratchpad), each framed to *break* the artifact with a **default-to-reject** posture, then keep only findings confirmed by a **2-of-3 majority** (1-vote findings are surfaced as "Unconfirmed (FYI)", never silently dropped). Each skeptic returns a single fenced JSON block; the orchestrator saves the verdicts and counts votes by stable kebab-case `id` with `lib/tally.py` instead of tallying by hand. The gate is tunable: drop to **any-one** for high-stakes work, raise to **unanimous** when re-work is costly. Every panel then writes a **human-readable Markdown report** to `plans/active_milestones/{moniker}/adversarial-reviews/{stage}-validation.md` — written on every run (even a clean pass), with re-runs preserved as `-r2`/`-r3` — so the verdict is browsable without opening an agent transcript.
 
 #### 8. `spec-validator` — Attack the Spec
 Runs **after a spec is drafted, before a plan is written** — defects are cheapest to fix here.
@@ -226,6 +226,7 @@ The swarm communicates through files under `plans/`. Knowing this layout is the 
 | `plans/active_milestones/{moniker}/adversarial-reviews/geap-{spec,plan}-validation.md` | `geap-spec-validator` · `geap-plan-validator` | Report from the **remote** Vertex AI panel (3 configurable skeptic models + synthesis vote) — same review-document shape as the local validators, plus the models used and the 2-of-4 vote tally per finding. |
 | `plans/active_milestones/{moniker}/adversarial-reviews/geap-interactions-{spec,plan}-validation.md` | `geap-interactions-spec-validator` · `geap-interactions-plan-validator` | Report from the **no-Python** remote panel (Interactions API via curl/ADC, Vertex fallback) — same shape as the geap reports plus per-model transport and a Panel Health section. |
 | `plans/audit/AUDIT_[Plan_Name].md` | `auditor` | Evidence-based audit report (the `plans/audit/` dir is git-ignored). |
+| `plans/active_milestones/{moniker}/usage.md` | `starter` | Cost log: one line per agent dispatch with the phase, the agent, and the token, tool-use, and duration totals its result reported. |
 | `plans/active_milestones/{moniker}/visual-recap.html` | `visual-implementation-recap` | Self-contained, browsable recap of everything the milestone changed — diffstat, annotated diffs, task/audit status — for the human commit gate (zero build; opens in any browser). |
 
 ---
@@ -242,7 +243,7 @@ A typical end-to-end run:
    - *(optional)* **`plan-deliberator`** convenes a territory panel (intent · codebase · delivery) to reshape the plan and decide open trade-offs with cited evidence before it faces the gate.
 5. **`plan-validator`** attacks the plan against the real codebase; the `first_domino` and confirmed fixes are applied (reorder steps, add prerequisites, correct assumptions).
 6. **🛑 Human review gate** — the user reviews `spec.md` + `plan.md` and types "approve".
-7. **`engineer`** (up to ~4 in parallel per group) implements each group under TDD; **`simplifier`** optionally refines; **`auditor`** verifies each group and writes an audit report.
+7. **`engineer`** (one per independent task, in parallel) implements each group under TDD; **`simplifier`** optionally refines; **`auditor`** verifies each group and writes an audit report.
 8. **`implementation-validator`** attacks the diff before merge; confirmed defects (at calibrated severity) are fixed.
 9. **🛑 Commit gate** — `visual-implementation-recap` renders `visual-recap.html` so the human can review every change at altitude; commit only on a green audit **and** explicit user approval.
 10. **`product-owner`** marks the release "Shipped" and activates the next.

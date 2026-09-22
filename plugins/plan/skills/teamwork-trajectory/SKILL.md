@@ -9,4 +9,4 @@ This skill allows you to dynamically compile an interactive, dark-mode visual ti
 
 ## Usage
 - Trigger this skill when the user asks to "generate trajectory", "visualize teamwork", "trace agents", or "update trajectory dashboard".
-- Run the generator script using python to scan `.agents/` and output the HTML dashboard.
+- Run `python3 ${CLAUDE_PLUGIN_ROOT}/skills/teamwork-trajectory/generator.py` from the project root; it scans `.agents/` and writes `.agents/trajectory.html`.

@@ -76,11 +76,13 @@ compatibility; hidden coupling that fans out to unmentioned callers.
 3. **Dispatch 3 skeptics in parallel** — three `Agent` calls in one message,
    `subagent_type: "general-purpose"` (can read/grep the codebase). Independent runs.
 4. **Collect verdicts:** parse each fenced JSON; re-dispatch any that returns prose.
-5. **Dedup by identity:** group by stable `id` + the `step` targeted.
-6. **Apply the majority gate:** confirmed = ≥2 of 3; 1-vote → "Unconfirmed (FYI)";
-   severity = most common among agreeing (tie → higher). Default 2-of-3; drop to
-   any-one for high-risk plans (irreversible migrations, prod data); raise to
-   unanimous when re-planning churn is costly.
+5. **Dedup and gate:** save each skeptic's JSON to a file and run
+   `python3 ${CLAUDE_PLUGIN_ROOT}/lib/tally.py --gate 2 s1.json s2.json s3.json`; it
+   groups by stable `id`, counts votes, and takes the majority severity (tie →
+   higher). Do not tally by hand. `--gate 1` for high-risk plans (irreversible
+   migrations, prod data), `--gate 3` when re-planning churn is costly.
+6. **Read the result:** confirmed = at or above the gate; 1-vote → "Unconfirmed
+   (FYI)", never silently dropped.
 7. **Persist the review** to
    `plans/active_milestones/{moniker}/adversarial-reviews/plan-validation.md` (create
    the folder). Derive `{moniker}` from the plan path; bare plan → 
@@ -191,4 +193,4 @@ section, even when empty (`_None._`).
 - Clean prose hides dead assumptions — skeptics must open the files.
 - No `file:line` → treat as a guess (confidence low), don't reorder around it.
 - A 1-vote ordering bug stays unconfirmed but examined — these are costly to hit.
-- Never let agents discuss the plan together; dedup on stable `id` + step.
+- Never let agents discuss the plan together; count votes with `lib/tally.py`, not by merging findings in your own words.

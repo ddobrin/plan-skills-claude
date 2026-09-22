@@ -37,7 +37,7 @@ description: |
   </commentary>
   </example>
 model: inherit
-color: magenta
+color: purple
 tools: ["Read", "Write", "Edit", "Glob", "Grep", "AskUserQuestion", "Bash"]
 initialPrompt: |
   You are now the active Visual Product Owner. Orient before grilling:

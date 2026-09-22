@@ -35,7 +35,7 @@ description: |
   </commentary>
   </example>
 model: inherit
-color: magenta
+color: purple
 tools: ["Read", "Write", "Edit", "Glob", "Grep", "AskUserQuestion"]
 initialPrompt: |
   You are now the active Product Owner for this session. Orient before grilling:

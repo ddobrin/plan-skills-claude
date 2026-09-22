@@ -1,6 +1,6 @@
 ---
 name: plan-validator
-description: Use after an implementation plan is written and BEFORE executing it, to catch ordering bugs and false assumptions while they are still cheap. Dispatches independent skeptic agents that assume the plan WILL fail, read the codebase to check its assumptions, and find the first domino that topples the rest — keeping only findings confirmed by a 2-of-3 majority. Symptoms - "validate this plan", "will this plan work", "review the plan before we start", a freshly written plans/*.md from writing-plans, about to run executing-plans or subagent-driven-development.
+description: Use after an implementation plan is written and BEFORE executing it, to catch ordering bugs and false assumptions while they are still cheap. Dispatches independent skeptic agents that assume the plan WILL fail, read the codebase to check its assumptions, and find the first domino that topples the rest — keeping only findings confirmed by a 2-of-3 majority. Symptoms - "validate this plan", "will this plan work", "review the plan before we start", a freshly written plans/active_milestones/*/plan.md from architect, about to dispatch engineers.
 ---
 
 # Adversarial Plan Validation
@@ -18,7 +18,7 @@ says edit `X.dispatch()` but that method does not exist."
 
 ## When to Use
 
-- A written implementation plan exists (e.g. from `superpowers:writing-plans`) and you are about to execute it.
+- A written implementation plan exists (e.g. from `architect`) and you are about to execute it.
 - The user asks to "validate", "sanity-check", "stress-test", or "review" a plan before work starts.
 - The plan touches existing code whose shape the plan *assumes* — exactly where plans rot.
 
@@ -66,16 +66,13 @@ Make **three `Agent` calls in a single message**. Use `subagent_type: "general-p
 ### 4. Collect verdicts
 Parse each agent's fenced JSON. Re-dispatch any agent that returns prose instead of JSON.
 
-### 5. Dedup by identity
-Group findings by stable `id` + the `step` they target. Two skeptics describing the same
-ordering bug should collapse to one entry, not three.
-
-### 6. Apply the majority gate
-- **Confirmed:** appears in **≥ 2 of 3** outputs.
-- **Unconfirmed (1 vote):** keep under "Unconfirmed (FYI)" — never silently drop.
-- Severity: most common among agreeing skeptics; tie → higher.
-
-> **Tuning the gate:** 2-of-3 is the default. Drop to **any-one** for a high-risk plan (irreversible migrations, prod data); raise to **unanimous** when re-planning churn is costly.
+### 5–6. Dedup and gate
+Save each skeptic's JSON to a file and run
+`python3 ${CLAUDE_PLUGIN_ROOT}/lib/tally.py --gate 2 s1.json s2.json s3.json`.
+It groups by stable `id`, counts votes, and picks the majority severity (tie → higher).
+Read the confirmed and unconfirmed lists from its output; do not tally by hand.
+Use `--gate 1` for high-stakes or security-sensitive artifacts and `--gate 3` when
+fix-churn is expensive.
 
 ### 7. Persist the review
 Write the aggregated result as a Markdown report to
@@ -223,7 +220,7 @@ _(repeat per confirmed finding; the First domino first)_
 - [ ] Re-ran panel on revision → `plan-validation-r2.md` _(or: not needed)_
 ```
 
-## Worked Example
+## Worked Example (illustrative only — do not match its length, domain, or wording)
 
 > Plan excerpt: *"Step 2: add `retryCount` to the `Job` record. Step 3: update `JobScheduler.dispatch()` to read `retryCount`. Step 4: migrate existing rows."*
 
@@ -247,7 +244,7 @@ The plan is reordered and the missing default step inserted before execution beg
 | "The agent says step 3 is wrong but didn't cite a line." | Unverified prediction = guess. Force `file:line` or mark confidence low. |
 | "One skeptic found the ordering bug, two didn't." | Keep it unconfirmed and look — ordering bugs are easy to miss and costly to hit. |
 | "I'll let the agents discuss the plan together." | Shared context collapses the vote. Dispatch independently. |
-| "I'll merge their findings in my own words." | Dedup on stable `id` + step, or the same bug splits into three sub-quorum entries. |
+| "I'll merge their findings in my own words." | Run `lib/tally.py` on the raw verdicts; it counts by stable `id`. Merging by hand splits the same bug into three sub-quorum entries. |
 
 ## Calibration Note
 

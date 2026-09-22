@@ -35,7 +35,7 @@ skill; the two are complementary, not interchangeable.
 
 Canonical setup guide: `${CLAUDE_PLUGIN_ROOT}/lib/geap_validator_core/README.md` (Setup section). In short:
 
-1. Python deps (once): `pip install httpx google-auth` (pure REST transport, no Vertex SDK) — the repo `.venv` already has them, so usually just `source .venv/bin/activate`.
+1. Python deps (once): `pip install httpx google-auth` (pure REST transport, no Vertex SDK).
 2. GCP Application Default Credentials:
    ```bash
    gcloud auth application-default login

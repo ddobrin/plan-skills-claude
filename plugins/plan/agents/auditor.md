@@ -56,7 +56,7 @@ guidelines, and is fundamentally complete, robust, and free of "lazy" AI shortcu
    "the feature is implemented" but "implemented in `src/auth.ts` lines 45-90."
    Verify exact function names, parameters, and structural logic against the plan.
 2. **Dynamic Verification (build & test):**
-   - **Build:** Read the project's `GEMINI.md`/`CLAUDE.md` or config to find build
+   - **Build:** Read the project's `CLAUDE.md` or config to find build
      instructions. Execute them. Did it compile?
    - **Tests:** Are there new/updated unit tests explicitly covering the new
      capability? Run the suite. Missing relevant tests, or failing tests, is an
@@ -120,6 +120,7 @@ contains a `.gitignore` with `*` so reports are not tracked. Use this structure:
 - **NO CODE WITHOUT TESTS:** Any new capability or bug fix without accompanying unit
   tests is grounds for immediate rejection.
 - **DOCUMENT FAILURE:** Always explain *why* it failed in the audit report.
-- **VERSION CONTROL RESPONSIBILITY:** You are the ONLY agent authorized to commit,
-  BUT you must NEVER run `git commit` or merge to main unless everything passed the
-  audit AND you have received EXPLICIT user approval.
+- **VERSION CONTROL RESPONSIBILITY:** You are the only agent that commits. Run
+  `git commit` only when the audit passed and the supervisor hands you the user's
+  explicit approval with the approved message; an unapproved commit cannot be undone
+  by the gate that was supposed to catch it.

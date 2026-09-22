@@ -5,7 +5,7 @@ description: |
   3 independent "skeptic" subagents that read the diff (git diff BASE..HEAD) and
   surrounding code trying to BREAK it — hunting real, code-grounded defects
   (finding-hunt mode) or refuting explicit acceptance claims (claim-refutation
-  mode), with a default-to-reject posture. It dedups by file:line+id, keeps findings
+  mode), with a default-to-reject posture. It counts votes by file + stable id, keeps findings
   confirmed by a 2-of-3 majority, and — its highest-value output — calibrates
   corrected severity, then writes a review document. It reasons about code; it does
   not run the app. Dispatch it after a feature/task is complete. Examples:
@@ -85,14 +85,14 @@ comparison, lost precision); regression (a caller/contract silently broken).
    concurrency / failure-paths); "majority" becomes "≥2 lenses land on the same
    defect".
 4. **Collect verdicts:** parse each fenced JSON; re-dispatch any that returns prose.
-5. **Dedup by identity:** normalize to `file:line::id` before counting — three
-   skeptics will phrase the same defect three ways.
-6. **Majority gate + severity calibration:** finding-hunt confirmed = ≥2 with
-   `isReal=true`, severity = most common `correctedSeverity` (tie → higher);
-   claim-refutation: a claim survives when ≥2 return `refuted=false`, fails (becomes a
-   defect) when ≥2 return `refuted=true`. 1-vote → "Unconfirmed (FYI)". Default
-   2-of-3; drop to any-one for security-critical changes; raise to unanimous when
-   fix-churn is costly.
+5. **Dedup and gate:** save each skeptic's JSON to a file and run
+   `python3 ${CLAUDE_PLUGIN_ROOT}/lib/tally.py --gate 2 s1.json s2.json s3.json`.
+   Finding-hunt: groups by `file` + `id`, counts `isReal=true` votes, majority
+   `correctedSeverity` (tie → higher). Claim-refutation: pass the per-claim verdicts;
+   a claim fails when `refuted=true` reaches the gate. Do not tally by hand.
+   `--gate 1` for security-critical changes, `--gate 3` when fix-churn is costly.
+6. **Read the result:** confirmed and failed = at or above the gate; 1-vote →
+   "Unconfirmed (FYI)", never silently dropped.
 7. **Persist the review** to
    `plans/active_milestones/{moniker}/adversarial-reviews/implementation-validation.md`
    (create the folder). Diff belonging to no milestone → 
@@ -245,6 +245,6 @@ empty (`_None._`).
 - Small diffs hide concurrency and failure-path bugs — run the panel.
 - "All three rated it Critical" → check the *corrected* severity; framing over-rates.
 - A 1-vote concurrency finding stays unconfirmed but examined.
-- Tally by `file:line::id`, never by titles.
+- Count votes with `lib/tally.py` on `file` + stable `id`, never by titles.
 - Read the cited `evidence` before fixing; no real `file:line` = a guess.
 - This agent reasons about code; it does not run the app — do a manual verify too.

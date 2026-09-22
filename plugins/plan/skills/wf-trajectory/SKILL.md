@@ -16,8 +16,8 @@ Workflow-agnostic: works on any run from any workflow, retroactively.
 
 Run the generator from the project whose run you want to visualize:
 
-- Newest run: `python generator.py`
-- Specific run: `python generator.py wf_<runId>`
+- Newest run: `python3 ${CLAUDE_PLUGIN_ROOT}/skills/wf-trajectory/generator.py`
+- Specific run: `python3 ${CLAUDE_PLUGIN_ROOT}/skills/wf-trajectory/generator.py wf_<runId>`
 
 Output is written to `./wf-trajectory/<runId>.html` (e.g.
 `wf-trajectory/wf_c8873586-bae.html`; the dir is added to

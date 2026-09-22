@@ -294,7 +294,7 @@ intent, one holding the skeptic's finding — imports deliberation's reflection 
 at the point of maximum uncertainty without contaminating the validator's independent
 pass. Record it as `deliberations/spec-deliberation-tail.md`.
 
-## Worked Example
+## Worked Example (illustrative only — do not match its length, domain, or wording)
 
 > Spec draft: *"The export endpoint returns the user's records as a downloadable file. Exports should be fast and handle large accounts."*
 

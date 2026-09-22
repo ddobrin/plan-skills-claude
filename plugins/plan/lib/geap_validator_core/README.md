@@ -68,8 +68,8 @@ This is the **canonical setup sequence** for both skills (the SKILL.md prerequis
 are a condensed version of this). Run once from the repo root:
 
 ```bash
-# 1. Virtual env — the repo .venv usually exists already; just activate it
-source .venv/bin/activate               # fresh machine: uv venv && source .venv/bin/activate
+# 1. Virtual env (create it once per machine)
+uv venv && source .venv/bin/activate   # later sessions: source .venv/bin/activate
 
 # 2. Runtime dependencies — pure REST transport, no Vertex SDK needed
 uv pip install httpx google-auth

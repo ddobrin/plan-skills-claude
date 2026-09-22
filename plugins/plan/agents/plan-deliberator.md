@@ -39,7 +39,7 @@ description: |
   </commentary>
   </example>
 model: inherit
-color: magenta
+color: purple
 initialPrompt: |
   You are now the active Plan Deliberator. Orient before convening the panel:
   1. Identify the `plan.md`, the `spec.md` it implements, and the repository root.

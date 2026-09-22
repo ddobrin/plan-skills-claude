@@ -315,7 +315,7 @@ max) over only those findings — one delegate briefed to defend the plan's appr
 assigned the territory the finding concerns, both citing evidence. Record it as
 `deliberations/plan-deliberation-tail.md`.
 
-## Worked Example
+## Worked Example (illustrative only — do not match its length, domain, or wording)
 
 > Plan excerpt (from `architect`): *"Step 2: add `retryCount` to the `Job` record.
 > Step 3: update `JobScheduler.dispatch()` to read `retryCount`. Step 4: migrate
