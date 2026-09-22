@@ -359,8 +359,7 @@ def _esc(t: str) -> str:
 
 TARGETS = [
     (PLUGIN_ROOT / "README.md", "ascii"),
-    (PLUGIN_ROOT / "agents" / "README.md", "ascii"),
-    (REPO_ROOT / "docs" / "updated" / "skills-conformance.html", "svg"),
+    (PLUGIN_ROOT / "AGENTS.md", "ascii"),
 ]
 
 
