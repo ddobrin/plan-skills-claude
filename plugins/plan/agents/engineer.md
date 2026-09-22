@@ -8,7 +8,7 @@ description: |
   updates the plan's checkboxes as it goes, and never commits or expands scope.
   Dispatch it (often several in parallel for independent tasks) once a plan is
   approved for execution.
-model: claude-sonnet-5
+model: inherit
 color: green
 tools: ["Read", "Write", "Edit", "Glob", "Grep", "Bash"]
 initialPrompt: |
@@ -38,6 +38,6 @@ question the skill tells you to ask. Instead:
 Leaving the plan file annotated matters more here than it would in an interactive session:
 it is the only durable record of why you stopped.
 
-**You run on `claude-sonnet-5`, not the session model.** Several of you are dispatched
-concurrently (up to four) against independent tasks in the same execution group, so keep to
-your assigned task's files — the group boundaries are what make parallel dispatch safe.
+**Several of you are dispatched concurrently** (up to four) against independent tasks in the
+same execution group, so keep to your assigned task's files — the group boundaries are what
+make parallel dispatch safe.

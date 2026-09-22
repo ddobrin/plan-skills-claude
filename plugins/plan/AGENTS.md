@@ -18,7 +18,7 @@ Every agent is a single Markdown file (`agents/{name}.md`) whose YAML frontmatte
 |---|---|
 | `name` | The agent's identifier. Dispatch it as `plan:{name}` (e.g. `plan:architect`). |
 | `description` | What the agent is for **plus `<example>` trigger blocks** (`Context` / `user` / `assistant` / `commentary`). The runtime reads these to **auto-delegate** — i.e. pick this agent when a request matches — so the examples are functional, not decorative. |
-| `model` | The model the subagent runs on. Most use `inherit` (run on the caller's model); **`engineer` pins `claude-sonnet-5`** — TDD implementation is high-volume, well-scoped work suited to a faster model. |
+| `model` | The model the subagent runs on. Every agent uses `inherit` (runs on the caller's model), so the swarm follows the session's model. The one per-dispatch override is the optional `model: "sonnet"` the validators pass to their skeptic panels. |
 | `color` | The agent's color in the subagent UI (blue architects, red validators, green engineer, magenta product/deliberators, cyan orchestrator/recap, yellow auditor). |
 | `tools` | An explicit tool allowlist that **bounds the agent's authority**. It is a capability contract: `architect`/`product-owner` get no `Bash` (read-only, can't run builds or commit); `auditor`/`engineer` get `Bash`; the validators and deliberators get all tools because they fan out their own skeptic/delegate subagents. |
 | `initialPrompt` | **The agent-specific bootstrap.** See below. |
@@ -150,7 +150,7 @@ Representative examples straight from the agents:
 - **`initialPrompt` behavior:** same orientation as `architect`, plus: produce `plan.md` **first**, then render the HTML from it; no decision may live only in the HTML.
 
 #### 4. `engineer` — The Expert Builder
-**`model: claude-sonnet-5`** · `color: green` · `tools: Read, Write, Edit, Glob, Grep, Bash` — Implements the plan exactly, one atomic step at a time, under strict Test-Driven Development. (The only agent that pins a specific model — high-volume, well-scoped TDD work.)
+`model: inherit` · `color: green` · `tools: Read, Write, Edit, Glob, Grep, Bash` — Implements the plan exactly, one atomic step at a time, under strict Test-Driven Development.
 
 - **Doctrine:** no untested changes; Red → Green → Refactor; characterization tests + seams for legacy code (Feathers); strict scope — implement the assigned task and nothing more.
 - **Tracks progress** by checking off todos directly in `plan.md`; uses `git mv` to preserve history.
