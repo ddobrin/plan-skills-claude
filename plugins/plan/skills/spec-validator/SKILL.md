@@ -99,8 +99,7 @@ quorum.
   count suggests — read the evidence, not the tally.
 - **Single vote:** appears in exactly one. These go to the **Single-Vote Findings (triage
   required)** section and each one needs an explicit decision — tightened, accepted as
-  intended behavior, or refuted with a reason. A lone finding from a current-generation
-  skeptic is more often a real hole one reviewer happened to reach than noise, so "only one
+  intended behavior, or refuted with a reason. A lone finding is more often a real hole one reviewer happened to reach than noise, so "only one
   agent saw it" is not a reason to close it. Spec holes are the cheapest defects in the
   lifecycle to fix and the most expensive to discover later.
 - Severity: most common among agreeing skeptics; tie → higher.
@@ -133,7 +132,7 @@ for a complete run.
 | "Three identical prompts give me three independent opinions." | They give one opinion sampled three times. Correlated skeptics manufacture false corroboration — partition the lens *and* the reading assignment. |
 | "The spec looks thorough, one skeptic is enough." | One agent trends toward agreement. The vote needs ≥3 independent runs. |
 | "I'll let the three agents collaborate." | Shared context collapses them toward consensus; the vote becomes meaningless. |
-| "Only 1 skeptic flagged it, so ignore it." | Wrong default. Modern skeptics are precise; the lone finding is usually real. Triage it and record the decision. |
+| "Only 1 skeptic flagged it, so ignore it." | Wrong default. The lone finding is usually real. Triage it and record the decision. |
 | "I'll tell them to only report the serious stuff." | The model will comply and report less. Ask for everything; filter at the gate. |
 | "I'll paraphrase their findings together." | Dedup on stable `id` + quoted clause, not by re-summarizing — or real holes vanish in the merge. |
 | "An agent returned prose, I'll interpret it." | Re-dispatch for valid JSON. Don't guess the contract. |

@@ -44,7 +44,7 @@ _(repeat per confirmed finding; the First domino first)_
 ## Single-Vote Findings (triage required)
 
 > One skeptic found these and the others did not. That is not evidence they are wrong —
-> current-generation skeptics have high precision, so a lone finding is more often a real
+> a lone finding is more often a real
 > defect one reviewer happened to reach than noise. **Each row needs a decision** — fixed,
 > accepted as a known risk, or refuted with a reason. Do not close this section by ignoring it.
 

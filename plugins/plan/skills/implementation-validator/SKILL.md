@@ -108,7 +108,7 @@ you tally on raw text, nothing reaches quorum. Normalize to `file:line::id` befo
   that; read the evidence, not the tally.
 - **Single vote:** appears in exactly one output. These go to the **Single-Vote Findings
   (triage required)** section and each one needs an explicit decision — fixed, accepted as a
-  known risk, or refuted with a reason. A lone finding from a current-generation skeptic is
+  known risk, or refuted with a reason. A lone finding is
   more often a real defect one reviewer happened to reach than noise, and concurrency and
   failure-path bugs are exactly the kind two of three readers miss.
 
@@ -131,7 +131,7 @@ for a complete run.
 ### 8. Act
 - Fix **confirmed** defects (and **failed claims**) at their calibrated severity, highest first.
 - **Triage every single-vote finding** and record the decision in the review.
-- Report the calibration explicitly: "3 findings claimed Critical; all 3 confirmed real but downgraded to High because impact is conditional on concurrent requests." This is the single most useful sentence the panel produces — see Calibration Note.
+- Report the calibration explicitly, in one sentence per moved finding: what severity was claimed, what it was corrected to, and the condition that gates the impact. When no severity moved, say that instead — see Calibration Note.
 - Tick the **Actions Taken** checklist in the review file as you fix each defect.
 
 ## Red Flags
@@ -149,14 +149,13 @@ for a complete run.
 
 ## Calibration Note
 
-Past runs show the highest-value output of this stage is **severity calibration, not
-deletion**. In a real review, three findings entered at **Critical** and *all three survived
-as real* — but every one was **downgraded to High** because the impact was conditional (a
-cross-request race on a singleton, not corruption on every call). Zero were deleted; zero
-stayed Critical. That Critical→High move is the signal: it separates "guaranteed on every
-call" from "serious but gated," which is exactly what a single aggressive reviewer gets
-wrong. Always surface the calibration delta to the user — it is more decision-useful than
-the raw verdict.
+A high-value output of this stage is **severity calibration, not only deletion**.
+Adversarial framing tends to over-rate impact, so a defect every skeptic agrees is real may
+still be over-rated: a cross-request race on a singleton is serious but gated, not
+corruption on every call. Calibration separates "guaranteed on every call" from "serious but
+gated," which is exactly what a single aggressive reviewer gets wrong. Report the severity
+the evidence supports — moved up, down, or unchanged — and always surface the calibration
+delta to the user; it is more decision-useful than the raw verdict.
 
 The same asymmetry explains what the quorum is for. It is a *ranking* device — it tells you
 which defects two independent readers reached, and those go first. It is not a filter that

@@ -14,10 +14,11 @@ Workflow-agnostic: works on any run from any workflow, retroactively.
 
 ## Usage
 
-Run the generator from the project whose run you want to visualize:
+Run the generator with the project whose run you want to visualize as the working
+directory — it locates the run from the current directory, not from its own location:
 
-- Newest run: `python generator.py`
-- Specific run: `python generator.py wf_<runId>`
+- Newest run: `python3 ${CLAUDE_PLUGIN_ROOT}/skills/wf-trajectory/generator.py`
+- Specific run: `python3 ${CLAUDE_PLUGIN_ROOT}/skills/wf-trajectory/generator.py wf_<runId>`
 
 Output is written to `./wf-trajectory/<runId>.html` (e.g.
 `wf-trajectory/wf_c8873586-bae.html`; the dir is added to
@@ -39,5 +40,5 @@ See `references/data-contract.md` for the fields consumed and
 
 ## Tests
 
-`python -m pytest tests/ -v` (uses a checked-in run fixture; no network, no
+`python3 -m pytest ${CLAUDE_PLUGIN_ROOT}/skills/wf-trajectory/tests/ -v` (uses a checked-in run fixture; no network, no
 `~/.claude` dependency).

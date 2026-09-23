@@ -36,10 +36,10 @@ Run this **after the audit exists** (ideally PASS). The git diff + `plan.md` + a
 *   For each section, replace the demo content between its paired markers (`<!-- VIR:OVERVIEW -->` … `<!-- /VIR:OVERVIEW -->`, etc.) with content authored from the grounding above.
 *   Use **`${CLAUDE_PLUGIN_ROOT}/skills/visual-implementation-recap/references/component-catalog.md`** for the exact HTML fragment per surface, and **`references/exemplar.md`** for a worked example.
 *   Mapping from evidence → surface:
-    *   Outcome + headline numbers → **Overview** (1–3-sentence brief + metric cards: files changed, +insertions/−deletions, tasks X/Y, audit PASS/FAIL).
+    *   Outcome + headline numbers → **Overview** (a short outcome brief + metric cards: files changed, +insertions/−deletions, tasks X/Y, audit PASS/FAIL).
     *   `plan.md` checklist × audit verdict → **Tasks Completed** (each task → ✅ Done / ⚠️ Partial / ❌ Failed with the files it touched).
     *   `git diff --stat` + `git status` → **Changed Files** (file tree with new/modified/deleted badges and a per-file `+X/−Y` diffstat).
-    *   The most important hunks of `git diff` → **Key Changes** (*the centerpiece* — 3–8 annotated diff cards; lines verbatim from the diff).
+    *   The most important hunks of `git diff` → **Key Changes** (*the centerpiece* — annotated diff cards; lines verbatim from the diff).
     *   System structure as it now stands → **Architecture** (Mermaid `flowchart` / `sequenceDiagram`).
     *   Contract / data-model changes → **API & Schema** (endpoint cards + `erDiagram`, with change flags).
     *   User-facing surface changes → **UI Changes** (before/after lo-fi wireframes).
@@ -66,8 +66,8 @@ Run this **after the audit exists** (ideally PASS). The git diff + `plan.md` + a
 2.  **Do not commit or merge.** Committing belongs to the `starter` / supervisor role, after a passing audit **and** explicit user approval. You are a review surface presented *before* that gate, not the gate itself.
 3.  **Grounded — true by construction:** Every diff line, file path, line count, task status, and finding must come from the actual `git diff` / `plan.md` / audit report. Never fabricate code or numbers. Interpretive annotations (the "what this means" notes beside a diff) are allowed but must be marked as inference — never presented as fact lifted from the diff.
 4.  **Redact secrets.** Before rendering any diff or code, strip or mask API keys, tokens, passwords, connection strings, and other credential-like literals. The recap shows *real* changed lines (unlike the spec/plan visuals, which show illustrative code), so a leaked secret would be published into a browsable artifact. When in doubt, mask it (`sk-••••`).
-5.  **Whole work-unit, no silent truncation.** Recap the entire milestone (implementation + fixes + tests + generated artifacts); exclude unrelated pre-existing dirty work. If you clip a long diff to stay within budget, **state what was clipped** — never present a partial diff as complete.
-6.  **Budgets.** 3–8 cards in Key Changes; prefer ≤ ~150 diff lines per card; the Overview brief is 1–3 sentences. Choose the changes that carry the most meaning, not the longest. (These are layout limits for the HTML surfaces, not a cap on how much you reason.)
+5.  **Whole work-unit, no silent truncation.** Recap the entire milestone (implementation + fixes + tests + generated artifacts); exclude unrelated pre-existing dirty work. If you clip a long diff, **state what was clipped** — never present a partial diff as complete.
+6.  **Scannable at the commit gate.** The reviewer should grasp the change from the Overview and Key Changes without opening the raw diff, and scan them in one sitting. Choose the hunks that carry the change's meaning, not the longest ones, and split a sprawling hunk across cards rather than rendering it whole.
 7.  **Honest reflection.** Do not inflate. If the audit is `FAIL` or a step is `⚠️ Partial`, the verdict banner and Tasks surface say so. The recap's value is trust.
 8.  **Self-contained.** One HTML file. The only external dependencies are the pinned CDN scripts at *view* time; diffs and code render with pure CSS (no library needed). No build step, no server, no local assets.
 9.  **The Notes surface is static.** Author annotations baked in at generation time, not a live, persisted, or multi-user system — say nothing that implies otherwise.

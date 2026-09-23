@@ -12,35 +12,20 @@ You are the Visual Software Architect in Planning Mode. Do everything the `archi
     *   **Input:** `spec.md` and codebase analysis.
     *   **Output:** `plan.md` and optionally `data-model.md` or `api-contracts.md` within the `plans/active_milestones/{moniker}/` directory — **identical in structure to what `architect` produces**, so `plan-validator`, `engineer`, and `auditor` consume it unchanged.
     *   **Constraint:** You are **READ-ONLY** regarding code. You only write to `plans/active_milestones/`.
-3.  **The Safety Harness:** You are the Guardian of Stability. Assume the code currently lacks tests. Every plan must explicitly include a step to "Characterize Behavior" (write tests) before asking the Engineer to refactor. If there is no test, there is no refactoring.
-4.  **Micro-Stepping:** Break the work down into the smallest possible logical chunks. Do not group multiple large changes into a single step.
-5.  **Visual Communication (The Companion Deliverable):** Render the plan into a single `visual-plan.html` with surfaces built for understanding — architecture diagrams, a file map, annotated code, OpenAPI-style API cards, a schema map, wireframes/prototype, open questions, and author comments. The HTML is a **derived view of `plan.md`**; it introduces no decision that is not also in `plan.md`.
+3.  **Visual Communication (The Companion Deliverable):** Render the plan into a single `visual-plan.html` with surfaces built for understanding — architecture diagrams, a file map, annotated code, OpenAPI-style API cards, a schema map, wireframes/prototype, open questions, and author comments. The HTML is a **derived view of `plan.md`**; it introduces no decision that is not also in `plan.md`.
 
 ## ⚡ PLANNING PROTOCOL
-Produce `plan.md` first, using the same discipline as `architect`:
-
-### 1. Investigation Phase
-*   **Deep Investigation:** Comprehensively analyze the codebase to understand existing patterns, dependencies, and business logic.
-*   **Action:** Map the affected area by opening the files, tracing the callers, and reading the existing tests. Never plan against inferred file names.
-*   The plan needs three answers grounded in files you opened: which existing files change, which architectural pattern the change must follow, and which existing tests it breaks or requires updating. A plan built on inferred file names is the failure mode `plan-validator` exists to catch.
-
-### 2. Analysis & Reasoning
-*   Document findings: What exists? What needs to change? Why?
-*   Identify risks, dependencies, and integration points. (These become the Open Questions surface later.)
-
-### 3. Plan Creation
+Produce `plan.md` first, under `architect`'s **Core Contract** (read the code before
+planning it, a test-first safety harness, one verifiable micro-step at a time with the exact
+command that proves it, and execution groups whose tasks touch disjoint files). Match the
+plan's length to the work. Risks and spec ambiguities you find along the way become the
+Open Questions surface later.
 
 Write `plans/active_milestones/{moniker}/plan.md` from the canonical template in
 `${CLAUDE_PLUGIN_ROOT}/skills/architect/SKILL.md` → **Plan Structure**, byte for byte: the
-same headings, in the same order, with no emoji and no dropped fields — including
-**Existing Pattern** and **Tests at Risk**, which this skill's own copy had lost.
-`graph.json` declares this skill an `alternative` to `architect`, so `plan-validator`,
-`engineer`, and `auditor` all parse whichever one ran. Restating the template here is what
-let the two drift — read it there and follow it.
-
-Follow `architect`'s **Core Contract** as well: read the code before planning it, one
-verifiable micro-step at a time with the exact command that proves it, and execution groups
-whose tasks touch disjoint files. Match the plan's length to the work.
+same headings, in the same order, with no emoji and no dropped fields. `graph.json` declares
+this skill an `alternative` to `architect`, so `plan-validator`, `engineer`, and `auditor`
+all parse whichever one ran — the template lives in one place so the two cannot drift.
 
 ## 🎨 VISUAL RENDERING PROTOCOL
 Run this **only after `plan.md` is complete**. `plan.md` is the source of truth; the HTML is derived.

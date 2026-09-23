@@ -41,7 +41,7 @@ _(repeat per confirmed finding)_
 ## Single-Vote Findings (triage required)
 
 > One skeptic found these and the others did not. That is not evidence they are wrong —
-> current-generation skeptics have high precision, so a lone finding is more often a real
+> a lone finding is more often a real
 > hole one reviewer happened to reach than noise. **Each row needs a decision** — tightened,
 > accepted as intended behavior, or refuted with a reason. Do not close this section by
 > ignoring it. Spec holes are the cheapest defects in the lifecycle to fix and the most

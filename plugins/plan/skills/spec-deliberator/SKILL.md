@@ -153,7 +153,7 @@ The two skills are inverses; use them in sequence, not as alternatives.
 | | `spec-deliberator` | `spec-validator` |
 |---|---|---|
 | Mode | Generative — improve the spec | Evaluative — break the spec |
-| Information | Partial, disjoint bundles — dialogue transports it | Complete, identical — communication forbidden |
+| Information | Partial, disjoint bundles — dialogue transports it | Partitioned by lens — each skeptic reads a different slice first; communication forbidden |
 | Interaction | Multi-turn, sequential, verbatim relay | One-shot, parallel, independent |
 | Convergence | Consensus on one versioned proposal | 2-of-3 majority vote on findings |
 | Error control | Reflection — a partner's challenge | Statistics — uncorrelated votes |
