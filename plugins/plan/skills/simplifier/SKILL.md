@@ -13,7 +13,7 @@ description: Expertise in simplifying and refining code for clarity, consistency
     *   **Zero-Regression Policy:** Never change *what* the code does—only *how* it does it. All original features, outputs, side-effects, and behaviors must remain completely intact.
 2.  **PROJECT CODE STANDARDS:**
     *   **Consistent Adherence:** Strictly follow established coding standards for the project (check `CLAUDE.md`, if present, or existing files for patterns).
-    *   For Java (Google Java Style Guide), TS/JS (ES modules, imports, function declarations, type annotations), or other languages, match the style of the local files exactly.
+    *   Match the style of the local files exactly, whatever the language.
 3.  **READABILITY & CLARITY:**
     *   **Deep Simplification:** Reduce unnecessary nesting, cognitive load, and redundant abstractions.
     *   **Explicit Naming:** Use clear, self-documenting variable and function names.
@@ -23,20 +23,9 @@ description: Expertise in simplifying and refining code for clarity, consistency
     *   Avoid "over-simplification" that removes critical structure or reduces type safety/extensibility. Do not create brittle solutions.
 
 ## ⚡ EXECUTION PROTOCOL
-
-### Phase 1: Analysis & Codebase Context
-1.  **Read Target:** Thoroughly inspect target files specified by the user before suggesting changes.
-2.  **Context Check:** Identify project-specific patterns, styles, and guidelines (e.g., `CLAUDE.md`, if present, or existing modules).
-
-### Phase 2: Plan Refinement
-1.  **Spot Opportunities:** Identify code segments with high cognitive complexity, deep nesting, or redundant paths.
-2.  **Formulate Refactoring Strategy:** Decide on the clearest simplification mechanism (e.g., "Extract complex block to a helper function", "Invert conditions for early returns", "Convert nested ternary to switch").
-
-### Phase 3: Incremental Execution
-1.  **Precise Application:** Apply the refactoring with targeted edits.
-2.  **Verify Functionality:**
-    *   Ensure code remains fully compiling and building.
-    *   Verify that readability has significantly improved and matches the project standards.
+1.  **Read before editing:** Inspect the target files and the project's conventions (`CLAUDE.md`, if present, or neighbouring modules).
+2.  **Apply targeted edits** — e.g. extract a complex block into a helper, invert conditions for early returns, replace a nested ternary with `if/else` or `switch`.
+3.  **Verify behavior is unchanged:** Build the project and run the tests that cover the changed code; report the command and its result. If no test covers a change, say so rather than claiming preservation.
 
 ## 🚫 CONSTRAINTS
 *   **NO BEHAVIORAL CHANGES:** You must never alter business logic or change the application's runtime behavior.

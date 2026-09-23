@@ -76,13 +76,18 @@ Make **three `Agent` calls in a single message**, `subagent_type: "general-purpo
 Parse each agent's fenced JSON. Re-dispatch any agent that returns prose.
 
 ### 5–6. Dedup, gate, and calibrate
-Save each skeptic's JSON to a file and run
+Save each skeptic's JSON to a file. In finding-hunt mode, skeptics name the same defect
+with different slugs and path spellings, and `tally.py` groups on the exact `file` + `id`,
+so first reconcile: where two findings describe the same defect (same file:line, same
+failure) under different slugs or path spellings, rewrite them to one canonical `file` and
+`id` in the saved files and record each remapping for the review. Merge only true
+duplicates. Then run
 `python3 ${CLAUDE_PLUGIN_ROOT}/lib/tally.py --gate 2 s1.json s2.json s3.json`.
-Finding-hunt: it groups by `file` + `id`, counts only `isReal=true` votes, and takes the majority
+Finding-hunt: it counts only `isReal=true` votes per `file` + `id` and takes the majority
 `correctedSeverity` (tie → higher). Claim-refutation: pass the per-claim verdict files
 instead; a claim fails when `refuted=true` reaches the gate and survives when
-`refuted=false` does. Read the confirmed, failed, and unconfirmed lists from its output;
-do not tally by hand. Use `--gate 1` for security-critical changes and `--gate 3` when
+`refuted=false` does. Read the confirmed, failed, and unconfirmed lists from its output
+rather than counting yourself. Use `--gate 1` for security-critical changes and `--gate 3` when
 fix-churn is expensive.
 
 ### 7. Persist the review
@@ -100,7 +105,7 @@ Review Document** template below verbatim.
 ### 8. Act
 - Fix **confirmed** defects (and **failed claims**) at their calibrated severity, highest first.
 - Surface **unconfirmed** findings for human eyeballing.
-- Report the calibration explicitly: "3 findings claimed Critical; all 3 confirmed real but downgraded to High because impact is conditional on concurrent requests." This is the single most useful sentence the panel produces — see Calibration Note.
+- Report the calibration explicitly: claimed = the highest single-skeptic rating in tally's `severity_votes` (or a prior reviewer's rating when validating existing findings); corrected = tally's majority. Say what moved and why, or that nothing moved. See Calibration Note.
 - Tick the **Actions Taken** checklist in the review file as you fix each defect.
 
 ## Finding-Hunt Template (default)
@@ -134,7 +139,7 @@ relies on a misreading, set isReal=false and say why.
 
 Assign each finding a STABLE id: a short kebab-case slug (e.g. "empty-list-npe",
 "singleton-cursor-race"). Two reviewers finding the same defect should plausibly choose
-the same slug. Calibrate severity HONESTLY: critical = unconditional data loss/corruption
+the same slug. Calibrate severity against these definitions: critical = unconditional data loss/corruption
 or broken core function on every run; high = serious but conditional (e.g. only under
 concurrency); medium = real but narrow; low = minor.
 
@@ -180,8 +185,8 @@ boundary inputs.
 CONTEXT — what the change claims overall:
 {DESCRIPTION}
 
-Be skeptical. DEFAULT refuted=true. You may only return refuted=false if you ACTIVELY
-tried to break the claim and could not — and you must describe what you tried.
+Be skeptical. DEFAULT refuted=true. Return refuted=false only if you tried to break the claim
+and could not, and describe what you tried.
 
 Your final message MUST be exactly one fenced JSON block and nothing else, matching:
 
@@ -238,7 +243,7 @@ the **Failed Claims** section in finding-hunt mode. Keep the other sections even
 
 ## Verdict
 
-{1–3 plain-language sentences. Lead with the calibration headline, e.g. "3 findings claimed Critical; all confirmed real but downgraded to High — impact is gated on concurrent requests, not every run."}
+{1–3 plain-language sentences. Lead with the calibration headline — what moved between claimed and corrected severity and why — or state that nothing moved.}
 
 ## Confirmed Defects (≥ 2 votes)
 
@@ -257,7 +262,7 @@ _(repeat per confirmed defect)_
 
 | `id` | claimed | corrected | why |
 |---|---|---|---|
-| `{id}` | 🔴 critical | 🟠 high | {impact gated on concurrent requests, not every run} |
+| `{id}` | {highest single rating} | {tally majority} | {why the impact is narrower or wider} |
 
 ## Failed Claims  _(claim-refutation mode only)_
 
@@ -304,7 +309,7 @@ After dedup + majority gate + calibration:
 | "The diff is small, one reviewer is enough." | Small diffs hide concurrency and failure-path bugs. Run the panel. |
 | "All three rated it Critical, so it's Critical." | Check the *corrected* severity and the reasoning — adversarial framing over-rates. Calibration is the point. |
 | "One skeptic flagged a race, two didn't." | Concurrency bugs are easy to miss. Keep it unconfirmed and look at the evidence. |
-| "I'll tally findings by their titles." | Titles differ across agents. Run `lib/tally.py`, which counts by `file` + stable `id`, or quorum never forms. |
+| "I'll tally findings by their titles." | Titles and slugs differ across agents. Reconcile duplicate ids and path spellings, then run `lib/tally.py`, which counts by `file` + `id`. |
 | "The agent said it's broken — fix it." | Read the cited `evidence` first. A finding without a real `file:line` is a guess, not a defect. |
 | "I verified the code, so the feature works." | This skill reasons about code; it does not run the app. For runtime confirmation, do a manual `verify` pass too. |
 

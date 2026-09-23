@@ -21,7 +21,7 @@ Add this repository to your Claude Code plugin marketplace and install the plugi
 The `plan` plugin bundles the skills, subagents, and shared libraries as one atomic unit — install it whole; the two families cross-reference each other and are not designed for partial installs.
 
 ### 2. Subagents Ship With the Plugin
-> 📖 See [plugins/plan/agents/README.md](plugins/plan/agents/README.md) for the subagent reference.
+> 📖 See [plugins/plan/SUBAGENTS.md](plugins/plan/SUBAGENTS.md) for the subagent reference.
 
 Subagents are packaged and distributed directly within the `plan` plugin.
 
@@ -41,5 +41,5 @@ The swarm runs on the Claude model family. Every role inherits the session's mod
 Explore the underlying documentation for details on individual roles, lifecycle stages, and deliverables:
 
 * **Planning Skills:** Complete guide to skills, artifacts, and lifecycle is documented in [plugins/plan/README.md](plugins/plan/README.md).
-* **Planning Subagents:** Complete guide to subagents, frontmatter schema, and auto-delegation triggers is documented in [plugins/plan/agents/README.md](plugins/plan/agents/README.md).
+* **Planning Subagents:** Complete guide to subagents, frontmatter schema, and auto-delegation triggers is documented in [plugins/plan/SUBAGENTS.md](plugins/plan/SUBAGENTS.md).
 * **Supervisor Orchestrator Plugin:** Documentation for the spec-driven coordinator and validation gates is in [plugins/orchestrator/README.md](plugins/orchestrator/README.md).

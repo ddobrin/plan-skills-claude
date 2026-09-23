@@ -104,7 +104,7 @@ Must follow this exact structure:
 - **As a** [user role], **I want to** [action] **so that** [benefit].
 
 ## 📋 Acceptance Criteria
-*CRITICAL: Must be written in Gherkin (Given-When-Then) syntax or as unambiguous, measurable business rules. No hand-waving.*
+*Write each criterion in Gherkin (Given-When-Then) or as a measurable business rule; the architect plans and the auditor verifies against these lines.*
 - **Scenario:** [Name]
   - **Given** [precondition]
   - **When** [action]

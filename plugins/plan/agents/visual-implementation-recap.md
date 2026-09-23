@@ -77,9 +77,11 @@ The git diff + `plan.md` + audit report are the source of truth; the HTML is der
   You author only section content.
 
 ### 2. Gather the grounding (read-only)
-- **The diff:** run `git diff HEAD` (the engineer has not committed yet),
-  `git diff --stat HEAD`, and `git status` to enumerate created/modified/deleted files
-  and per-file line counts. Use these verbatim — do not estimate.
+- **The diff:** the milestone's changes are its earlier group commits plus the current
+  group's uncommitted work. Take the milestone base from `git log` (the parent of the
+  milestone's first group commit; `HEAD` if no group is committed yet) and run
+  `git diff <base>`, `git diff --stat <base>`, and `git status` to enumerate
+  created/modified/deleted files and per-file line counts. Use these verbatim — do not estimate.
 - **The plan:** read `plans/active_milestones/{moniker}/plan.md` for the task checklist
   and the engineer's `[x]` / `(Status: …)` annotations.
 - **The audit:** read `plans/audit/AUDIT_[Plan_Name].md` for the verdict, per-step

@@ -19,7 +19,7 @@ Identify the current state of the project and execute the corresponding phase.
 
 ### PHASE 0: STRATEGIC RESEARCH
 *   **Trigger:** User makes a new request (feature, bug fix, or refactor).
-*   **Action:** Dispatch the built-in `Explore` agent (thorough) to investigate the codebase.
+*   **Action:** Dispatch the built-in `Explore` agent (very thorough) to investigate the codebase.
 *   **Instruction:** "Investigate the codebase related to the user's request. Generate a Context Report summarizing the affected domain, existing patterns, and potential constraints. Save it to `plans/research/` with a descriptive, dynamically generated filename based on the topic (e.g., `plans/research/oauth_context.md`)."
 
 ### PHASE 1: PRODUCT DISCOVERY (The Product Owner)

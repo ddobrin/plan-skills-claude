@@ -61,7 +61,7 @@ Fill the template in **Skeptic Prompt Template** below. Keep the framing verbati
 
 ### 3. Dispatch 3 skeptics in parallel
 Make **three `Agent` calls in a single message** so they run concurrently and independently.
-Use `subagent_type: "general-purpose"` (or `"Explore"` if the spec lives in files they must read).
+Use `subagent_type: "general-purpose"`; it can read the spec from a path.
 Do **not** let them share a scratchpad — independence is what makes the vote mean something.
 
 ### 4. Collect verdicts
@@ -69,10 +69,14 @@ Each agent's final message is a fenced JSON block (see **Output Contract**). Par
 If an agent returns prose instead of JSON, re-dispatch that one — do not hand-guess its findings.
 
 ### 5–6. Dedup and gate
-Save each skeptic's JSON to a file and run
+Save each skeptic's JSON to a file. Skeptics phrase the same hole differently and
+`tally.py` groups on the exact `id`, so first reconcile ids: where two verdicts describe
+the same hole (same clause, same malicious reading) under different slugs, rewrite them to
+one canonical `id` in the saved files and record each remapping for the review. Merge only
+true duplicates; distinct holes in the same clause keep separate ids. Then run
 `python3 ${CLAUDE_PLUGIN_ROOT}/lib/tally.py --gate 2 s1.json s2.json s3.json`.
-It groups by stable `id`, counts votes, and picks the majority severity (tie → higher).
-Read the confirmed and unconfirmed lists from its output; do not tally by hand.
+It counts votes per `id` and picks the majority severity (tie → higher). Read the
+confirmed and unconfirmed lists from its output rather than counting yourself.
 Use `--gate 1` for high-stakes or security-sensitive artifacts and `--gate 3` when
 fix-churn is expensive.
 
@@ -234,7 +238,7 @@ The two confirmed holes get written into the spec before any plan is drafted.
 | "The spec looks thorough, one skeptic is enough." | One agent trends toward agreement. The vote needs ≥3 independent runs. |
 | "I'll let the three agents collaborate." | Shared context collapses them toward consensus; the vote becomes meaningless. |
 | "Only 1 skeptic flagged it, so ignore it." | Log it as unconfirmed. That tail is the recall you paid for. |
-| "I'll paraphrase their findings together." | Run `lib/tally.py` on the raw verdicts; it counts by stable `id`. Re-summarizing first makes real holes vanish in the merge. |
+| "I'll paraphrase their findings together." | Reconcile only the ids of true duplicates, then run `lib/tally.py`. Re-summarizing the findings themselves makes real holes vanish in the merge. |
 | "An agent returned prose, I'll interpret it." | Re-dispatch for valid JSON. Don't guess the contract. |
 
 ## Calibration Note

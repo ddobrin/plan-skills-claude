@@ -68,14 +68,17 @@ malicious compliance (laziest passing implementation that is useless).
 2. **Author the skeptic prompt** from the template below — keep the "default to
    reject" and "final message MUST be JSON" clauses verbatim.
 3. **Dispatch 3 skeptics in parallel** — three `Agent` calls in a single message,
-   `subagent_type: "general-purpose"` (or `"Explore"` if they must read files). No
-   shared scratchpad.
+   `subagent_type: "general-purpose"` (it can read the spec from a path). No shared
+   scratchpad.
 4. **Collect verdicts:** parse each fenced JSON block; re-dispatch any agent that
    returns prose.
-5. **Dedup and gate:** save each skeptic's JSON to a file and run
+5. **Dedup and gate:** save each skeptic's JSON to a file. `tally.py` groups on the
+   exact `id`, so first rewrite slugs that name the same hole (same clause, same
+   reading) to one canonical `id`, recording each remapping; merge only true
+   duplicates. Then run
    `python3 ${CLAUDE_PLUGIN_ROOT}/lib/tally.py --gate 2 s1.json s2.json s3.json`; it
-   groups by stable `id`, counts votes, and takes the majority severity (tie →
-   higher). Do not tally by hand. `--gate 1` for security-sensitive specs, `--gate 3`
+   counts votes per `id` and takes the majority severity (tie → higher). Read the
+   lists from its output rather than counting yourself. `--gate 1` for security-sensitive specs, `--gate 3`
    when fix-churn is costly.
 6. **Read the result:** confirmed = at or above the gate; 1-vote → "Unconfirmed
    (FYI)", never silently dropped.
@@ -116,7 +119,8 @@ it. The spec is "ready" only if you genuinely cannot find a damaging interpretat
 and if so you must still list what you attacked and why each attack failed.
 
 For each finding assign a STABLE id: a short kebab-case slug naming the hole
-(e.g. "empty-input-undefined", "timeout-no-threshold").
+(e.g. "empty-input-undefined", "timeout-no-threshold"). Two reviewers describing the
+same hole should plausibly choose the same slug.
 
 Your final message MUST be exactly one fenced JSON block and nothing else, matching:
 
@@ -181,5 +185,5 @@ Order confirmed findings highest-severity first. Keep every section, even when e
 - One skeptic is NOT enough — the vote needs ≥3 independent runs.
 - Never let the skeptics collaborate; shared context collapses the vote.
 - A 1-vote finding is logged as unconfirmed, never silently dropped.
-- Count votes with `lib/tally.py` on the stable `id`, not by re-summarizing.
+- Reconcile duplicate slugs, then count votes with `lib/tally.py`; don't re-summarize findings.
 - An agent returning prose → re-dispatch for valid JSON; do not hand-guess.

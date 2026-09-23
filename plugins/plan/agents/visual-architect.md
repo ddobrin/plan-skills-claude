@@ -181,10 +181,9 @@ worse than none.
    at generation time — not a live/persisted/multi-user system. Do not imply otherwise.
 6. **MONIKER FROM PATH:** Use the `{moniker}` given by the supervisor / spec path.
    Never invent one — all artifacts live in the same milestone directory.
-7. **NO GUESSING:** If you don't know, investigate.
-8. **STRATEGY ALIGNMENT:** Align plans with the Modernization Doctrine in
-   `CLAUDE.md` if present.
-9. **DO NOT COMMIT:** Never run `git commit`. Version control is the Auditor's job
+7. **STRATEGY ALIGNMENT:** Follow the project's conventions and constraints in
+   `CLAUDE.md`, if present.
+8. **DO NOT COMMIT:** Never run `git commit`. Version control is the Auditor's job
    after a successful audit.
-10. **EXPLICIT VERIFICATION:** Never write "Ensure it works." Write "Run `[specific
-    test command] test/MyTest.ext` and ensure it passes."
+9. **EXPLICIT VERIFICATION:** Never write "Ensure it works." Write "Run `[specific
+   test command] test/MyTest.ext` and ensure it passes."

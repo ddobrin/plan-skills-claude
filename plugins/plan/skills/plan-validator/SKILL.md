@@ -67,10 +67,15 @@ Make **three `Agent` calls in a single message**. Use `subagent_type: "general-p
 Parse each agent's fenced JSON. Re-dispatch any agent that returns prose instead of JSON.
 
 ### 5–6. Dedup and gate
-Save each skeptic's JSON to a file and run
+Save each skeptic's JSON to a file. Skeptics phrase the same problem differently and
+`tally.py` groups on the exact `id`, so first reconcile ids: where two verdicts describe
+the same problem (same step, same failure) under different slugs, rewrite them to one
+canonical `id` in the saved files, including `first_domino` values, and record each
+remapping for the review. Merge only true duplicates. Then run
 `python3 ${CLAUDE_PLUGIN_ROOT}/lib/tally.py --gate 2 s1.json s2.json s3.json`.
-It groups by stable `id`, counts votes, and picks the majority severity (tie → higher).
-Read the confirmed and unconfirmed lists from its output; do not tally by hand.
+It counts votes per `id`, picks the majority severity (tie → higher), and counts
+`first_domino` votes. Read the confirmed and unconfirmed lists from its output rather
+than counting yourself.
 Use `--gate 1` for high-stakes or security-sensitive artifacts and `--gate 3` when
 fix-churn is expensive.
 
@@ -99,7 +104,7 @@ and `{REPO_ROOT}`.
 ```
 You are an adversarial plan reviewer. Assume this implementation plan WILL fail. Your job
 is to predict exactly which step fails first and why, before any work is wasted. You have
-read access to the codebase — USE IT to check every assumption the plan makes.
+read access to the codebase; check every assumption the plan makes against it.
 
 PLAN:
 {PLAN}
@@ -111,7 +116,7 @@ Attack each step across these categories:
 - Ordering/dependency: step N needs an artifact a later step produces; two steps touch
   the same file with no merge plan.
 - False assumption about existing code: the plan names a function/file/field/table/flag/
-  signature that does not exist or differs. OPEN THE FILE AND CHECK.
+  signature that does not exist or differs.
 - Unverifiable step: "verify it works" with no command, test, or observable signal.
 - No rollback: a step that cannot be undone if the next step fails.
 - Missing migration/compatibility: schema or API change with no backfill/versioning/
@@ -158,7 +163,7 @@ Each skeptic returns the JSON above. The orchestrator aggregates into:
 {
   "confirmed": [ { "id": "...", "votes": 2, "step": "...", "severity": "high", "fix": "..." } ],
   "unconfirmed": [ { "id": "...", "votes": 1, "...": "..." } ],
-  "first_domino": "id voted most often as the earliest blocking failure"
+  "first_domino": "the id with the most first_domino_votes in tally's output (tie → the earlier step)"
 }
 ```
 
@@ -244,7 +249,7 @@ The plan is reordered and the missing default step inserted before execution beg
 | "The agent says step 3 is wrong but didn't cite a line." | Unverified prediction = guess. Force `file:line` or mark confidence low. |
 | "One skeptic found the ordering bug, two didn't." | Keep it unconfirmed and look — ordering bugs are easy to miss and costly to hit. |
 | "I'll let the agents discuss the plan together." | Shared context collapses the vote. Dispatch independently. |
-| "I'll merge their findings in my own words." | Run `lib/tally.py` on the raw verdicts; it counts by stable `id`. Merging by hand splits the same bug into three sub-quorum entries. |
+| "I'll merge their findings in my own words." | Reconcile duplicate ids, then run `lib/tally.py`. Unreconciled slugs split the same bug into three sub-quorum entries; rewritten findings lose their evidence. |
 
 ## Calibration Note
 

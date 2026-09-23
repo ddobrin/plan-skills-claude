@@ -31,7 +31,7 @@ UI · VERIFY · NOTES`.
 
 ## 1. Overview
 
-Lead with metric cards (the headline numbers), then a 1–3-sentence outcome brief and a
+Lead with metric cards (the headline numbers), then a short, scannable outcome brief and a
 small key/value card. Source the numbers from `git diff --stat` and the audit summary.
 
 ```html
@@ -315,7 +315,7 @@ Mirror what actually changed; do not invent. Rough guide:
 - **Contract / data work:** add API & Schema (flag what changed).
 - **UI work:** add UI Changes (before/after). Backend/data-only milestones **omit** it with
   a one-line note ("No user-facing UI in this milestone").
-- **Notes:** include 1–3 high-value callouts (decisions, compatibility risk, deferred
+- **Notes:** include only the callouts worth a reviewer's attention (decisions, compatibility risk, deferred
   follow-ups); skip if there are none worth flagging.
 
 The HTML is a derived view of the real diff + `plan.md` + the audit report; if they

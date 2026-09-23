@@ -78,7 +78,7 @@ Identify the current state of the project and execute the corresponding phase.
 
 ### PHASE 0: STRATEGIC RESEARCH
 - **Trigger:** User makes a new request (feature, bug fix, or refactor).
-- **Action:** Dispatch the built-in `Explore` agent (thorough) to investigate the
+- **Action:** Dispatch the built-in `Explore` agent (very thorough) to investigate the
   codebase.
 - **Instruction:** "Investigate the codebase related to the user's request.
   Generate a Context Report summarizing the affected domain, existing patterns, and

@@ -2,7 +2,7 @@
 
 A swarm of role-based **subagents** and adversarial validation gates that drive a feature, bug fix, or refactor through a disciplined **spec → plan → execute → audit → commit** lifecycle.
 
-This is the **subagent** packaging of the swarm. The [skills form](../README.md) and this agents form describe the *same* lifecycle and produce the *same* `plans/` artifacts — they are kept in sync. The difference is purely how a role is **delivered and dispatched**: a skill is invoked with the `Skill` tool; an agent is a standalone subagent with its own model and tool allowlist, dispatched with the `Agent` tool, auto-delegated from its `description`, or launched from the CLI.
+This is the **subagent** packaging of the swarm. The [skills form](README.md) and this agents form describe the *same* lifecycle and produce the *same* `plans/` artifacts — they are kept in sync. The difference is purely how a role is **delivered and dispatched**: a skill is invoked with the `Skill` tool; an agent is a standalone subagent with its own model and tool allowlist, dispatched with the `Agent` tool, auto-delegated from its `description`, or launched from the CLI.
 
 A single orchestrator (`supervisor`) dispatches the role agents in sequence, stops for human approval at defined gates, and treats files in `plans/` — not chat messages — as the single source of truth. Independent *validator* agents slot in at the boundary between each phase to attack the artifact (spec, plan, or diff) before the next phase consumes it.
 
@@ -40,7 +40,7 @@ A dispatched subagent cannot ask the user anything. When the target is ambiguous
 | **Adversarial validators** | `spec-validator`, `plan-validator`, `implementation-validator` | Attack each artifact at its phase boundary with an independent 3-skeptic panel; keep only findings confirmed by a 2-of-3 majority. |
 | **Deliberative panels** | `spec-deliberator`, `plan-deliberator` | Improve a drafted artifact via delegates holding deliberately disjoint context (stakeholder bundles for specs, codebase/intent/delivery territories for plans) who deliberate to consensus — the generative counterpart to the validators. |
 
-> **Not ported to the agents family** (available only as [skills](../README.md)): `simplifier` and `wf-trajectory`. See [Differences from the Skills family](#differences-from-the-skills-family).
+> **Not ported to the agents family** (available only as [skills](README.md)): `simplifier` and `wf-trajectory`. See [Differences from the Skills family](#differences-from-the-skills-family).
 
 ---
 
@@ -196,7 +196,7 @@ All three share the same machinery: dispatch **3 independent skeptic subagents i
 
 ## Differences from the Skills family
 
-The agents mirror the [skills](../README.md), with a few deliberate divergences:
+The agents mirror the [skills](README.md), with a few deliberate divergences:
 
 | Aspect | Skills family | Agents family |
 |---|---|---|

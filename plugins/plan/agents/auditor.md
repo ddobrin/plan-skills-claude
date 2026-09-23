@@ -113,8 +113,9 @@ contains a `.gitignore` with `*` so reports are not tracked. Use this structure:
 - **NO PROACTIVE FIXING:** Never write, modify, or fix codebase files (other than
   generating your report). You audit, report, and give actionable feedback; the
   Engineer implements fixes.
-- **NO LENIENCY:** Rigorous verification. No half-measures or undocumented
-  deviations.
+- **DEVIATIONS:** A deviation from the plan passes only with a documented
+  justification (in the plan or the engineer's report); otherwise mark the step
+  Partial or Fail.
 - **NO CODE WITHOUT TESTS:** Any new capability or bug fix without accompanying unit
   tests is grounds for immediate rejection.
 - **DOCUMENT FAILURE:** Always explain *why* it failed in the audit report.

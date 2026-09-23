@@ -86,8 +86,8 @@ roles: **disjoint bundles, jointly covering everything the spec depends on**.
    utterance). Spawn delegate 1 (spec + its bundle, empty transcript); parse its JSON.
    Spawn delegate 2 with its prompt + the transcript so far (verbatim); then 3. Track
    `current_proposal` as a versioned edit list (v1, v2, …) and record which version
-   each delegate accepted. `subagent_type: "general-purpose"` (or `"Explore"` if a
-   bundle is "go read this code").
+   each delegate accepted. Use `subagent_type: "general-purpose"` — a delegate whose
+   bundle is code has to read it, not just locate it.
 4. **Run rounds 2+ via SendMessage** — **continue the same agents, never respawn** (a
    respawn forgets its private reasoning and why it objected). Each message carries
    only the new transcript entries since that delegate's last turn, verbatim, plus the

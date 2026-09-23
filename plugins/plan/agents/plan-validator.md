@@ -68,10 +68,13 @@ compatibility; hidden coupling that fans out to unmentioned callers.
 3. **Dispatch 3 skeptics in parallel** — three `Agent` calls in one message,
    `subagent_type: "general-purpose"` (can read/grep the codebase). Independent runs.
 4. **Collect verdicts:** parse each fenced JSON; re-dispatch any that returns prose.
-5. **Dedup and gate:** save each skeptic's JSON to a file and run
+5. **Dedup and gate:** save each skeptic's JSON to a file. `tally.py` groups on the
+   exact `id`, so first rewrite slugs that name the same problem (same step, same
+   failure) to one canonical `id`, `first_domino` included, recording each remapping;
+   merge only true duplicates. Then run
    `python3 ${CLAUDE_PLUGIN_ROOT}/lib/tally.py --gate 2 s1.json s2.json s3.json`; it
-   groups by stable `id`, counts votes, and takes the majority severity (tie →
-   higher). Do not tally by hand. `--gate 1` for high-risk plans (irreversible
+   counts votes per `id`, takes the majority severity (tie → higher), and counts
+   `first_domino` votes. Read the lists from its output rather than counting yourself. `--gate 1` for high-risk plans (irreversible
    migrations, prod data), `--gate 3` when re-planning churn is costly.
 6. **Read the result:** confirmed = at or above the gate; 1-vote → "Unconfirmed
    (FYI)", never silently dropped.
@@ -89,7 +92,7 @@ compatibility; hidden coupling that fans out to unmentioned callers.
 ```
 You are an adversarial plan reviewer. Assume this implementation plan WILL fail. Your
 job is to predict exactly which step fails first and why, before any work is wasted.
-You have read access to the codebase — USE IT to check every assumption the plan makes.
+You have read access to the codebase; check every assumption the plan makes against it.
 
 PLAN:
 {PLAN}
@@ -101,7 +104,7 @@ Attack each step across these categories:
 - Ordering/dependency: step N needs an artifact a later step produces; two steps touch
   the same file with no merge plan.
 - False assumption about existing code: the plan names a function/file/field/table/flag/
-  signature that does not exist or differs. OPEN THE FILE AND CHECK.
+  signature that does not exist or differs.
 - Unverifiable step: "verify it works" with no command, test, or observable signal.
 - No rollback: a step that cannot be undone if the next step fails.
 - Missing migration/compatibility: schema or API change with no backfill/versioning/
@@ -115,7 +118,8 @@ cite file:line, or label confidence "low".
 Find the FIRST domino: the earliest step whose failure invalidates the steps after it.
 
 For each finding assign a STABLE id: a short kebab-case slug (e.g.
-"step4-method-missing", "no-rollback-on-migrate").
+"step4-method-missing", "no-rollback-on-migrate"). Two reviewers finding the same
+problem should plausibly choose the same slug.
 
 Your final message MUST be exactly one fenced JSON block and nothing else, matching:
 
@@ -185,4 +189,4 @@ section, even when empty (`_None._`).
 - Clean prose hides dead assumptions — skeptics must open the files.
 - No `file:line` → treat as a guess (confidence low), don't reorder around it.
 - A 1-vote ordering bug stays unconfirmed but examined — these are costly to hit.
-- Never let agents discuss the plan together; count votes with `lib/tally.py`, not by merging findings in your own words.
+- Never let agents discuss the plan together; reconcile duplicate slugs, then count votes with `lib/tally.py`; don't merge findings in your own words.

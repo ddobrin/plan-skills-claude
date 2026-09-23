@@ -2,7 +2,7 @@
 
 Written by the Workflow engine to
 `$CLAUDE_CONFIG_DIR|~/.claude/projects/<encoded-launch-dir>/<sessionId>/workflows/wf_<runId>.json`.
-`<encoded-launch-dir>` = the launch directory's absolute path with `/` → `-`.
+`<encoded-launch-dir>` = the launch directory's absolute path with every non-alphanumeric character replaced by `-` (not collapsed; `/Users/x/.claude` → `-Users-x--claude`).
 
 ## Run header (consumed)
 `runId, workflowName, summary, status, durationMs, agentCount, totalTokens,

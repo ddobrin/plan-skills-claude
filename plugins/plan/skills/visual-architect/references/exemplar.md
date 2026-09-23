@@ -1,7 +1,8 @@
 # Visual Plan — Worked Exemplar
 
 A tiny end-to-end example: a spec excerpt + a plan excerpt, then the HTML fragments they
-produce. Use this to calibrate altitude and tone. Full markup per component lives in
+produce. It is illustrative: match its markup and altitude, not its domain,
+length, or number of items. Full markup per component lives in
 `component-catalog.md`; this shows how to *select* from it for a real plan.
 
 ---

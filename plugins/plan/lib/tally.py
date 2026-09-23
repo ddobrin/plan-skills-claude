@@ -15,7 +15,8 @@ Finding mode (verdicts with a top-level "findings" array):
     the gate are confirmed; one vote below it (or more, with a gate of 3) is
     unconfirmed; ids every reporting skeptic marked isReal=false are rejected.
     Severity is the most common correctedSeverity/severity among the votes, and a
-    tie goes to the higher level.
+    tie goes to the higher level; severity_votes lists each vote's rating. Plan
+    verdicts' top-level first_domino ids are counted into first_domino_votes.
 
 Claim-refutation mode (verdicts with a top-level "claim", or a list of them):
     Verdicts are grouped by claim text. A claim fails when refuted=true reaches the
@@ -65,6 +66,7 @@ def tally_findings(verdicts, gate):
         entry["votes"] = len(voters)
         entry["reported_by"] = sorted({i + 1 for i, _ in entries})
         entry["severity"] = majority(f.get("correctedSeverity") or f.get("severity") for f in real)
+        entry["severity_votes"] = [f.get("correctedSeverity") or f.get("severity") for f in real]
         if not voters:
             result["rejected"].append(entry)
         elif len(voters) >= gate:
@@ -74,6 +76,10 @@ def tally_findings(verdicts, gate):
 
     for bucket in result.values():
         bucket.sort(key=lambda e: (-e["votes"], -RANK.get(str(e["severity"]).lower(), 0)))
+    dominoes = collections.Counter(
+        v.get("first_domino") for v in verdicts if isinstance(v, dict) and v.get("first_domino"))
+    if dominoes:
+        result["first_domino_votes"] = dict(dominoes.most_common())
     return result
 
 
