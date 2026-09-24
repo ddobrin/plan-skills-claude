@@ -219,7 +219,7 @@ Each turn returns the JSON above. The orchestrator (you) maintains:
 {
   "proposal_versions": [ { "version": 2, "edits": ["..."], "produced_by": "codebase, round 1" } ],
   "acceptances": { "intent": 2, "codebase": 2, "delivery": 1 },
-  "tradeoffs_decided": [ { "topic": "backfill strategy", "chosen": "online default + lazy backfill", "over": "offline migration", "because": "delivery: no maintenance window before release; codebase: schedule() tolerates default 0 (scheduler/JobScheduler.java:88)" } ],
+  "tradeoffs_decided": [ { "topic": "...", "chosen": "...", "over": "...", "because": "each territory's constraint, cited" } ],
   "disputes": [ { "topic": "...", "positions": {"intent": "...", "delivery": "..."}, "resolution": "converged v2 | escalated" } ]
 }
 ```
@@ -315,7 +315,7 @@ max) over only those findings — one delegate briefed to defend the plan's appr
 assigned the territory the finding concerns, both citing evidence. Record it as
 `deliberations/plan-deliberation-tail.md`.
 
-## Worked Example
+## Worked Example (illustrative only — do not match its length, domain, or wording)
 
 > Plan excerpt (from `architect`): *"Step 2: add `retryCount` to the `Job` record.
 > Step 3: update `JobScheduler.dispatch()` to read `retryCount`. Step 4: migrate
@@ -341,12 +341,6 @@ Territories: **intent** deep-reads the spec (acceptance criterion: *"failed jobs
   `:104`); **intent** accepts v3 (basis: criterion now maps to steps 3+5); **delivery**
   accepts its own v3. **Converged, v3, 2 rounds. Trade-off decided: online backfill,
   because no-window + null-intolerant scheduler.**
-
-Compare `plan-validator`'s worked example on the same plan: it *finds*
-`dispatch-signature-missing` and `migrate-before-default` — but it cannot add the
-missing dashboard step (that requires the spec's intent) and cannot *choose* the
-backfill strategy (that requires weighing delivery constraints against code shape).
-The deliberation did both, and the revised plan then faces the validator anyway.
 
 ## Red Flags
 

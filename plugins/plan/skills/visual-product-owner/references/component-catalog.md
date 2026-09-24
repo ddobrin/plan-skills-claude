@@ -282,7 +282,7 @@ Mirror the spec; do not invent content. Rough guide:
 - **UI work:** add Wireframes; add the interactive Prototype only for multi-step flows/wizards
   where the interaction itself is the question. Backend/data-only specs **omit** Wireframes with
   a one-line note ("No user-facing UI in this spec").
-- **Comments:** include 1–3 high-value author callouts; skip if there are none worth flagging.
+- **Comments:** include only the author callouts worth a reviewer's attention; skip if there are none.
 
 Keep examples at the right altitude: show the core idea, then one concrete instance — not every
 case. The HTML is a derived view of `spec.md`; if they disagree, `spec.md` wins.

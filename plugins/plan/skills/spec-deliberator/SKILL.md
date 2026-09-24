@@ -107,8 +107,8 @@ or proposals oscillate instead of converging.
 - Track `current_proposal` as a **versioned edit list** (v1, v2, …): whenever a
   delegate's turn contains amendments, apply them to produce the next version and
   record which version each delegate has accepted.
-- Use `subagent_type: "general-purpose"` (or `"Explore"` if a bundle is "go read this
-  part of the codebase").
+- Use `subagent_type: "general-purpose"` — a delegate whose bundle is code has to read
+  it, not just locate it.
 
 ### 4. Run subsequent rounds via SendMessage
 For rounds 2+, **continue the same agents with `SendMessage`** — never respawn. A
@@ -294,7 +294,7 @@ intent, one holding the skeptic's finding — imports deliberation's reflection 
 at the point of maximum uncertainty without contaminating the validator's independent
 pass. Record it as `deliberations/spec-deliberation-tail.md`.
 
-## Worked Example
+## Worked Example (illustrative only — do not match its length, domain, or wording)
 
 > Spec draft: *"The export endpoint returns the user's records as a downloadable file. Exports should be fast and handle large accounts."*
 

@@ -1,7 +1,7 @@
 # Visual Spec — Worked Exemplar
 
-A tiny end-to-end example: a `spec.md` excerpt, then the HTML fragments it produces. Use
-this to calibrate altitude and tone. Full markup per component lives in
+A tiny end-to-end example: a `spec.md` excerpt, then the HTML fragments it produces. It is illustrative: match its markup and
+altitude, not its domain, length, or number of items. Full markup per component lives in
 `component-catalog.md`; this shows how to *select* from it for a real spec. (It uses the
 same "Silent Token Refresh" feature as `visual-architect`'s exemplar, so you can compare
 the spec view with the plan view of the same work.)

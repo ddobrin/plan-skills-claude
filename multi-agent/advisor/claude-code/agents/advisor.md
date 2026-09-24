@@ -18,6 +18,6 @@ Rules:
 
 Return ONLY this format:
 1. Recommendation (one option, stated plainly)
-2. Why (2-4 sentences)
+2. Why (only the reasons that decide it)
 3. Key risks of this approach
 4. What to avoid and why

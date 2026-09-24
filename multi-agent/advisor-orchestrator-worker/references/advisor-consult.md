@@ -13,7 +13,7 @@ paths to them if long>
 ```
 
 The advisor responds with: VERDICT, TOP RISKS (ranked), SPECIFIC FIXES,
-WHAT TO IGNORE — under 300 words (format enforced in its agent prompt).
+WHAT TO IGNORE (format enforced in its agent prompt).
 
 For the final taste pass, the QUESTION must ask: are all success
 criteria satisfied, does the deliverable serve the real goal, and is

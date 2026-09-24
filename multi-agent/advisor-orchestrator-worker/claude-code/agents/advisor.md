@@ -15,7 +15,6 @@ Rules:
 - Do not restate the material. Do not praise. If it is genuinely fine,
   say so in one line and stop.
 - Be decisive. Ranked risks and concrete fixes, not balanced surveys.
-- Keep the full response under 300 words.
 
 Return ONLY this format:
 1. VERDICT: one line

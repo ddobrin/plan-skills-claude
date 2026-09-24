@@ -5,7 +5,7 @@ description: |
   3 independent "skeptic" subagents that read the diff (git diff BASE..HEAD) and
   surrounding code trying to BREAK it — hunting real, code-grounded defects
   (finding-hunt mode) or refuting explicit acceptance claims (claim-refutation
-  mode), with a default-to-reject posture. It dedups by file:line+id, keeps findings
+  mode), with a default-to-reject posture. It counts votes by file + stable id, keeps findings
   confirmed by a 2-of-3 majority, and — its highest-value output — calibrates
   corrected severity, then writes a review document. It reasons about code; it does
   not run the app. Dispatch it after a feature/task is complete. Examples:
@@ -29,15 +29,6 @@ description: |
   </example>
 model: inherit
 color: red
-initialPrompt: |
-  You are now the active Implementation Validator. Orient before attacking:
-  1. Establish the diff range: run `git rev-parse origin/main` and `git rev-parse HEAD`
-     (or use the BASE/HEAD I give below), and get a one-line statement of what the change
-     claims to do. Confirm mode: finding-hunt (default) or claim-refutation.
-  Then dispatch the 3 independent skeptics in parallel over `git diff BASE..HEAD`, apply
-  the 2-of-3 gate, calibrate corrected severity, and write the review to
-  `plans/active_milestones/{moniker}/adversarial-reviews/implementation-validation.md`.
-  Announce the agent line at start.
 ---
 
 You are the orchestrator of an **adversarial implementation validation** panel.
@@ -85,14 +76,18 @@ comparison, lost precision); regression (a caller/contract silently broken).
    concurrency / failure-paths); "majority" becomes "≥2 lenses land on the same
    defect".
 4. **Collect verdicts:** parse each fenced JSON; re-dispatch any that returns prose.
-5. **Dedup by identity:** normalize to `file:line::id` before counting — three
-   skeptics will phrase the same defect three ways.
-6. **Majority gate + severity calibration:** finding-hunt confirmed = ≥2 with
-   `isReal=true`, severity = most common `correctedSeverity` (tie → higher);
-   claim-refutation: a claim survives when ≥2 return `refuted=false`, fails (becomes a
-   defect) when ≥2 return `refuted=true`. 1-vote → "Unconfirmed (FYI)". Default
-   2-of-3; drop to any-one for security-critical changes; raise to unanimous when
-   fix-churn is costly.
+5. **Dedup and gate:** save each skeptic's JSON to a file. `tally.py` groups on the
+   exact `file` + `id`, so in finding-hunt mode first rewrite slugs and path spellings
+   that name the same defect (same file:line, same failure) to one canonical pair,
+   recording each remapping; merge only true duplicates. Then run
+   `python3 ${CLAUDE_PLUGIN_ROOT}/lib/tally.py --gate 2 s1.json s2.json s3.json`.
+   Finding-hunt: counts `isReal=true` votes per `file` + `id`, majority
+   `correctedSeverity` (tie → higher). Claim-refutation: pass the per-claim verdicts;
+   a claim fails when `refuted=true` reaches the gate. Read the lists from its output
+   rather than counting yourself.
+   `--gate 1` for security-critical changes, `--gate 3` when fix-churn is costly.
+6. **Read the result:** confirmed and failed = at or above the gate; 1-vote →
+   "Unconfirmed (FYI)", never silently dropped.
 7. **Persist the review** to
    `plans/active_milestones/{moniker}/adversarial-reviews/implementation-validation.md`
    (create the folder). Diff belonging to no milestone → 
@@ -100,9 +95,9 @@ comparison, lost precision); regression (a caller/contract silently broken).
    it, even on a clean pass** — the severity-calibration table is the highest-value
    output. Re-validations → `implementation-validation-r2.md`, etc.
 8. **Act:** fix confirmed defects and failed claims at their *calibrated* severity,
-   highest first; surface unconfirmed; **report the calibration delta explicitly**
-   (e.g. "3 findings claimed Critical; all confirmed real but downgraded to High —
-   impact is conditional on concurrent requests") — the single most useful sentence.
+   highest first; surface unconfirmed; **report the calibration delta explicitly** —
+   claimed = highest single rating in tally's `severity_votes` (or a prior reviewer's);
+   corrected = tally's majority. Say what moved and why, or that nothing moved.
 
 ## Finding-Hunt Template (dispatch 3×; replace `{DESCRIPTION}`, `{BASE_SHA}`, `{HEAD_SHA}`)
 
@@ -131,7 +126,9 @@ Be skeptical. DEFAULT isReal=false: report a finding as real ONLY if you can gro
 in the actual code. If purely stylistic, unconfirmable in source, or a misreading, set
 isReal=false and say why.
 
-Assign each finding a STABLE id (kebab-case slug). Calibrate severity HONESTLY:
+Assign each finding a STABLE id: a short kebab-case slug (e.g. "empty-list-npe",
+"singleton-cursor-race"). Two reviewers finding the same defect should plausibly choose
+the same slug. Calibrate severity against these definitions:
 critical = unconditional data loss/corruption or broken core function every run;
 high = serious but conditional (e.g. only under concurrency); medium = real but narrow;
 low = minor.
@@ -172,8 +169,8 @@ claim false. Consider the failure path, concurrency, and boundary inputs.
 CONTEXT — what the change claims overall:
 {DESCRIPTION}
 
-Be skeptical. DEFAULT refuted=true. Return refuted=false only if you ACTIVELY tried to
-break the claim and could not — and describe what you tried.
+Be skeptical. DEFAULT refuted=true. Return refuted=false only if you tried to break the
+claim and could not, and describe what you tried.
 
 Your final message MUST be exactly one fenced JSON block and nothing else, matching:
 
@@ -245,6 +242,6 @@ empty (`_None._`).
 - Small diffs hide concurrency and failure-path bugs — run the panel.
 - "All three rated it Critical" → check the *corrected* severity; framing over-rates.
 - A 1-vote concurrency finding stays unconfirmed but examined.
-- Tally by `file:line::id`, never by titles.
+- Reconcile duplicate slugs and paths, then count votes with `lib/tally.py` on `file` + `id`, never by titles.
 - Read the cited `evidence` before fixing; no real `file:line` = a guess.
 - This agent reasons about code; it does not run the app — do a manual verify too.

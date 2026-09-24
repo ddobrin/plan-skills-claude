@@ -14,7 +14,7 @@ Rules:
 - Run relevant tests/linters if they exist and report results.
 
 Return ONLY this summary format:
-1. What changed (2-4 sentences)
+1. What changed (brief)
 2. Files touched (paths)
 3. Decisions made and why (brief)
 4. Blockers or follow-ups (if any)

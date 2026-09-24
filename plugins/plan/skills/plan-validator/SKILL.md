@@ -1,6 +1,6 @@
 ---
 name: plan-validator
-description: Use after an implementation plan is written and BEFORE executing it, to catch ordering bugs and false assumptions while they are still cheap. Dispatches independent skeptic agents that assume the plan WILL fail, read the codebase to check its assumptions, and find the first domino that topples the rest — keeping only findings confirmed by a 2-of-3 majority. Symptoms - "validate this plan", "will this plan work", "review the plan before we start", a freshly written plans/*.md from writing-plans, about to run executing-plans or subagent-driven-development.
+description: Use after an implementation plan is written and BEFORE executing it, to catch ordering bugs and false assumptions while they are still cheap. Dispatches independent skeptic agents that assume the plan WILL fail, read the codebase to check its assumptions, and find the first domino that topples the rest — keeping only findings confirmed by a 2-of-3 majority. Symptoms - "validate this plan", "will this plan work", "review the plan before we start", a freshly written plans/active_milestones/*/plan.md from architect, about to dispatch engineers.
 ---
 
 # Adversarial Plan Validation
@@ -18,7 +18,7 @@ says edit `X.dispatch()` but that method does not exist."
 
 ## When to Use
 
-- A written implementation plan exists (e.g. from `superpowers:writing-plans`) and you are about to execute it.
+- A written implementation plan exists (e.g. from `architect`) and you are about to execute it.
 - The user asks to "validate", "sanity-check", "stress-test", or "review" a plan before work starts.
 - The plan touches existing code whose shape the plan *assumes* — exactly where plans rot.
 
@@ -66,16 +66,18 @@ Make **three `Agent` calls in a single message**. Use `subagent_type: "general-p
 ### 4. Collect verdicts
 Parse each agent's fenced JSON. Re-dispatch any agent that returns prose instead of JSON.
 
-### 5. Dedup by identity
-Group findings by stable `id` + the `step` they target. Two skeptics describing the same
-ordering bug should collapse to one entry, not three.
-
-### 6. Apply the majority gate
-- **Confirmed:** appears in **≥ 2 of 3** outputs.
-- **Unconfirmed (1 vote):** keep under "Unconfirmed (FYI)" — never silently drop.
-- Severity: most common among agreeing skeptics; tie → higher.
-
-> **Tuning the gate:** 2-of-3 is the default. Drop to **any-one** for a high-risk plan (irreversible migrations, prod data); raise to **unanimous** when re-planning churn is costly.
+### 5–6. Dedup and gate
+Save each skeptic's JSON to a file. Skeptics phrase the same problem differently and
+`tally.py` groups on the exact `id`, so first reconcile ids: where two verdicts describe
+the same problem (same step, same failure) under different slugs, rewrite them to one
+canonical `id` in the saved files, including `first_domino` values, and record each
+remapping for the review. Merge only true duplicates. Then run
+`python3 ${CLAUDE_PLUGIN_ROOT}/lib/tally.py --gate 2 s1.json s2.json s3.json`.
+It counts votes per `id`, picks the majority severity (tie → higher), and counts
+`first_domino` votes. Read the confirmed and unconfirmed lists from its output rather
+than counting yourself.
+Use `--gate 1` for high-stakes or security-sensitive artifacts and `--gate 3` when
+fix-churn is expensive.
 
 ### 7. Persist the review
 Write the aggregated result as a Markdown report to
@@ -102,7 +104,7 @@ and `{REPO_ROOT}`.
 ```
 You are an adversarial plan reviewer. Assume this implementation plan WILL fail. Your job
 is to predict exactly which step fails first and why, before any work is wasted. You have
-read access to the codebase — USE IT to check every assumption the plan makes.
+read access to the codebase; check every assumption the plan makes against it.
 
 PLAN:
 {PLAN}
@@ -114,7 +116,7 @@ Attack each step across these categories:
 - Ordering/dependency: step N needs an artifact a later step produces; two steps touch
   the same file with no merge plan.
 - False assumption about existing code: the plan names a function/file/field/table/flag/
-  signature that does not exist or differs. OPEN THE FILE AND CHECK.
+  signature that does not exist or differs.
 - Unverifiable step: "verify it works" with no command, test, or observable signal.
 - No rollback: a step that cannot be undone if the next step fails.
 - Missing migration/compatibility: schema or API change with no backfill/versioning/
@@ -161,7 +163,7 @@ Each skeptic returns the JSON above. The orchestrator aggregates into:
 {
   "confirmed": [ { "id": "...", "votes": 2, "step": "...", "severity": "high", "fix": "..." } ],
   "unconfirmed": [ { "id": "...", "votes": 1, "...": "..." } ],
-  "first_domino": "id voted most often as the earliest blocking failure"
+  "first_domino": "the id with the most first_domino_votes in tally's output (tie → the earlier step)"
 }
 ```
 
@@ -223,7 +225,7 @@ _(repeat per confirmed finding; the First domino first)_
 - [ ] Re-ran panel on revision → `plan-validation-r2.md` _(or: not needed)_
 ```
 
-## Worked Example
+## Worked Example (illustrative only — do not match its length, domain, or wording)
 
 > Plan excerpt: *"Step 2: add `retryCount` to the `Job` record. Step 3: update `JobScheduler.dispatch()` to read `retryCount`. Step 4: migrate existing rows."*
 
@@ -247,7 +249,7 @@ The plan is reordered and the missing default step inserted before execution beg
 | "The agent says step 3 is wrong but didn't cite a line." | Unverified prediction = guess. Force `file:line` or mark confidence low. |
 | "One skeptic found the ordering bug, two didn't." | Keep it unconfirmed and look — ordering bugs are easy to miss and costly to hit. |
 | "I'll let the agents discuss the plan together." | Shared context collapses the vote. Dispatch independently. |
-| "I'll merge their findings in my own words." | Dedup on stable `id` + step, or the same bug splits into three sub-quorum entries. |
+| "I'll merge their findings in my own words." | Reconcile duplicate ids, then run `lib/tally.py`. Unreconciled slugs split the same bug into three sub-quorum entries; rewritten findings lose their evidence. |
 
 ## Calibration Note
 

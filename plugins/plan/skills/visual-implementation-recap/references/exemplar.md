@@ -1,8 +1,8 @@
 # Visual Recap — Worked Exemplar
 
 A tiny end-to-end example: the grounding inputs (a `git diff`, the completed `plan.md`
-checklist, and the audit report) and the HTML fragments they produce. Use this to
-calibrate altitude and tone. Full markup per component lives in `component-catalog.md`;
+checklist, and the audit report) and the HTML fragments they produce. It is illustrative: match its markup and
+altitude, not its domain, length, or number of items. Full markup per component lives in `component-catalog.md`;
 this shows how to *select* from it for a real milestone. (It uses the same "Silent Token
 Refresh" feature as the `visual-architect` / `visual-product-owner` exemplars, so you can
 compare the recap of the *result* with the plan and spec of the same work.)
@@ -11,7 +11,7 @@ compare the recap of the *result* with the plan and spec of the same work.)
 
 ## Input — the grounding
 
-`git diff --stat HEAD`:
+`git diff --stat <base>`:
 ```
  src/auth/refresh.ts        | 38 ++++++++++++++++++
  src/auth/login.ts          | 16 +++++----

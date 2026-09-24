@@ -296,7 +296,7 @@ Mirror the plan; do not invent UI. Rough guide:
   (leave a one-line "No UI in this plan").
 - **UI work:** add Wireframes; add the interactive Prototype only for multi-step flows/wizards
   where interaction is the question.
-- **Comments:** include 1–3 high-value author callouts; skip if there are none worth flagging.
+- **Comments:** include only the author callouts worth a reviewer's attention; skip if there are none.
 
 Keep examples at the right altitude: show the core abstraction, then one concrete instance —
 not every case. The HTML is a derived view of `plan.md`; if they disagree, `plan.md` wins.
