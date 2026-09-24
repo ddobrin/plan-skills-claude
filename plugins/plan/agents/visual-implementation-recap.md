@@ -9,25 +9,7 @@ description: |
   instead of prose plus a raw git diff. It is grounded true-by-construction (every
   line traces to the actual git diff / plan.md / audit), redacts secrets, and is
   ADDITIVE: it NEVER replaces the auditor, the implementation-validator, or human
-  approval, and it never commits. Examples:
-
-  <example>
-  Context: A milestone is implemented and the audit passed; the reviewer wants to see the whole change before approving.
-  user: "The audit is green — recap what was built so I can review before we commit."
-  assistant: "I'll use the visual-implementation-recap agent to gather git diff/plan.md/audit and render visual-recap.html with the outcome, changed-files tree, annotated diffs, and the audit verdict."
-  <commentary>
-  Making the whole change reviewable at the commit gate, grounded in the real diff, is exactly this renderer's purpose.
-  </commentary>
-  </example>
-
-  <example>
-  Context: The engineer fixed something after a failed audit and the recap is now stale.
-  user: "Engineer pushed fixes after the audit — refresh the recap."
-  assistant: "I'll launch the visual-implementation-recap agent to regenerate the affected sections from the new diff and audit and refresh the timestamp."
-  <commentary>
-  Keeping visual-recap.html in sync with the actual diff and audit — a stale recap is worse than none — is part of this agent's contract.
-  </commentary>
-  </example>
+  approval, and it never commits.
 model: inherit
 color: cyan
 tools: ["Read", "Write", "Edit", "Glob", "Grep", "Bash"]

@@ -10,34 +10,6 @@ description: |
   on ONE jointly revised plan — deciding the trade-offs (migration strategy, group
   boundaries, scope) a validator can only flag, never decide. It is the generative
   counterpart to plan-validator; run plan-validator on the result afterward.
-  Examples:
-
-  <example>
-  Context: A drafted plan touches three subsystems no one context can deep-read whole.
-  user: "This plan spans the API, the worker, and the migration tooling — deliberate on it before we execute."
-  assistant: "I'll use the plan-deliberator agent to assign codebase-api, codebase-worker, and delivery territories to delegates and have them converge on one revised plan, then hand off to plan-validator."
-  <commentary>
-  Reconciling territory-siloed evidence and deciding cross-cutting trade-offs into one plan is exactly what deliberation (not adversarial attack) is for.
-  </commentary>
-  </example>
-
-  <example>
-  Context: The plan leaves a migration strategy undecided.
-  user: "The plan doesn't commit to online vs offline migration — resolve it."
-  assistant: "I'll launch the plan-deliberator agent; the delivery delegate will weigh the deploy window against the codebase delegate's null-tolerance findings and the panel will commit the plan to one strategy with each constraint on the record."
-  <commentary>
-  Deciding an open trade-off with each territory's constraints cited is the deliberator's job — a validator can only flag the absence of a decision.
-  </commentary>
-  </example>
-
-  <example>
-  Context: A plan-validator run left single-vote findings the author can't adjudicate.
-  user: "plan-validator left a few single-vote findings I can't decide on — resolve the tail."
-  assistant: "I'll use the plan-deliberator agent as a mini-panel over exactly those disputed findings, one delegate defending the plan's approach and one assigned the territory the finding concerns."
-  <commentary>
-  Deliberating over the single-vote tail imports reflection at the point of maximum uncertainty — the highest-value hybrid use.
-  </commentary>
-  </example>
 model: inherit
 color: magenta
 initialPrompt: |

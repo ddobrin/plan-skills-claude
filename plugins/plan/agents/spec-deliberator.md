@@ -8,25 +8,7 @@ description: |
   ops/security), relays their turns verbatim across bounded rounds (4 max), and
   drives them to converge on ONE jointly revised spec with earned acceptance. It is
   the generative counterpart to spec-validator; run spec-validator on the result
-  afterward. Examples:
-
-  <example>
-  Context: A spec's constraints live in different places no single context holds.
-  user: "The limits for this feature live in product research, infra docs, and the security policy — deliberate on the spec."
-  assistant: "I'll use the spec-deliberator agent to seed product, engineering, and ops delegates with disjoint bundles and have them converge on one revised spec, then hand off to spec-validator."
-  <commentary>
-  Reconciling genuinely siloed, asymmetric knowledge into one spec is exactly what deliberation (not adversarial attack) is for.
-  </commentary>
-  </example>
-
-  <example>
-  Context: A spec-validator run left single-vote findings the author can't adjudicate.
-  user: "spec-validator left a few single-vote findings I can't decide on — resolve the tail."
-  assistant: "I'll launch the spec-deliberator agent as a mini-panel over exactly those disputed findings, one delegate defending intent and one holding the skeptic's finding."
-  <commentary>
-  Deliberating over the single-vote tail imports reflection at the point of maximum uncertainty — the highest-value hybrid use.
-  </commentary>
-  </example>
+  afterward.
 model: inherit
 color: magenta
 initialPrompt: |

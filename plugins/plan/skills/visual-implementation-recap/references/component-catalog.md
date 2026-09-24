@@ -24,14 +24,14 @@ UI · VERIFY · NOTES`.
   invent code or numbers. "What this means" annotations are fine but mark them as inference.
 - **Redact secrets.** The recap shows *real* changed lines. Strip or mask API keys, tokens,
   passwords, and credential-like literals before rendering (`sk-••••`). When in doubt, mask.
-- **No silent truncation.** If you clip a long diff to fit the budget, say so
+- **No silent truncation.** If you clip a long diff, say so
   (`showing 2 of 5 hunks`). A partial diff must never read as complete.
 
 ---
 
 ## 1. Overview
 
-Lead with metric cards (the headline numbers), then a 1–3-sentence outcome brief and a
+Lead with metric cards (the headline numbers), then a short outcome brief and a
 small key/value card. Source the numbers from `git diff --stat` and the audit summary.
 
 ```html
@@ -109,7 +109,7 @@ Badges: `<span class="badge new">new</span>` · `<span class="badge mod">modifie
 
 ## 4. Key Changes — the centerpiece
 
-The 3–8 changes that carry the most meaning, each as an annotated diff card. **Lines come
+The changes that carry the most meaning, each as an annotated diff card. **Lines come
 verbatim from `git diff`** — only redact secrets and clip with a stated note.
 
 Each line is a `<span class="ln …">` inside `<pre class="diff">`. Line classes:
@@ -149,8 +149,8 @@ directly in the card. When clipped, add a note:
 <p class="clip">Showing the salient hunk of 2 in this file.</p>
 ```
 
-Budgets: 3–8 cards total; prefer ≤ ~150 diff lines per card. Pick the hunks that change
-behavior, not boilerplate.
+Pick the hunks that change behavior, not boilerplate, and split a sprawling hunk across
+cards rather than rendering it whole.
 
 ---
 
@@ -315,7 +315,7 @@ Mirror what actually changed; do not invent. Rough guide:
 - **Contract / data work:** add API & Schema (flag what changed).
 - **UI work:** add UI Changes (before/after). Backend/data-only milestones **omit** it with
   a one-line note ("No user-facing UI in this milestone").
-- **Notes:** include 1–3 high-value callouts (decisions, compatibility risk, deferred
+- **Notes:** include the high-value callouts (decisions, compatibility risk, deferred
   follow-ups); skip if there are none worth flagging.
 
 The HTML is a derived view of the real diff + `plan.md` + the audit report; if they

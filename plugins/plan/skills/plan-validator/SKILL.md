@@ -1,6 +1,6 @@
 ---
 name: plan-validator
-description: Use after an implementation plan is written and BEFORE executing it, to catch ordering bugs and false assumptions while they are still cheap. Dispatches independent skeptic agents that assume the plan WILL fail, read the codebase to check its assumptions, and find the first domino that topples the rest — keeping only findings confirmed by a 2-of-3 majority. Symptoms - "validate this plan", "will this plan work", "review the plan before we start", a freshly written plans/*.md from writing-plans, about to run executing-plans or subagent-driven-development.
+description: Use after an implementation plan is written and BEFORE executing it, to catch ordering bugs and false assumptions while they are still cheap. Dispatches independent skeptic agents that assume the plan WILL fail, read the codebase to check its assumptions, and find the first domino that topples the rest — keeping only findings confirmed by a 2-of-3 majority. Symptoms - "validate this plan", "will this plan work", "review the plan before we start", an implementation plan just written and about to be executed.
 ---
 
 # Adversarial Plan Validation
@@ -18,7 +18,7 @@ says edit `X.dispatch()` but that method does not exist."
 
 ## When to Use
 
-- A written implementation plan exists (e.g. from `architect` or `superpowers:writing-plans`) and you are about to execute it.
+- A written implementation plan exists (from `architect`, or any plan-writing skill) and you are about to execute it.
 - The user asks to "validate", "sanity-check", "stress-test", or "review" a plan before work starts.
 - The plan touches existing code whose shape the plan *assumes* — exactly where plans rot.
 
@@ -97,7 +97,7 @@ ordering bug should collapse to one entry, not three.
   count suggests — read the evidence, not the tally.
 - **Single vote:** appears in exactly one. These go to the **Single-Vote Findings (triage
   required)** section and each one needs an explicit decision — fixed, accepted as a known
-  risk, or refuted with a reason. A lone finding from a current-generation skeptic is more
+  risk, or refuted with a reason. A lone finding is more
   often a real defect one reviewer happened to reach than noise, so "only one agent saw it"
   is not a reason to close it. Ordering bugs in particular are easy to miss and expensive to hit.
 - Severity: most common among agreeing skeptics; tie → higher.
@@ -130,7 +130,7 @@ for a complete run.
 | "Three identical prompts give me three independent opinions." | They give one opinion sampled three times. Correlated skeptics manufacture false corroboration — partition the lens *and* the reading assignment. |
 | "The plan reads cleanly, it'll be fine." | Clean prose hides dead assumptions. The skeptics must open the files. |
 | "The agent says step 3 is wrong but didn't cite a line." | Unverified prediction = guess. Force `file:line` or mark confidence low. |
-| "One skeptic found the ordering bug, two didn't — so it's noise." | Wrong default. Modern skeptics are precise; the lone finding is usually real. Triage it and record the decision. |
+| "One skeptic found the ordering bug, two didn't — so it's noise." | Wrong default. The lone finding is usually real. Triage it and record the decision. |
 | "I'll tell them to only report the serious stuff." | The model will comply and report less. Ask for everything; filter at the gate. |
 | "I'll let the agents discuss the plan together." | Shared context collapses the vote. Dispatch independently. |
 | "I'll merge their findings in my own words." | Dedup on stable `id` + step, or the same bug splits into three sub-quorum entries. |

@@ -27,7 +27,7 @@ no restated summaries.
 
 ## Verdict
 
-{1–3 plain-language sentences. Lead with the calibration headline, e.g. "3 findings claimed Critical; all confirmed real but downgraded to High — impact is gated on concurrent requests, not every run."}
+{1–3 plain-language sentences. Lead with the calibration headline: which severities moved, in which direction, and the condition that gates the impact — or that none moved.}
 
 ## Confirmed Defects (≥ 2 votes)
 
@@ -57,7 +57,7 @@ _(repeat per confirmed defect)_
 ## Single-Vote Findings (triage required)
 
 > One skeptic found these and the others did not. That is not evidence they are wrong —
-> current-generation skeptics have high precision, so a lone finding is more often a real
+> a lone finding is more often a real
 > defect one reviewer happened to reach than noise. Concurrency and failure-path bugs in
 > particular are easy for two of three readers to miss. **Each row needs a decision** —
 > fixed, accepted as a known risk, or refuted with a reason. Read the cited evidence; a

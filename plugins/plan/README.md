@@ -6,7 +6,7 @@ These skills are designed to be used together. A single orchestrator (`starter`)
 
 The swarm's structure is itself declared rather than described: [`graph.json`](graph.json) holds the nodes, edges, gates and node contracts, the lifecycle diagrams below are generated from it, and each milestone's `state.json` records where a run actually is. See [Topology & State](#topology--state).
 
-> **Skills or subagents?** This document describes the **skills** form (invoked with the `Skill` tool). The same swarm is also packaged as **subagents** under [`agents/`](agents/README.md) — dispatched with the `Task` tool (`subagent_type`), auto-delegated from each agent's `description`, or launched with `claude --agent <name>`. The two families are kept in sync; the agents add per-role `model`, `color`, `tools`, and an `initialPrompt` bootstrap. See [`agents/README.md`](agents/README.md) for the agent-specific details.
+> **Skills or subagents?** This document describes the **skills** form (invoked with the `Skill` tool). The same swarm is also packaged as **subagents** under [`agents/`](agents/) — dispatched with the `Task` tool (`subagent_type`), auto-delegated from each agent's `description`, or launched with `claude --agent <name>`. The two families are kept in sync; the agents add per-role `model`, `color`, `tools`, and an `initialPrompt` bootstrap. See [`AGENTS.md`](AGENTS.md) for the agent-specific details.
 
 ---
 
@@ -172,35 +172,11 @@ Runs **after a spec is drafted, before a plan is written** — defects are cheap
 - **Attack surface:** ambiguity, missing requirements (errors, empty/huge inputs, concurrency, auth, limits, units, time), contradictions, untestable acceptance criteria, and *malicious compliance* (the laziest implementation that passes every criterion yet is useless).
 - **Output:** confirmed findings each carry a `tightening` — a concrete reworded/added requirement to fold back into the spec.
 
-#### 8·alt. `geap-spec-validator` — Attack the Spec, Remotely
-A **drop-in alternative to `spec-validator`** whose skeptics are **remote Vertex AI foundation models** (any mix of `gemini-*` / `claude-*`, configurable) instead of local subagents — one Python script runs 3 skeptics in parallel plus a **synthesis model** that consolidates findings and casts an extra validation vote (quorum: ≥ 2 of 4 votes, counted programmatically).
-
-- **Use it instead of `spec-validator`** when the review benefits from model diversity (non-Claude opinions) or an externally-produced audit trail; requires GCP ADC (`gcloud auth application-default login`).
-- **Output:** `adversarial-reviews/geap-spec-validation.md` in the same milestone folder; exit code 0 = pass, 1 = confirmed findings.
-
-#### 8·alt2. `geap-interactions-spec-validator` — Attack the Spec, Remotely, No Python
-The **no-Python sibling of `geap-spec-validator`**: the same remote skeptic panel (configurable roster of `gemini-*`/`claude-*` models + synthesis vote), but transport is `curl` to the **Interactions API** with ADC — executed by `geap-interactions-caller` subagents, one per skeptic, with automatic per-call fallback to the Vertex AI global endpoint. The orchestrating agent counts the votes (≥ 2 of N+1).
-
-- **Use it instead of `geap-spec-validator`** when no venv/Python is available or wanted; requires only `gcloud` ADC + `jq`.
-- **Output:** `adversarial-reviews/geap-interactions-spec-validation.md` in the same milestone folder, including a per-model Transport row.
-
 #### 9. `plan-validator` — Attack the Plan
 Runs **after a plan is written, before execution**. Unlike spec skeptics, these **read the codebase** to check the plan's assumptions against reality.
 
 - **Attack surface:** ordering/dependency bugs ("step 4 edits what step 2 forgot to create"), false assumptions about existing code (a named function/field/signature that doesn't exist — *open the file and check*), unverifiable "verify" steps, missing rollback, missing migration/compat, hidden coupling.
 - **Output:** each finding cites `file:line` evidence and a `fix`; the panel names the **`first_domino`** — the earliest failure that invalidates later steps.
-
-#### 9·alt. `geap-plan-validator` — Attack the Plan, Remotely
-A **drop-in alternative to `plan-validator`** running the panel on **remote Vertex AI foundation models** (3 configurable skeptics — Dependency & Ordering, Hidden-Assumption, Integration & Failure-Mode — plus a synthesis model that also nominates the `first_domino`).
-
-- **Scope caveat:** remote skeptics **cannot read the repository** — they attack the plan text only (evidence = verbatim plan quotes; unverifiable code assumptions are flagged `false-assumption`/low-confidence). For codebase-verified review, use the local `plan-validator`; the two are complementary.
-- **Output:** `adversarial-reviews/geap-plan-validation.md` in the same milestone folder; exit code 0 = pass, 1 = confirmed findings.
-
-#### 9·alt2. `geap-interactions-plan-validator` — Attack the Plan, Remotely, No Python
-The **no-Python sibling of `geap-plan-validator`**: same remote panel and `first_domino` nomination, transport via `curl` to the **Interactions API** with ADC (per-call Vertex fallback), one caller subagent per skeptic, votes counted by the orchestrating agent.
-
-- **Scope caveat:** identical to `geap-plan-validator` — remote skeptics attack the plan text only.
-- **Output:** `adversarial-reviews/geap-interactions-plan-validation.md` in the same milestone folder, including a per-model Transport row.
 
 #### 10. `implementation-validator` — Attack the Diff
 Runs **after code is written, before merge**. Reasons about the code (it does *not* launch the app).
@@ -216,6 +192,12 @@ An out-of-band **utility** skill (not part of the lifecycle) that scans the `.ag
 
 - **Produces:** `.agents/trajectory.html` (self-contained, browsable).
 - **Triggers:** "generate trajectory", "visualize teamwork", "trace agents", "update trajectory dashboard".
+
+#### `wf-trajectory` — Visualize a Workflow Run
+An out-of-band **utility** skill (not part of the lifecycle) that renders a completed Claude Code dynamic Workflow run (`wf_<runId>.json`) as a self-contained, offline HTML page — summary metrics, a collapsible run→phase→agent tree, and a Gantt timeline of parallel fan-out. Workflow-agnostic; works retroactively on any run.
+
+- **Produces:** `wf-trajectory/<runId>.html` (the directory is git-ignored).
+- **Triggers:** "visualize the workflow run", "render wf trajectory", "trace a workflow", "show the last workflow execution". For swarm runs that wrote `.agents/` records, use `teamwork-trajectory` instead.
 
 ---
 
@@ -236,8 +218,6 @@ The swarm communicates through files under `plans/`. Knowing this layout is the 
 | `plans/active_milestones/{moniker}/data-model.md` · `api-contracts.md` | `architect` | Optional supporting design artifacts. |
 | `plans/active_milestones/{moniker}/visual-plan.html` | `visual-architect` | Self-contained, browsable companion to `plan.md` for the human review gate (zero build; opens in any browser). |
 | `plans/active_milestones/{moniker}/adversarial-reviews/{spec,plan,implementation}-validation.md` | `spec-validator` · `plan-validator` · `implementation-validator` | Human-readable Markdown report from each skeptic panel — verdict, confirmed findings (with `file:line` evidence and fixes), the single-vote tail for triage, and (for implementation) the severity-calibration table. Written every run, even on a clean pass; re-runs append `-r2`, `-r3`. |
-| `plans/active_milestones/{moniker}/adversarial-reviews/geap-{spec,plan}-validation.md` | `geap-spec-validator` · `geap-plan-validator` | Report from the **remote** Vertex AI panel (3 configurable skeptic models + synthesis vote) — same review-document shape as the local validators, plus the models used and the 2-of-4 vote tally per finding. |
-| `plans/active_milestones/{moniker}/adversarial-reviews/geap-interactions-{spec,plan}-validation.md` | `geap-interactions-spec-validator` · `geap-interactions-plan-validator` | Report from the **no-Python** remote panel (Interactions API via curl/ADC, Vertex fallback) — same shape as the geap reports plus per-model transport and a Panel Health section. |
 | `plans/audit/AUDIT_[Plan_Name].md` | `auditor` | Evidence-based audit report (the `plans/audit/` dir is git-ignored). |
 | `plans/active_milestones/{moniker}/visual-recap.html` | `visual-implementation-recap` | Self-contained, browsable recap of everything the milestone changed — diffstat, annotated diffs, task/audit status — for the human commit gate (zero build; opens in any browser). |
 
@@ -254,7 +234,7 @@ Two files make the swarm's structure explicit rather than remembered.
 Every node, edge, gate and node contract in one declaration: which nodes exist, what routes
 between them and under what condition, which panels are lens-partitioned and into which
 lenses, and what each node is allowed to read and write. **The lifecycle diagrams in this
-README and in [`agents/README.md`](agents/README.md) are generated from it** — they are not
+README and in [`AGENTS.md`](AGENTS.md) are generated from it** — they are not
 maintained by hand, because three hand-maintained copies of one topology is how the
 documented lifecycle and the dispatching state machine drifted apart in the first place.
 
@@ -262,7 +242,7 @@ documented lifecycle and the dispatching state machine drifted apart in the firs
 python3 lib/graph/graph.py validate       # topology vs. the skills on disk
 python3 lib/graph/graph.py render ascii   # the lifecycle diagram
 python3 lib/graph/graph.py render mermaid # the same graph, for docs
-python3 lib/graph/graph.py sync           # rewrite the generated blocks in both READMEs
+python3 lib/graph/graph.py sync           # rewrite the generated blocks in README.md and AGENTS.md
 python3 lib/graph/graph.py sync --check   # non-zero exit if a README is stale (CI)
 ```
 

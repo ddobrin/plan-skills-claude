@@ -2,7 +2,7 @@
 
 A swarm of role-based **subagents** and adversarial validation gates that drive a feature, bug fix, or refactor through a disciplined **spec → plan → execute → audit → commit** lifecycle.
 
-This is the **subagent** packaging of the swarm. The [skills form](../README.md) and this agents form describe the *same* lifecycle and produce the *same* `plans/` artifacts — they are kept in sync. The difference is purely how a role is **delivered and dispatched**: a skill is invoked with the `Skill` tool; an agent is a standalone subagent with its own model, tool allowlist, and a bootstrap `initialPrompt`, dispatched with the `Task` tool, auto-delegated from its `description`, or launched from the CLI.
+This is the **subagent** packaging of the swarm. The [skills form](README.md) and this agents form describe the *same* lifecycle and produce the *same* `plans/` artifacts — they are kept in sync. The difference is purely how a role is **delivered and dispatched**: a skill is invoked with the `Skill` tool; an agent is a standalone subagent with its own model, tool allowlist, and a bootstrap `initialPrompt`, dispatched with the `Task` tool, auto-delegated from its `description`, or launched from the CLI.
 
 A single orchestrator (`supervisor`) dispatches the role agents in sequence, stops for human approval at defined gates, and treats files in `plans/` — not chat messages — as the single source of truth. Independent *validator* agents slot in at the boundary between each phase to attack the artifact (spec, plan, or diff) before the next phase consumes it.
 
@@ -18,7 +18,7 @@ Every agent is a single Markdown file (`agents/{name}.md`) whose YAML frontmatte
 |---|---|
 | `name` | The agent's identifier. Dispatch it as `plan:{name}` (e.g. `plan:architect`). |
 | `description` | What the agent is for **plus `<example>` trigger blocks** (`Context` / `user` / `assistant` / `commentary`). The runtime reads these to **auto-delegate** — i.e. pick this agent when a request matches — so the examples are functional, not decorative. |
-| `model` | The model the subagent runs on. Most use `inherit` (run on the caller's model); **`engineer` pins `claude-sonnet-5`** — TDD implementation is high-volume, well-scoped work suited to a faster model. |
+| `model` | The model the subagent runs on. Every agent uses `inherit` (runs on the caller's model), so the swarm follows the session's model. The one per-dispatch override is the optional `model: "sonnet"` the validators pass to their skeptic panels. |
 | `color` | The agent's color in the subagent UI (blue architects, red validators, green engineer, magenta product/deliberators, cyan orchestrator/recap, yellow auditor). |
 | `tools` | An explicit tool allowlist that **bounds the agent's authority**. It is a capability contract: `architect`/`product-owner` get no `Bash` (read-only, can't run builds or commit); `auditor`/`engineer` get `Bash`; the validators and deliberators get all tools because they fan out their own skeptic/delegate subagents. |
 | `initialPrompt` | **The agent-specific bootstrap.** See below. |
@@ -52,15 +52,14 @@ Representative examples straight from the agents:
 | **Swarm roles** | `supervisor`, `product-owner` (or `visual-product-owner`), `architect` (or `visual-architect`), `engineer`, `auditor`, `visual-implementation-recap` | Perform the lifecycle — orchestrate, spec, plan, build, verify, and recap the result. |
 | **Adversarial validators** | `spec-validator`, `plan-validator`, `implementation-validator` | Attack each artifact at its phase boundary with an independent 3-skeptic panel; keep only findings confirmed by a 2-of-3 majority. |
 | **Deliberative panels** | `spec-deliberator`, `plan-deliberator` | Improve a drafted artifact via delegates holding deliberately disjoint context (stakeholder bundles for specs, codebase/intent/delivery territories for plans) who deliberate to consensus — the generative counterpart to the validators. |
-| **Transport** | `geap-interactions-caller` | Not a reasoning role. A shell that calls one remote Vertex AI / Interactions-API model and returns its verdict JSON; dispatched (one per skeptic) by the `geap-interactions-*-validator` **skills**. |
 
-> **Not ported to the agents family** (available only as [skills](../README.md)): `simplifier`, `teamwork-trajectory`, and the four `geap-*` remote validators (`geap-spec-validator`, `geap-plan-validator`, `geap-interactions-spec-validator`, `geap-interactions-plan-validator`). The remote validators remain skills because they orchestrate a Python script or a fleet of `curl` callers; in the agents world their only footprint is the `geap-interactions-caller` transport shell. See [Differences from the Skills family](#differences-from-the-skills-family).
+> **Not ported to the agents family** (available only as [skills](README.md)): `simplifier`, `teamwork-trajectory`, and `wf-trajectory`. See [Differences from the Skills family](#differences-from-the-skills-family).
 
 ---
 
 ## The Lifecycle
 
-> The diagram below is generated from [`../graph.json`](../graph.json) — the single
+> The diagram below is generated from [`graph.json`](graph.json) — the single
 > declaration of this swarm's nodes, edges and gates. Edit that file and run
 > `python3 lib/graph/graph.py sync`; do not hand-edit the block.
 
@@ -151,7 +150,7 @@ Representative examples straight from the agents:
 - **`initialPrompt` behavior:** same orientation as `architect`, plus: produce `plan.md` **first**, then render the HTML from it; no decision may live only in the HTML.
 
 #### 4. `engineer` — The Expert Builder
-**`model: claude-sonnet-5`** · `color: green` · `tools: Read, Write, Edit, Glob, Grep, Bash` — Implements the plan exactly, one atomic step at a time, under strict Test-Driven Development. (The only agent that pins a specific model — high-volume, well-scoped TDD work.)
+`model: inherit` · `color: green` · `tools: Read, Write, Edit, Glob, Grep, Bash` — Implements the plan exactly, one atomic step at a time, under strict Test-Driven Development.
 
 - **Doctrine:** no untested changes; Red → Green → Refactor; characterization tests + seams for legacy code (Feathers); strict scope — implement the assigned task and nothing more.
 - **Tracks progress** by checking off todos directly in `plan.md`; uses `git mv` to preserve history.
@@ -213,25 +212,17 @@ All three share the same machinery: dispatch **3 lens-partitioned skeptic subage
 - **Signature output — severity calibration:** the panel's most valuable product isn't deletion but *corrected severity* (e.g. three reviewers call a singleton race "Critical"; confirmed real but downgraded to "High" because impact is gated on concurrent requests). Always surface the calibration delta.
 - **`initialPrompt` behavior:** establish the `BASE..HEAD` diff range (`git rev-parse origin/main` / `HEAD`) and a one-line statement of what the change claims, confirm the mode, then dispatch the 3 skeptics and write `adversarial-reviews/implementation-validation.md`.
 
-### Transport
-
-#### `geap-interactions-caller` — Remote Model Transport Shell
-`tools: Bash, Read` (no `model`/`color`/`initialPrompt` — it is not a reasoning role) — Given one remote model, one system prompt (a skeptic lens or the synthesis prompt), and one document path, it calls the model over the **Interactions API** via `curl` with ADC auth (falling back to the Vertex AI global endpoint), validates the returned verdict JSON, self-repairs up to 3 attempts, and returns **only** the fenced JSON verdict. It performs no adversarial reasoning itself — the remote model does.
-
-- **Dispatched by** the `geap-interactions-spec-validator` and `geap-interactions-plan-validator` **skills** (one caller per skeptic); not intended for direct interactive use.
-
 ---
 
 ## Differences from the Skills family
 
-The agents mirror the [skills](../README.md), with a few deliberate divergences:
+The agents mirror the [skills](README.md), with a few deliberate divergences:
 
 | Aspect | Skills family | Agents family |
 |---|---|---|
 | **Orchestrator name** | `starter` | `supervisor` (same role) |
 | **`simplifier`** | Present — refines code with zero behavioral change inside the Construction Loop | **Not ported.** Use the skill, or fold clarity work into the `engineer`'s refactor step. |
-| **`teamwork-trajectory`** | Present — utility that renders `.agents/trajectory.html` | **Not ported** (utility, out of lifecycle). |
-| **Remote `geap-*` validators** | Four skills (`geap-spec-validator`, `geap-plan-validator`, `geap-interactions-spec-validator`, `geap-interactions-plan-validator`) | Represented only by the `geap-interactions-caller` transport shell; the validator *orchestration* stays in the skills. |
+| **`teamwork-trajectory`** · **`wf-trajectory`** | Present — utilities that render `.agents/trajectory.html` and `wf-trajectory/<runId>.html` | **Not ported** (utilities, out of lifecycle). |
 | **Per-role runtime config** | Implicit | Explicit frontmatter: `model`, `color`, `tools`, `initialPrompt`. |
 | **Invocation** | `Skill` tool | `Task` tool (`subagent_type`), auto-delegation from `description`, or `claude --agent <name>`. |
 
@@ -253,7 +244,6 @@ The swarm communicates through files under `plans/` — the layout is identical 
 | `plans/active_milestones/{moniker}/data-model.md` · `api-contracts.md` | `architect` | Optional supporting design artifacts. |
 | `plans/active_milestones/{moniker}/visual-plan.html` | `visual-architect` | Self-contained, browsable companion to `plan.md` for the human review gate (zero build). |
 | `plans/active_milestones/{moniker}/adversarial-reviews/{spec,plan,implementation}-validation.md` | `spec-validator` · `plan-validator` · `implementation-validator` | Human-readable report from each skeptic panel — verdict, confirmed findings (with `file:line` evidence and fixes), the single-vote tail for triage, and (for implementation) the severity-calibration table. Written every run; re-runs append `-r2`, `-r3`. |
-| `plans/active_milestones/{moniker}/adversarial-reviews/geap-interactions-{spec,plan}-validation.md` | `geap-interactions-*-validator` skills (via `geap-interactions-caller`) | Report from the **no-Python** remote panel (Interactions API via curl/ADC, Vertex fallback) — per-model transport and a Panel Health section. |
 | `plans/audit/AUDIT_[Plan_Name].md` | `auditor` | Evidence-based audit report (the `plans/audit/` dir is git-ignored). |
 | `plans/active_milestones/{moniker}/visual-recap.html` | `visual-implementation-recap` | Self-contained, browsable recap of everything the milestone changed — diffstat, annotated diffs, task/audit status — for the human commit gate (zero build). |
 

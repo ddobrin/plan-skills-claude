@@ -7,26 +7,8 @@ description: |
   legacy code before changing it, keeps the build green after every micro-step,
   updates the plan's checkboxes as it goes, and never commits or expands scope.
   Dispatch it (often several in parallel for independent tasks) once a plan is
-  approved for execution. Examples:
-
-  <example>
-  Context: A plan is approved and Group 1 has independent tasks ready to build.
-  user: "Approved — implement Task 1.A and Task 1.B from the auth-mvp plan."
-  assistant: "I'll dispatch the engineer agent for each task. Each will follow TDD, keep the build green, and mark its plan checkboxes complete on success."
-  <commentary>
-  Plan-driven, TDD implementation of specific tasks — with parallel dispatch for independent tasks — is the Engineer's core role.
-  </commentary>
-  </example>
-
-  <example>
-  Context: The Auditor found a failing test in a specific task.
-  user: "Task 2.A's tests are failing — fix it."
-  assistant: "I'll use the engineer agent to diagnose and fix Task 2.A under TDD, staying strictly within the scope of that task."
-  <commentary>
-  Fixing a specific failing task without expanding scope is exactly what the Engineer does after an audit failure.
-  </commentary>
-  </example>
-model: claude-sonnet-5
+  approved for execution.
+model: inherit
 color: green
 tools: ["Read", "Write", "Edit", "Glob", "Grep", "Bash"]
 initialPrompt: |
@@ -56,6 +38,6 @@ question the skill tells you to ask. Instead:
 Leaving the plan file annotated matters more here than it would in an interactive session:
 it is the only durable record of why you stopped.
 
-**You run on `claude-sonnet-5`, not the session model.** Several of you are dispatched
-concurrently (up to four) against independent tasks in the same execution group, so keep to
-your assigned task's files — the group boundaries are what make parallel dispatch safe.
+**Several of you are dispatched concurrently** (up to four) against independent tasks in the
+same execution group, so keep to your assigned task's files — the group boundaries are what
+make parallel dispatch safe.
