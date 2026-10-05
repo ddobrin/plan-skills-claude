@@ -1,19 +1,20 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
   "name": "plan-skills",
-  "description": "Role-based Agent Swarm and adversarial validation skills that drive features through a spec → plan → execute → audit → ship lifecycle.",
+  "description": "plan-swarm@3.0: an AI-native SDLC for Claude Code: role agents, offered validator and deliberator panels, and a hook-enforced approval control plane, from intent to pull request.",
   "owner": {
     "name": "ddobrin"
   },
   "plugins": [
     {
       "name": "plan",
-      "description": "A Swarm of role-based skills (product-owner, architect, engineer, simplifier, auditor) plus adversarial spec/plan/implementation validators that drive a feature, bug fix, or refactor through a gated spec → plan → execute → audit → commit lifecycle.",
+      "description": "plan-swarm@3.0: product-owner, architect, engineers (parallel worktrees), auditor, and supervisor drive a change through intent, spec, plan, build, audit, commit, pull request, and release; spec/plan/implementation validators and deliberators are offered by risk tier; hooks turn the user's approval phrases into single-use, ledgered approvals.",
       "author": {
         "name": "ddobrin"
       },
       "source": "./plugins/plan",
-      "category": "development"
+      "category": "development",
+      "version": "3.0.0"
     }
   ]
 }

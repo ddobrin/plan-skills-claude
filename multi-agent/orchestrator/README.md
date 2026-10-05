@@ -13,7 +13,7 @@ Source: [ClaudeDevs on X](https://x.com/ClaudeDevs/status/2074606061567574181)
 ```
 orchestrator/
 ├── claude-code/
-│   ├── CLAUDE.md              orchestrator instructions
+│   ├── AGENTS.md              orchestrator instructions
 │   └── agents/
 │       ├── worker.md          Sonnet execution subagent
 │       └── researcher.md      Sonnet read-only subagent
@@ -31,20 +31,23 @@ orchestrator/
 cd your-project
 mkdir -p .claude/agents
 cp path/to/orchestrator/claude-code/agents/*.md .claude/agents/
-cat path/to/orchestrator/claude-code/CLAUDE.md >> CLAUDE.md
+cat path/to/orchestrator/claude-code/AGENTS.md >> AGENTS.md
 ```
+
+- Claude Code reads a project's `AGENTS.md` only when the project has no `CLAUDE.md`. If yours has one, add the line `@AGENTS.md` to it.
+- Antigravity reads the same root `AGENTS.md`, and its version of this pattern (`antigravity/AGENTS.md`) is a different file. A project that uses both tools has one root `AGENTS.md`, so merge the two by hand.
 
 ### All projects (user-level)
 
 ```bash
 mkdir -p ~/.claude/agents
 cp path/to/orchestrator/claude-code/agents/*.md ~/.claude/agents/
-cat path/to/orchestrator/claude-code/CLAUDE.md >> ~/.claude/CLAUDE.md
+cat path/to/orchestrator/claude-code/AGENTS.md >> ~/.claude/CLAUDE.md   # user-level instructions file
 ```
 
 Note: user-level agents apply to every project for your OS user. To share
 with teammates ("all users"), commit the per-project `.claude/agents/` and
-`CLAUDE.md` to the repo instead — everyone who clones it gets the pattern.
+`AGENTS.md` to the repo instead — everyone who clones it gets the pattern.
 
 ### Run
 

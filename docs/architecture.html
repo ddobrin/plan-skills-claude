@@ -1,0 +1,1204 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>plan-swarm@3.0: End‑State Architecture (AI‑Native SDLC)</title>
+<style>
+  :root{
+    --bg:#fbfaf7; --panel:#ffffff; --ink:#1d1d1f; --muted:#5f6368; --line:#e4e1da; --line2:#b9b4aa;
+    --accent:#c2562c; --blue:#2f5bd3; --green:#1f7a4d; --amber:#a86a00; --red:#b3261e; --gray:#8a8f98; --purple:#7b3fd1;
+    --g-bg:#e8f5ee; --a-bg:#fff4dc; --r-bg:#fde8e6; --b-bg:#e9efff; --code:#f3f1ec;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#141414; --panel:#1c1c1e; --ink:#ececec; --muted:#a1a1a6; --line:#2e2e30; --line2:#55555a;
+      --accent:#e0794f; --blue:#7c9cff; --green:#5cc98f; --amber:#e7b04a; --red:#ff7b72; --gray:#8d8d93; --purple:#b38cff;
+      --g-bg:#16301f; --a-bg:#33290f; --r-bg:#3a1a18; --b-bg:#1b2442; --code:#242426; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15.5px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Helvetica,Arial,sans-serif}
+  .wrap{display:grid;grid-template-columns:240px minmax(0,1fr);gap:40px;max-width:1320px;margin:0 auto;padding:40px 28px 80px}
+  nav{position:sticky;top:24px;align-self:start;font-size:13.5px;max-height:calc(100vh - 48px);overflow:auto}
+  nav b{display:block;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-size:11.5px;margin-bottom:8px}
+  nav a{display:block;color:var(--ink);text-decoration:none;padding:3px 0 3px 10px;border-left:2px solid var(--line)}
+  nav a:hover{border-left-color:var(--accent);color:var(--accent)}
+  @media (max-width:980px){.wrap{grid-template-columns:1fr}nav{display:none}}
+  h1{font-size:34px;line-height:1.15;margin:0 0 6px;letter-spacing:-.01em}
+  h2{font-size:22px;margin:56px 0 12px;padding-top:12px;border-top:1px solid var(--line)}
+  h3{font-size:17px;margin:26px 0 8px}
+  p{margin:10px 0}
+  .sub{color:var(--muted);margin:0 0 18px}
+  .meta{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:13px;color:var(--muted);margin-bottom:22px}
+  code{font:13px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--code);padding:1px 5px;border-radius:4px}
+  pre{background:var(--code);border:1px solid var(--line);border-radius:10px;padding:14px 16px;overflow:auto;font:12.5px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;margin:10px 0}
+  pre code{background:none;padding:0}
+  a{color:var(--blue)}
+  table{width:100%;border-collapse:collapse;background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden;font-size:14px;margin:12px 0}
+  th,td{text-align:left;vertical-align:top;padding:8px 12px;border-bottom:1px solid var(--line)}
+  th{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);background:var(--code)}
+  tr:last-child td{border-bottom:0}
+  .pill{display:inline-block;font-size:11.5px;font-weight:650;padding:2px 8px;border-radius:999px;white-space:nowrap}
+  .p-g{background:var(--g-bg);color:var(--green)} .p-a{background:var(--a-bg);color:var(--amber)}
+  .p-r{background:var(--r-bg);color:var(--red)} .p-b{background:var(--b-bg);color:var(--blue)} .p-x{background:var(--code);color:var(--muted)}
+  .callout{background:var(--b-bg);border-radius:10px;padding:14px 18px;margin:14px 0;font-size:14.5px}
+  .warn{background:var(--a-bg)}
+  .principles{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:12px 0}
+  @media (max-width:900px){.principles{grid-template-columns:1fr}}
+  .pr{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;font-size:14px}
+  .pr b{display:block;font-size:15px;margin-bottom:4px}
+  figure{margin:16px 0 8px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px}
+  figure svg{width:100%;height:auto;display:block}
+  figcaption{font-size:12.5px;color:var(--muted);margin-top:8px}
+  .ev{font-size:12.5px;color:var(--muted)}
+  footer{margin-top:60px;font-size:12.5px;color:var(--muted);border-top:1px solid var(--line);padding-top:16px}
+
+  /* ---------- SVG vocabulary (inherits theme) ---------- */
+  svg text{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Helvetica,Arial,sans-serif;fill:var(--ink)}
+  .bx{fill:var(--panel);stroke:var(--line2);stroke-width:1.3}
+  .bx-h{fill:var(--a-bg);stroke:var(--amber);stroke-width:1.6}
+  .bx-ai{fill:var(--b-bg);stroke:var(--blue);stroke-width:1.4}
+  .bx-pr{fill:var(--g-bg);stroke:var(--green);stroke-width:1.4}
+  .bx-ctl{fill:var(--a-bg);stroke:var(--amber);stroke-width:1.2}
+  .bx-opt{fill:var(--panel);stroke:var(--gray);stroke-width:1.2;stroke-dasharray:5 4}
+  .bx-fut{fill:none;stroke:var(--gray);stroke-width:1.2;stroke-dasharray:3 4}
+  .bx-grp{fill:none;stroke:var(--line2);stroke-width:1.2}
+  .t1{font-size:14px;font-weight:700}
+  .t2{font-size:11.5px;fill:var(--muted)}
+  .t3{font-size:12px}
+  .hd{font-size:11px;fill:var(--muted);letter-spacing:.08em;text-transform:uppercase;font-weight:600}
+  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px}
+  .fl{stroke:var(--ink);stroke-width:1.4;fill:none}
+  .fb{stroke:var(--red);stroke-width:1.4;fill:none}
+  .fut{stroke:var(--gray);stroke-width:1.4;fill:none;stroke-dasharray:4 4}
+  .ll{stroke:var(--line2);stroke-width:1;stroke-dasharray:3 4}
+  .ok{stroke:var(--green);stroke-width:1.4;fill:none}
+  .no{stroke:var(--red);stroke-width:1.4;fill:none;stroke-dasharray:5 3}
+  .mk{fill:var(--ink)} .mk-r{fill:var(--red)} .mk-g{fill:var(--gray)} .mk-gr{fill:var(--green)} .mk-p{fill:var(--purple)}
+  .bx-add{fill:var(--panel);stroke:var(--purple);stroke-width:1.4;stroke-dasharray:6 4}
+  .bx-alt{fill:var(--panel);stroke:var(--green);stroke-width:1.4;stroke-dasharray:6 4}
+  .opt{stroke:var(--purple);stroke-width:1.4;fill:none;stroke-dasharray:5 4}
+  .alt{stroke:var(--green);stroke-width:1.4;fill:none;stroke-dasharray:5 4}
+  .num{fill:var(--panel);stroke:var(--red);stroke-width:1.3}
+  .numt{font-size:10.5px;font-weight:700;fill:var(--red)}
+  .pl-c{fill:var(--g-bg);stroke:var(--green)} .pl-h{fill:var(--a-bg);stroke:var(--amber)} .pl-t{fill:var(--b-bg);stroke:var(--blue)} .pl-x{fill:var(--code);stroke:var(--line2)}
+  .plt{font-size:10px;font-weight:650}
+  .dot-m{fill:var(--gray)} .dot-s{fill:var(--blue)} .dot-w{fill:var(--green)} .dot-c{fill:var(--amber);stroke:var(--ink);stroke-width:1}
+  .ln-m{stroke:var(--gray);stroke-width:3;fill:none} .ln-s{stroke:var(--blue);stroke-width:3;fill:none} .ln-w{stroke:var(--green);stroke-width:2;stroke-dasharray:6 4;fill:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav>
+  <b>Contents</b>
+  <a href="#decisions">0 · Decisions log</a>
+  <a href="#delta">0.1 · @2.1 → @3.0</a>
+  <a href="#principles">1 · Design principles</a>
+  <a href="#context">2 · System context</a>
+  <a href="#lifecycle">3 · End‑to‑end lifecycle</a>
+  <a href="#optionality">3.1 · Optionality view</a>
+  <a href="#state">4 · Milestone state machine</a>
+  <a href="#control">5 · Control plane</a>
+  <a href="#approval">5.2 · Approval protocol</a>
+  <a href="#threat">5.4 · Threat model</a>
+  <a href="#tiers">6 · Risk tiers</a>
+  <a href="#build">7 · Build topology</a>
+  <a href="#delivery">8 · Delivery</a>
+  <a href="#artifacts">9 · Artifact model &amp; contracts</a>
+  <a href="#package">10 · Plugin package</a>
+  <a href="#roles">11 · Role catalog</a>
+  <a href="#evals">12 · Evaluation</a>
+  <a href="#observe">13 · Observability</a>
+  <a href="#maintain">14 · Maintain loop (future)</a>
+  <a href="#failures">15 · Failure modes</a>
+  <a href="#trace">16 · Playbook traceability</a>
+  <a href="#verify">17 · To verify before build</a>
+</nav>
+
+<main>
+<h1>plan‑swarm@3.0: end‑state architecture</h1>
+<p class="sub">The whole process as it should run once the swarm adopts the AI‑Native SDLC: every stage, gate, artifact, and control, and how they fit together.</p>
+<div class="meta">
+  <span>Status: <b>proposed target</b>, not implemented</span>
+  <span>Baseline: <code>a54fa10</code> · companion to <a href="feasible.html">feasible.html</a></span>
+  <span>Playbook: <a href="https://claude.com/blog/the-ai-native-sdlc-playbook">The AI‑Native SDLC Playbook</a></span>
+  <span>Date: 24 Sep 2026</span>
+</div>
+
+<div class="callout" style="background:var(--g-bg)"><b>As built (plugin 3.0.0).</b> This design is implemented; <a href="ai-dlc.html">ai-dlc.html</a> describes the system as it now runs. Refinements made while building it:
+<ul style="margin:6px 0 0;padding-left:20px">
+<li>Worktree branches are <code>swarm-wip/{m}/{task}</code>, not <code>swarm/{m}/w/{task}</code>: git cannot create a ref below an existing branch.</li>
+<li>In pr mode <code>swarm/{m}</code> is created when the <b>intent</b> is accepted (not at plan approval), so the intent, spec, and plan commits ship inside the PR.</li>
+<li>Approvals, tickets, and the heartbeat live in <code>.git/plan-swarm/</code> (not <code>${CLAUDE_PLUGIN_DATA}</code>) so the git pre-commit hook, which runs outside Claude Code, can read them; the git hook trusts a short‑lived ticket from the first layer instead of an environment marker.</li>
+<li>Worktrees are created by <code>lib/worktree.py</code> under <code>.swarm/worktrees/</code> from the milestone HEAD (the Agent tool's worktree base is not configurable); engineers in worktrees report steps and the supervisor ticks <code>plan.md</code>, so parallel tasks never conflict on it.</li>
+<li>The cost log is written through <code>lib/usage.py</code> by the supervisor (the <code>SubagentStop</code> payload carries no usage totals); the managed‑settings template is <code>templates/managed-settings.example.md</code>.</li>
+<li>The gate is active only where <code>plans/swarm.md</code> exists (and fails closed if it disappears after activation), follows <code>cd</code> inside a command, and classifies pathspec commits by their paths.</li>
+<li>An independent security review found bypasses in the first gate; the hardened gate refuses unrecognized git forms, adds <code>pre-merge-commit</code> and <code>pre-push</code> hooks that check every pushed commit against the ledger, and the approval hook stages the ledger row into the commit it authorizes. The threat model is explicit: local layers guard against well‑meaning agents; branch protection, CI, and code‑owner review are the authority.</li>
+</ul></div>
+
+
+<div class="callout"><b>In one paragraph.</b> A human or, later, a detector drops an <code>intent.md</code> into an inbox. The supervisor walks it through the unchanged spine: intent → spec → plan → 🛑 approve → build → audit → 🛑 commit → PR → release. Each step commits its artifact. Judgment stays in prompts (roles, validators, deliberators, all still <em>offered</em>). Authority moves into a <b>control plane</b> of hooks: a real human prompt mints a single‑use approval nonce, and a gate consumes it before any commit, push, or tag. Engineers build in parallel worktrees. Work lands as a PR reviewed against <code>REVIEW.md</code>. Every approval is written to a ledger by the mechanism, not by an agent, so the milestone's state and its audit trail are both just <code>git log</code>.</div>
+
+<!-- ============================================================ 0 -->
+<section id="decisions">
+<h2>0 · Decisions log</h2>
+<table>
+<thead><tr><th style="width:5%">#</th><th style="width:22%">Decision</th><th style="width:40%">Choice</th><th>Decided by</th></tr></thead>
+<tbody>
+<tr><td>D1</td><td>Scope</td><td>Plan → Deploy is the end state. Maintain is fully designed but marked <em>future</em>.</td><td><span class="pill p-g">owner</span></td></tr>
+<tr><td>D2</td><td>Packaging</td><td>Plugin, plus opt‑in project templates.</td><td><span class="pill p-g">owner</span></td></tr>
+<tr><td>D3</td><td>Artifact names</td><td>Keep <code>spec.md</code> / <code>plan.md</code> / <code>plans/</code>. Add <code>intent.md</code>, which absorbs research and <code>context.md</code>.</td><td><span class="pill p-g">owner</span></td></tr>
+<tr><td>D4</td><td>Approval proof</td><td>Nonce + ledger. <code>UserPromptSubmit</code> mints, <code>PreToolUse</code> consumes, <code>approvals.md</code> records.</td><td><span class="pill p-g">owner</span></td></tr>
+<tr><td>D5</td><td>Delivery</td><td>PR by default on <code>swarm/{moniker}</code>; <em>local</em> mode as an opt‑in.</td><td><span class="pill p-g">owner</span></td></tr>
+<tr><td>D6</td><td>Role source</td><td>One canonical <code>roles/{name}.md</code> per role. <code>agents/</code> and <code>skills/</code> are generated.</td><td><span class="pill p-g">owner</span></td></tr>
+<tr><td>D7</td><td>Gates</td><td>Validators and deliberators stay <b>offered</b>, as today. The tier changes only the recommendation and the suggested vote threshold.</td><td><span class="pill p-g">owner</span></td></tr>
+<tr><td>D8</td><td>Risk tier</td><td>Proposed by deterministic rules, confirmed by a human at the review gate. It can only rise automatically.</td><td><span class="pill p-g">owner</span></td></tr>
+<tr><td>D9</td><td>Engineer commits</td><td>Engineers may make <b>WIP commits on their own worktree branch only</b> (<code>swarm-wip/{m}/*</code>). The supervisor squash‑merges without committing, so the auditor still makes every deliverable commit.</td><td><span class="pill p-g">owner · accepted</span></td></tr>
+<tr><td>D10</td><td>Second enforcement layer</td><td>A git <code>pre-commit</code> hook (template) calls the same gate, so commits made outside the <code>Bash</code> tool's string match are still caught.</td><td><span class="pill p-g">owner · accepted</span></td></tr>
+<tr><td>D11</td><td>Spec acceptance</td><td>Becomes an explicit approval kind (<code>approve spec {m}</code>), so <code>spec.md</code> gets its own commit, as the playbook's intent → spec → plan timing needs.</td><td><span class="pill p-g">owner · accepted</span></td></tr>
+<tr><td>D12</td><td>Loop limits · version</td><td>The end state is versioned <b>plan‑swarm@3.0</b>. ≤ <b>5</b> concurrent engineers (was ≤ 4 in plan‑swarm@2.1); ≤ 3 Path‑A rounds per task, then escalate to a human. Both configurable in <code>plans/swarm.md</code>.</td><td><span class="pill p-g">owner · accepted</span></td></tr>
+<tr><td>D13</td><td>Machine‑readable config</td><td><code>plans/swarm.md</code>: Markdown rationale plus exactly one <code>json swarm-config</code> block holding tiers, limits, delivery mode, and policy skills. Same convention for <code>bands.md</code> and <code>topology.md</code>. <b>Why not YAML:</b> the hooks must run on built‑in Python only (<code>json</code> is built in, a YAML parser isn't), and the swarm already parses fenced JSON out of Markdown (<code>tally.py</code>; the config extractor matches the fence by tag). Replaces the <code>CLAUDE.md ## Policies</code> idea.</td><td><span class="pill p-g">owner · accepted</span></td></tr>
+</tbody>
+</table>
+
+<h3 id="delta">What changed from plan‑swarm@2.1 to @3.0</h3>
+<table>
+<thead><tr><th style="width:24%">Area</th><th style="width:34%">@2.1 (today)</th><th>@3.0 (end state)</th></tr></thead>
+<tbody>
+<tr><td>Entry</td><td>request → research report</td><td>intent inbox → <code>approve intent</code> → <code>intent.md</code> (research appended)</td></tr>
+<tr><td>Human decisions</td><td>2 (review gate, commit gate) + release, typed in chat</td><td>6 nonce‑gated approvals (intent, spec, plan, commit, PR, release), ledgered in <code>approvals.md</code></td></tr>
+<tr><td>Enforcement</td><td>prose in prompts; tool allowlists</td><td>control plane: hooks + git <code>pre-commit</code> + heartbeat</td></tr>
+<tr><td>Engineers</td><td>≤ 4 concurrent, one shared working tree</td><td>≤ <b>5</b> concurrent, one worktree each, WIP commits on <code>swarm-wip/*</code>, squash per group</td></tr>
+<tr><td>Path‑A retries</td><td>unbounded</td><td>≤ 3 rounds per task, then escalate</td></tr>
+<tr><td>Delivery</td><td>local commit + tag</td><td>PR on <code>swarm/{m}</code> by default; local mode opt‑in</td></tr>
+<tr><td>Validators</td><td>offered; implementation‑validator fixes code itself</td><td>offered, tier‑recommended; <b>report only</b>; PR mode via <code>REVIEW.md</code></td></tr>
+<tr><td>Evidence</td><td>audits git‑ignored; approvals in chat</td><td>audit, approvals, usage all tracked; metrics from <code>git log</code></td></tr>
+<tr><td>Role source</td><td>hand‑kept <code>agents/</code> + <code>skills/</code></td><td><code>roles/</code> → generated forms, parity evals</td></tr>
+<tr><td>Feedback loops</td><td>6</td><td>8 (adds 7 PR review → engineer, 8 maintain → intent, future)</td></tr>
+</tbody>
+</table>
+</section>
+
+<!-- ============================================================ 1 -->
+<section id="principles">
+<h2>1 · Design principles</h2>
+<div class="principles">
+  <div class="pr"><b>Artifacts are the state</b>No hidden state file. A milestone's phase is <em>derived</em> from which committed artifacts and ledger entries exist, so any session can resume.</div>
+  <div class="pr"><b>Prose for judgment, mechanism for authority</b>Prompts decide <em>what is good</em>. Hooks decide <em>what is allowed</em>. No prompt sentence is the only thing standing between an agent and a commit.</div>
+  <div class="pr"><b>Humans own intent, approval, merge</b>Five human decisions per milestone: accept intent, accept spec, approve plan, approve each commit, merge the PR. Plus release.</div>
+  <div class="pr"><b>Reviewers never write</b>Validators and the auditor report. Only the engineer changes code, and only the auditor makes deliverable commits.</div>
+  <div class="pr"><b>Every step leaves a commit</b>The chain of commits is the audit trail: who asked (intent), what was agreed (spec, plan), who approved (ledger), what shipped (PR).</div>
+  <div class="pr"><b>One source, many forms</b>Each role is written once. Agent and skill forms are build outputs, and evals verify both.</div>
+</div>
+</section>
+
+<!-- ============================================================ 2 -->
+<section id="context">
+<h2>2 · System context</h2>
+<figure>
+<svg viewBox="0 0 1000 440" role="img" aria-label="System context diagram">
+  <defs>
+    <marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="mk"/></marker>
+    <marker id="a1g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="mk-g"/></marker>
+  </defs>
+  <!-- people -->
+  <rect x="20" y="40" width="200" height="300" rx="12" class="bx"/>
+  <text x="120" y="66" text-anchor="middle" class="t1">People</text>
+  <text x="40" y="100" class="t3">Originator</text><text x="40" y="116" class="t2">raises intent</text>
+  <text x="40" y="146" class="t3">Product owner (human)</text><text x="40" y="162" class="t2">triages intent · accepts spec</text>
+  <text x="40" y="192" class="t3">Approver</text><text x="40" y="208" class="t2">plan · commit · PR · release</text>
+  <text x="40" y="238" class="t3">Code owner</text><text x="40" y="254" class="t2">merges the PR on GitHub</text>
+  <text x="40" y="284" class="t3">Platform admin</text><text x="40" y="300" class="t2">managed settings · CI runners</text>
+  <!-- session -->
+  <rect x="300" y="40" width="380" height="300" rx="12" class="bx-grp"/>
+  <text x="490" y="66" text-anchor="middle" class="t1">Claude Code session · plan plugin</text>
+  <rect x="320" y="82" width="340" height="38" rx="8" class="bx"/><text x="490" y="106" text-anchor="middle" class="t3">supervisor: state machine derived from artifacts</text>
+  <rect x="320" y="130" width="340" height="38" rx="8" class="bx"/><text x="490" y="154" text-anchor="middle" class="t3">roles: product‑owner · architect · engineer ×≤5 · auditor</text>
+  <rect x="320" y="178" width="340" height="38" rx="8" class="bx-ai"/><text x="490" y="202" text-anchor="middle" class="t3">panels (offered): deliberators · 3‑skeptic validators</text>
+  <rect x="320" y="226" width="340" height="38" rx="8" class="bx-ctl"/><text x="490" y="250" text-anchor="middle" class="t3">control plane: hooks → approve · gate · tier · health</text>
+  <rect x="320" y="274" width="340" height="38" rx="8" class="bx"/><text x="490" y="298" text-anchor="middle" class="t3">lib: tally · metrics · render_roles</text>
+  <!-- repo -->
+  <rect x="760" y="40" width="220" height="140" rx="12" class="bx"/>
+  <text x="870" y="66" text-anchor="middle" class="t1">Git repository</text>
+  <text x="778" y="92" class="mono">plans/ (intents, milestones)</text>
+  <text x="778" y="110" class="mono">plans/swarm.md</text>
+  <text x="778" y="128" class="mono">src/ + tests/</text>
+  <text x="778" y="146" class="mono">CLAUDE.md · REVIEW.md</text>
+  <text x="778" y="164" class="mono">.git/hooks/pre-commit</text>
+  <!-- github -->
+  <rect x="760" y="200" width="220" height="140" rx="12" class="bx-pr"/>
+  <text x="870" y="226" text-anchor="middle" class="t1">GitHub</text>
+  <text x="778" y="252" class="t3">Pull request (swarm/{m})</text>
+  <text x="778" y="272" class="t3">Actions: claude‑code‑action</text>
+  <text x="778" y="292" class="t3">Code Review ← REVIEW.md</text>
+  <text x="778" y="312" class="t3">Branch protection</text>
+  <!-- future -->
+  <rect x="300" y="370" width="380" height="50" rx="10" class="bx-fut"/>
+  <text x="490" y="392" text-anchor="middle" class="t3">Production signals → bands.md detector</text>
+  <text x="490" y="409" text-anchor="middle" class="t2">future: writes intents only</text>
+  <!-- arrows -->
+  <path d="M220,170 H298" class="fl" marker-end="url(#a1)"/><text x="259" y="162" text-anchor="middle" class="t2">prompts</text>
+  <path d="M298,210 H222" class="fl" marker-end="url(#a1)"/><text x="259" y="226" text-anchor="middle" class="t2">asks</text>
+  <path d="M680,110 H758" class="fl" marker-end="url(#a1)"/><text x="719" y="102" text-anchor="middle" class="t2">commits</text>
+  <path d="M680,255 H758" class="fl" marker-end="url(#a1)"/><text x="719" y="247" text-anchor="middle" class="t2">push · PR</text>
+  <path d="M758,300 H682" class="fl" marker-end="url(#a1)"/><text x="719" y="316" text-anchor="middle" class="t2">CI: claude -p</text>
+  <path d="M870,200 V182" class="fl" marker-end="url(#a1)"/>
+  <path d="M120,340 V360 H870 V342" class="fl" marker-end="url(#a1)"/><text x="600" y="356" class="t2">code owner merges</text>
+  <path d="M490,370 V342" class="fut" marker-end="url(#a1g)"/>
+</svg>
+<figcaption>Figure 1: The plugin runs inside a developer's Claude Code session. GitHub and CI are reached through templates the project opts into. Production signals are future scope.</figcaption>
+</figure>
+</section>
+
+<!-- ============================================================ 3 -->
+<section id="lifecycle">
+<h2>3 · End‑to‑end lifecycle</h2>
+<p>The spine is today's spine with three additions: an intent inbox at the top, a PR at the bottom, and a control‑plane marker (🔒) on every step that needs a human nonce. Feedback loops run on the left, and the right column shows what each step commits.</p>
+<figure>
+<svg viewBox="0 0 1000 1190" role="img" aria-label="End-to-end lifecycle">
+  <defs>
+    <marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="mk"/></marker>
+    <marker id="a2r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="mk-r"/></marker>
+    <marker id="a2g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="mk-g"/></marker>
+  </defs>
+  <text x="140" y="38" text-anchor="middle" class="hd">feedback loops</text>
+  <text x="415" y="38" text-anchor="middle" class="hd">main spine</text>
+  <text x="610" y="38" class="hd">committed artifact · enforcement</text>
+
+  <!-- spine arrows -->
+  <g class="fl" marker-end="url(#a2)">
+    <path d="M415,108 V128"/><path d="M415,178 V198"/><path d="M415,248 V268"/><path d="M415,318 V338"/>
+    <path d="M415,388 V408"/><path d="M415,458 V478"/><path d="M415,528 V548"/><path d="M415,598 V618"/>
+    <path d="M415,668 V688"/><path d="M415,738 V758"/><path d="M415,808 V828"/><path d="M415,878 V898"/>
+    <path d="M415,948 V968"/><path d="M415,1018 V1038"/>
+  </g>
+  <path d="M415,1088 V1108" class="fut" marker-end="url(#a2g)"/>
+
+  <!-- nodes -->
+  <rect x="250" y="60" width="330" height="48" rx="9" class="bx"/>
+  <text x="415" y="81" text-anchor="middle" class="t1">signal</text><text x="415" y="98" text-anchor="middle" class="t2">human request · or triage agent (future)</text>
+
+  <rect x="250" y="130" width="330" height="48" rx="9" class="bx"/>
+  <text x="415" y="151" text-anchor="middle" class="t1">intent triage 🔒</text><text x="415" y="168" text-anchor="middle" class="t2">product‑owner (intent mode) · human: approve intent</text>
+
+  <rect x="250" y="200" width="330" height="48" rx="9" class="bx"/>
+  <text x="415" y="221" text-anchor="middle" class="t1">research</text><text x="415" y="238" text-anchor="middle" class="t2">Explore agent · appends codebase context to intent</text>
+
+  <rect x="250" y="270" width="330" height="48" rx="9" class="bx"/>
+  <text x="415" y="291" text-anchor="middle" class="t1">product‑owner → spec 🔒</text><text x="415" y="308" text-anchor="middle" class="t2">Grill Loop · policy skills · human: approve spec</text>
+
+  <rect x="250" y="340" width="330" height="48" rx="9" class="bx-ai"/>
+  <text x="415" y="361" text-anchor="middle" class="t1">spec gates · offered</text><text x="415" y="378" text-anchor="middle" class="t2">spec‑deliberator → spec‑validator (2‑of‑3)</text>
+
+  <rect x="250" y="410" width="330" height="48" rx="9" class="bx"/>
+  <text x="415" y="431" text-anchor="middle" class="t1">architect → plan</text><text x="415" y="448" text-anchor="middle" class="t2">reads code · parallel groups · tier re‑check</text>
+
+  <rect x="250" y="480" width="330" height="48" rx="9" class="bx-ai"/>
+  <text x="415" y="501" text-anchor="middle" class="t1">plan gates · offered</text><text x="415" y="518" text-anchor="middle" class="t2">plan‑deliberator → plan‑validator · first_domino</text>
+
+  <rect x="250" y="550" width="330" height="48" rx="9" class="bx-h"/>
+  <text x="415" y="571" text-anchor="middle" class="t1">HUMAN REVIEW GATE 🔒</text><text x="415" y="588" text-anchor="middle" class="t2">approve plan {m} [tier=…] · branch swarm/{m}</text>
+
+  <rect x="250" y="620" width="330" height="48" rx="9" class="bx"/>
+  <text x="415" y="641" text-anchor="middle" class="t1">engineer × ≤5</text><text x="415" y="658" text-anchor="middle" class="t2">TDD · one worktree each · disjoint files</text>
+
+  <rect x="250" y="690" width="330" height="48" rx="9" class="bx-opt"/>
+  <text x="415" y="711" text-anchor="middle" class="t1">simplifier · optional</text><text x="415" y="728" text-anchor="middle" class="t2">zero behavioral change</text>
+
+  <rect x="250" y="760" width="330" height="48" rx="9" class="bx"/>
+  <text x="415" y="781" text-anchor="middle" class="t1">auditor</text><text x="415" y="798" text-anchor="middle" class="t2">static · build + tests · anti‑shortcut</text>
+
+  <rect x="250" y="830" width="330" height="48" rx="9" class="bx-ai"/>
+  <text x="415" y="851" text-anchor="middle" class="t1">implementation gate · offered</text><text x="415" y="868" text-anchor="middle" class="t2">implementation‑validator · visual recap</text>
+
+  <rect x="250" y="900" width="330" height="48" rx="9" class="bx-h"/>
+  <text x="415" y="921" text-anchor="middle" class="t1">COMMIT GATE 🔒</text><text x="415" y="938" text-anchor="middle" class="t2">green audit · approve commit {m} g{n}</text>
+
+  <rect x="250" y="970" width="330" height="48" rx="9" class="bx-pr"/>
+  <text x="415" y="991" text-anchor="middle" class="t1">pull request 🔒</text><text x="415" y="1008" text-anchor="middle" class="t2">approve pr {m} · CI review · code owner merges</text>
+
+  <rect x="250" y="1040" width="330" height="48" rx="9" class="bx-pr"/>
+  <text x="415" y="1061" text-anchor="middle" class="t1">release · tag 🔒</text><text x="415" y="1078" text-anchor="middle" class="t2">approve release v{x} · roadmap → Shipped</text>
+
+  <rect x="250" y="1110" width="330" height="48" rx="9" class="bx-fut"/>
+  <text x="415" y="1131" text-anchor="middle" class="t1">maintain · future</text><text x="415" y="1148" text-anchor="middle" class="t2">bands.md breach → headless triage agent</text>
+
+  <!-- feedback loops -->
+  <path d="M250,368 H225 V300 H248" class="fb" marker-end="url(#a2r)"/>
+  <path d="M250,508 H225 V428 H248" class="fb" marker-end="url(#a2r)"/>
+  <path d="M250,776 H225 V632 H248" class="fb" marker-end="url(#a2r)"/>
+  <path d="M250,854 H200 V640 H248" class="fb" marker-end="url(#a2r)"/>
+  <path d="M250,924 H175 V648 H248" class="fb" marker-end="url(#a2r)"/>
+  <path d="M250,994 H150 V656 H248" class="fb" marker-end="url(#a2r)"/>
+  <path d="M250,792 H125 V442 H248" class="fb" marker-end="url(#a2r)"/>
+  <path d="M250,1134 H50 V150 H248" class="fut" marker-end="url(#a2g)"/>
+  <g>
+    <circle cx="225" cy="334" r="9" class="num"/><text x="225" y="338" text-anchor="middle" class="numt">1</text>
+    <circle cx="225" cy="468" r="9" class="num"/><text x="225" y="472" text-anchor="middle" class="numt">2</text>
+    <circle cx="225" cy="704" r="9" class="num"/><text x="225" y="708" text-anchor="middle" class="numt">3</text>
+    <circle cx="200" cy="747" r="9" class="num"/><text x="200" y="751" text-anchor="middle" class="numt">4</text>
+    <circle cx="175" cy="786" r="9" class="num"/><text x="175" y="790" text-anchor="middle" class="numt">5</text>
+    <circle cx="150" cy="825" r="9" class="num"/><text x="150" y="829" text-anchor="middle" class="numt">7</text>
+    <circle cx="125" cy="617" r="9" class="num"/><text x="125" y="621" text-anchor="middle" class="numt">6</text>
+    <circle cx="50" cy="642" r="9" class="num" style="stroke:var(--gray)"/><text x="50" y="646" text-anchor="middle" class="numt" style="fill:var(--gray)">8</text>
+  </g>
+
+  <!-- right column: artifacts + pills -->
+  <g class="mono">
+    <text x="610" y="80">request text · or evidence bundle</text>
+    <text x="610" y="150">plans/intents/{date}-{slug}.md → {m}/intent.md</text>
+    <text x="610" y="220">intent.md § Codebase context</text>
+    <text x="610" y="290">spec.md (+ Policy Concerns) · 00-ROADMAP.md</text>
+    <text x="610" y="360">deliberations/ · adversarial-reviews/spec-*.md</text>
+    <text x="610" y="430">plan.md · data-model.md · api-contracts.md</text>
+    <text x="610" y="500">adversarial-reviews/plan-validation.md</text>
+    <text x="610" y="570">approvals.md ← approve.py · branch swarm/{m}</text>
+    <text x="610" y="640">worktree branches swarm-wip/{m}/{task}</text>
+    <text x="610" y="710">(inside the engineer's worktree)</text>
+    <text x="610" y="780">{m}/audit.md (tracked)</text>
+    <text x="610" y="850">implementation-validation.md · visual-recap.html</text>
+    <text x="610" y="920">group commit on swarm/{m} by auditor</text>
+    <text x="610" y="990">PR body = recap + gate verdicts + ledger</text>
+    <text x="610" y="1060">annotated tag · 00-ROADMAP.md Shipped</text>
+    <text x="610" y="1130">intent/* branch · plans/intents/ only</text>
+  </g>
+  <!-- pills: commit -->
+  <g>
+    <rect x="610" y="157" width="54" height="16" rx="8" class="pl-c"/><text x="637" y="169" text-anchor="middle" class="plt" style="fill:var(--green)">commit</text>
+    <rect x="670" y="157" width="58" height="16" rx="8" class="pl-h"/><text x="699" y="169" text-anchor="middle" class="plt" style="fill:var(--amber)">🔒 nonce</text>
+    <rect x="610" y="227" width="130" height="16" rx="8" class="pl-x"/><text x="675" y="239" text-anchor="middle" class="plt" style="fill:var(--muted)">with the intent commit</text>
+    <rect x="610" y="297" width="54" height="16" rx="8" class="pl-c"/><text x="637" y="309" text-anchor="middle" class="plt" style="fill:var(--green)">commit</text>
+    <rect x="670" y="297" width="58" height="16" rx="8" class="pl-h"/><text x="699" y="309" text-anchor="middle" class="plt" style="fill:var(--amber)">🔒 nonce</text>
+    <rect x="610" y="367" width="124" height="16" rx="8" class="pl-x"/><text x="672" y="379" text-anchor="middle" class="plt" style="fill:var(--muted)">with the spec commit</text>
+    <rect x="610" y="437" width="74" height="16" rx="8" class="pl-t"/><text x="647" y="449" text-anchor="middle" class="plt" style="fill:var(--blue)">tier re‑check</text>
+    <rect x="610" y="507" width="124" height="16" rx="8" class="pl-x"/><text x="672" y="519" text-anchor="middle" class="plt" style="fill:var(--muted)">with the plan commit</text>
+    <rect x="610" y="577" width="54" height="16" rx="8" class="pl-c"/><text x="637" y="589" text-anchor="middle" class="plt" style="fill:var(--green)">commit</text>
+    <rect x="670" y="577" width="58" height="16" rx="8" class="pl-h"/><text x="699" y="589" text-anchor="middle" class="plt" style="fill:var(--amber)">🔒 nonce</text>
+    <rect x="734" y="577" width="84" height="16" rx="8" class="pl-t"/><text x="776" y="589" text-anchor="middle" class="plt" style="fill:var(--blue)">tier confirmed</text>
+    <rect x="610" y="647" width="128" height="16" rx="8" class="pl-x"/><text x="674" y="659" text-anchor="middle" class="plt" style="fill:var(--muted)">WIP commits, no nonce</text>
+    <rect x="610" y="787" width="140" height="16" rx="8" class="pl-x"/><text x="680" y="799" text-anchor="middle" class="plt" style="fill:var(--muted)">with the group commit</text>
+    <rect x="610" y="857" width="140" height="16" rx="8" class="pl-x"/><text x="680" y="869" text-anchor="middle" class="plt" style="fill:var(--muted)">with the group commit</text>
+    <rect x="610" y="927" width="54" height="16" rx="8" class="pl-c"/><text x="637" y="939" text-anchor="middle" class="plt" style="fill:var(--green)">commit</text>
+    <rect x="670" y="927" width="58" height="16" rx="8" class="pl-h"/><text x="699" y="939" text-anchor="middle" class="plt" style="fill:var(--amber)">🔒 nonce</text>
+    <rect x="610" y="997" width="42" height="16" rx="8" class="pl-c"/><text x="631" y="1009" text-anchor="middle" class="plt" style="fill:var(--green)">push</text>
+    <rect x="658" y="997" width="58" height="16" rx="8" class="pl-h"/><text x="687" y="1009" text-anchor="middle" class="plt" style="fill:var(--amber)">🔒 nonce</text>
+    <rect x="610" y="1067" width="36" height="16" rx="8" class="pl-c"/><text x="628" y="1079" text-anchor="middle" class="plt" style="fill:var(--green)">tag</text>
+    <rect x="652" y="1067" width="58" height="16" rx="8" class="pl-h"/><text x="681" y="1079" text-anchor="middle" class="plt" style="fill:var(--amber)">🔒 nonce</text>
+    <rect x="610" y="1137" width="138" height="16" rx="8" class="pl-x"/><text x="679" y="1149" text-anchor="middle" class="plt" style="fill:var(--muted)">future · no nonce needed</text>
+  </g>
+</svg>
+<figcaption>Figure 2: End‑state lifecycle. Blue = offered AI gates (unchanged, D7). Amber = human gates. 🔒 = needs a single‑use nonce minted from a real user prompt. Dashed = optional or future.</figcaption>
+</figure>
+
+<table>
+<thead><tr><th style="width:4%">#</th><th style="width:26%">Loop</th><th style="width:34%">Trigger</th><th>Rule</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>spec‑validator → product‑owner</td><td>Confirmed finding with a <code>tightening</code></td><td>The <b>author</b> (PO) applies it, not the validator. Re‑run saved as <code>-r2</code>.</td></tr>
+<tr><td>2</td><td>plan‑validator → architect</td><td>Confirmed <code>fix</code>; <code>first_domino</code> first</td><td>The architect applies it. The plan re‑enters plan gates only if the user asks.</td></tr>
+<tr><td>3</td><td>auditor → engineer (Path A)</td><td>Tests fail or anti‑shortcut hit</td><td>≤ 3 rounds per task (D12), then escalate to a human with the audit history.</td></tr>
+<tr><td>4</td><td>implementation‑validator → engineer</td><td>Confirmed defect at calibrated severity</td><td>Highest severity first. Re‑audit before the commit gate.</td></tr>
+<tr><td>5</td><td>commit gate → engineer</td><td>Group committed, more groups remain</td><td>The next group branches worktrees from the new <code>swarm/{m}</code> HEAD.</td></tr>
+<tr><td>6</td><td>auditor / engineer <code>blocked</code> / merge conflict → architect (Path B)</td><td>The plan is impossible, or groups collide</td><td>User approves the re‑plan. The changed plan needs a fresh <code>approve plan</code> nonce.</td></tr>
+<tr><td>7</td><td>PR review → engineer</td><td>Findings from CI review or the code owner</td><td>Fix group → audit → commit gate → push (a new <code>pr</code> nonce is <em>not</em> needed for updates to an open PR).</td></tr>
+<tr><td>8</td><td>maintain → intent <span class="pill p-x">future</span></td><td>Band breach at propose tier</td><td>Writes an intent only. Enters at the top like any human intent.</td></tr>
+</tbody>
+</table>
+
+<h3 id="optionality">3.1 Optionality view</h3>
+<p>The plan‑swarm@3.0 lifecycle, laid out like the original plan‑swarm@2.1 topology, showing <b>what can be switched off, added, or swapped</b>. Every spine step is mandatory except the three blue <em>offered</em> gates. Everything to the right is a choice, made by the user when the supervisor offers it, or by <code>plans/swarm.md</code>.</p>
+<figure>
+<svg viewBox="0 0 1200 1230" role="img" aria-label="Optionality view of the end-state lifecycle">
+  <defs>
+    <marker id="o-k" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="mk"/></marker>
+    <marker id="o-r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="mk-r"/></marker>
+    <marker id="o-p" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="mk-p"/></marker>
+    <marker id="o-g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="mk-gr"/></marker>
+    <marker id="o-x" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="mk-g"/></marker>
+  </defs>
+  <text x="140" y="44" text-anchor="middle" class="hd">feedback loops</text>
+  <text x="420" y="44" text-anchor="middle" class="hd">main spine</text>
+  <text x="760" y="44" text-anchor="middle" class="hd">optional add‑on</text>
+  <text x="1040" y="44" text-anchor="middle" class="hd">swap‑in alternative</text>
+
+  <!-- spine arrows -->
+  <g class="fl" marker-end="url(#o-k)">
+    <path d="M420,118 V138"/><path d="M420,188 V208"/><path d="M420,258 V278"/><path d="M420,328 V348"/>
+    <path d="M420,398 V418"/><path d="M420,468 V488"/><path d="M420,538 V558"/><path d="M420,608 V628"/>
+    <path d="M420,678 V698"/><path d="M420,748 V768"/><path d="M420,818 V838"/><path d="M420,888 V908"/>
+    <path d="M420,958 V978"/>
+  </g>
+  <path d="M420,1028 V1048" class="fut" marker-end="url(#o-x)"/>
+
+  <!-- spine nodes -->
+  <rect x="250" y="70" width="340" height="48" rx="9" class="bx"/>
+  <text x="420" y="91" text-anchor="middle" class="t1">request · signal</text><text x="420" y="108" text-anchor="middle" class="t2">feature · fix · refactor</text>
+
+  <rect x="250" y="140" width="340" height="48" rx="9" class="bx"/>
+  <text x="420" y="161" text-anchor="middle" class="t1">intent triage</text><text x="420" y="178" text-anchor="middle" class="t2">plans/intents/ → {m}/intent.md</text>
+  <rect x="522" y="146" width="62" height="16" rx="8" class="pl-h"/><text x="553" y="158" text-anchor="middle" class="plt" style="fill:var(--amber)">◆ human</text>
+
+  <rect x="250" y="210" width="340" height="48" rx="9" class="bx"/>
+  <text x="420" y="231" text-anchor="middle" class="t1">research</text><text x="420" y="248" text-anchor="middle" class="t2">codebase context → intent.md</text>
+
+  <rect x="250" y="280" width="340" height="48" rx="9" class="bx"/>
+  <text x="420" y="301" text-anchor="middle" class="t1">product‑owner</text><text x="420" y="318" text-anchor="middle" class="t2">Grill Loop · spec.md · 00‑ROADMAP.md</text>
+  <rect x="522" y="286" width="62" height="16" rx="8" class="pl-h"/><text x="553" y="298" text-anchor="middle" class="plt" style="fill:var(--amber)">◆ human</text>
+
+  <rect x="250" y="350" width="340" height="48" rx="9" class="bx-ai" style="stroke-width:2.2"/>
+  <text x="420" y="371" text-anchor="middle" class="t1">spec‑validator</text><text x="420" y="388" text-anchor="middle" class="t2">2‑of‑3 quorum gate</text>
+  <rect x="522" y="356" width="62" height="16" rx="8" class="pl-t"/><text x="553" y="368" text-anchor="middle" class="plt" style="fill:var(--blue)">offered</text>
+
+  <rect x="250" y="420" width="340" height="48" rx="9" class="bx"/>
+  <text x="420" y="441" text-anchor="middle" class="t1">architect</text><text x="420" y="458" text-anchor="middle" class="t2">plan.md · parallel groups · proposed tier</text>
+
+  <rect x="250" y="490" width="340" height="48" rx="9" class="bx-ai" style="stroke-width:2.2"/>
+  <text x="420" y="511" text-anchor="middle" class="t1">plan‑validator</text><text x="420" y="528" text-anchor="middle" class="t2">reads the codebase · first_domino</text>
+  <rect x="522" y="496" width="62" height="16" rx="8" class="pl-t"/><text x="553" y="508" text-anchor="middle" class="plt" style="fill:var(--blue)">offered</text>
+
+  <rect x="250" y="560" width="340" height="48" rx="9" class="bx-h"/>
+  <text x="420" y="581" text-anchor="middle" class="t1">HUMAN REVIEW GATE ◆</text><text x="420" y="598" text-anchor="middle" class="t2">approve plan {m} · tier confirmed · 🔒</text>
+
+  <rect x="250" y="630" width="340" height="48" rx="9" class="bx"/>
+  <text x="420" y="651" text-anchor="middle" class="t1">engineer × ≤5</text><text x="420" y="668" text-anchor="middle" class="t2">one worktree each · disjoint files · TDD</text>
+
+  <rect x="250" y="700" width="340" height="48" rx="9" class="bx"/>
+  <text x="420" y="721" text-anchor="middle" class="t1">auditor</text><text x="420" y="738" text-anchor="middle" class="t2">audit.md (tracked) · anti‑shortcut</text>
+
+  <rect x="250" y="770" width="340" height="48" rx="9" class="bx-ai" style="stroke-width:2.2"/>
+  <text x="420" y="791" text-anchor="middle" class="t1">implementation‑validator</text><text x="420" y="808" text-anchor="middle" class="t2">severity calibration</text>
+  <rect x="522" y="776" width="62" height="16" rx="8" class="pl-t"/><text x="553" y="788" text-anchor="middle" class="plt" style="fill:var(--blue)">offered</text>
+
+  <rect x="250" y="840" width="340" height="48" rx="9" class="bx-h"/>
+  <text x="420" y="861" text-anchor="middle" class="t1">COMMIT GATE ◆</text><text x="420" y="878" text-anchor="middle" class="t2">green audit + approve commit {m} g{n} · 🔒</text>
+
+  <rect x="250" y="910" width="340" height="48" rx="9" class="bx-pr"/>
+  <text x="420" y="931" text-anchor="middle" class="t1">pull request ◆</text><text x="420" y="948" text-anchor="middle" class="t2">approve pr · CI review · code owner merges · 🔒</text>
+  <rect x="522" y="916" width="62" height="16" rx="8" class="pl-x"/><text x="553" y="928" text-anchor="middle" class="plt" style="fill:var(--muted)">mode: pr</text>
+
+  <rect x="250" y="980" width="340" height="48" rx="9" class="bx-pr"/>
+  <text x="420" y="1001" text-anchor="middle" class="t1">release · tag ◆</text><text x="420" y="1018" text-anchor="middle" class="t2">approve release · product‑owner marks Shipped · 🔒</text>
+
+  <rect x="250" y="1050" width="340" height="48" rx="9" class="bx-fut"/>
+  <text x="420" y="1071" text-anchor="middle" class="t1">maintain · future</text><text x="420" y="1088" text-anchor="middle" class="t2">bands.md breach → triage agent → intent</text>
+
+  <!-- add-ons (purple dashed) -->
+  <rect x="640" y="280" width="240" height="48" rx="9" class="bx-add"/>
+  <text x="760" y="301" text-anchor="middle" class="t1" style="fill:var(--purple)">spec‑deliberator</text><text x="760" y="318" text-anchor="middle" class="t2">3 delegates · disjoint bundles</text>
+  <rect x="640" y="420" width="240" height="48" rx="9" class="bx-add"/>
+  <text x="760" y="441" text-anchor="middle" class="t1" style="fill:var(--purple)">plan‑deliberator</text><text x="760" y="458" text-anchor="middle" class="t2">intent · codebase · delivery</text>
+  <rect x="640" y="630" width="240" height="48" rx="9" class="bx-add"/>
+  <text x="760" y="651" text-anchor="middle" class="t1" style="fill:var(--purple)">simplifier</text><text x="760" y="668" text-anchor="middle" class="t2">zero behavioral change</text>
+  <rect x="640" y="770" width="240" height="48" rx="9" class="bx-add"/>
+  <text x="760" y="791" text-anchor="middle" class="t1" style="fill:var(--purple)">visual‑implementation‑recap</text><text x="760" y="808" text-anchor="middle" class="t2">visual-recap.html → PR body</text>
+  <g class="opt">
+    <path d="M590,304 H638" marker-end="url(#o-p)"/><path d="M760,328 V374 H592" marker-end="url(#o-p)"/>
+    <path d="M590,444 H638" marker-end="url(#o-p)"/><path d="M760,468 V514 H592" marker-end="url(#o-p)"/>
+    <path d="M590,654 H638" marker-end="url(#o-p)"/><path d="M760,678 V724 H592" marker-end="url(#o-p)"/>
+    <path d="M590,794 H638" marker-end="url(#o-p)"/><path d="M760,818 V864 H592" marker-end="url(#o-p)"/>
+  </g>
+
+  <!-- swap-ins (green dashed) -->
+  <rect x="910" y="280" width="260" height="48" rx="9" class="bx-alt"/>
+  <text x="1040" y="301" text-anchor="middle" class="t1" style="fill:var(--green)">visual‑product‑owner</text><text x="1040" y="318" text-anchor="middle" class="t2">same spec.md + visual-spec.html</text>
+  <rect x="910" y="420" width="260" height="48" rx="9" class="bx-alt"/>
+  <text x="1040" y="441" text-anchor="middle" class="t1" style="fill:var(--green)">visual‑architect</text><text x="1040" y="458" text-anchor="middle" class="t2">same plan.md + visual-plan.html</text>
+  <rect x="910" y="910" width="260" height="48" rx="9" class="bx-alt"/>
+  <text x="1040" y="931" text-anchor="middle" class="t1" style="fill:var(--green)">local mode</text><text x="1040" y="948" text-anchor="middle" class="t2">delivery.mode: local · no PR</text>
+  <g class="alt">
+    <path d="M560,280 V270 H1040 V278" marker-end="url(#o-g)"/>
+    <path d="M560,420 V410 H1040 V418" marker-end="url(#o-g)"/>
+    <path d="M590,934 H908" marker-end="url(#o-g)"/>
+    <path d="M1040,958 V1004 H592" marker-end="url(#o-g)"/>
+  </g>
+  <text x="800" y="264" text-anchor="middle" class="t2" style="fill:var(--green)">⇄ swap</text>
+  <text x="800" y="404" text-anchor="middle" class="t2" style="fill:var(--green)">⇄ swap</text>
+  <text x="760" y="926" text-anchor="middle" class="t2" style="fill:var(--green)">⇄ swap (skips the PR)</text>
+
+  <!-- feedback loops (numbered as in plan-swarm@2.1) -->
+  <path d="M250,378 H225 V308 H248" class="fb" marker-end="url(#o-r)"/>
+  <path d="M250,518 H225 V436 H248" class="fb" marker-end="url(#o-r)"/>
+  <path d="M250,720 H225 V640 H248" class="fb" marker-end="url(#o-r)"/>
+  <path d="M250,794 H200 V648 H248" class="fb" marker-end="url(#o-r)"/>
+  <path d="M250,864 H175 V656 H248" class="fb" marker-end="url(#o-r)"/>
+  <path d="M250,732 H125 V452 H248" class="fb" marker-end="url(#o-r)"/>
+  <path d="M250,934 H150 V664 H248" class="fb" marker-end="url(#o-r)"/>
+  <path d="M250,1074 H60 V164 H248" class="fut" marker-end="url(#o-x)"/>
+  <g>
+    <circle cx="225" cy="343" r="9" class="num"/><text x="225" y="347" text-anchor="middle" class="numt">1</text>
+    <circle cx="225" cy="477" r="9" class="num"/><text x="225" y="481" text-anchor="middle" class="numt">2</text>
+    <circle cx="225" cy="686" r="9" class="num"/><text x="225" y="690" text-anchor="middle" class="numt">3</text>
+    <circle cx="200" cy="752" r="9" class="num"/><text x="200" y="756" text-anchor="middle" class="numt">4</text>
+    <circle cx="175" cy="798" r="9" class="num"/><text x="175" y="802" text-anchor="middle" class="numt">5</text>
+    <circle cx="125" cy="592" r="9" class="num"/><text x="125" y="596" text-anchor="middle" class="numt">6</text>
+    <circle cx="150" cy="842" r="9" class="num"/><text x="150" y="846" text-anchor="middle" class="numt">7</text>
+    <circle cx="60" cy="620" r="9" class="num" style="stroke:var(--gray)"/><text x="60" y="624" text-anchor="middle" class="numt" style="fill:var(--gray)">8</text>
+  </g>
+
+  <!-- legend -->
+  <g transform="translate(40,1130)">
+    <rect x="0" y="0" width="1120" height="84" rx="10" class="bx"/>
+    <rect x="18" y="16" width="44" height="22" rx="5" class="bx"/><text x="70" y="32" class="t3">mandatory step</text>
+    <rect x="190" y="16" width="44" height="22" rx="5" class="bx-h"/><text x="242" y="32" class="t3">◆ human gate (nonce 🔒)</text>
+    <rect x="420" y="16" width="44" height="22" rx="5" class="bx-ai" style="stroke-width:2.2"/><text x="472" y="32" class="t3">offered AI gate</text>
+    <rect x="600" y="16" width="44" height="22" rx="5" class="bx-add"/><text x="652" y="32" class="t3">optional add‑on</text>
+    <rect x="790" y="16" width="44" height="22" rx="5" class="bx-alt"/><text x="842" y="32" class="t3">swap‑in alternative</text>
+    <rect x="990" y="16" width="44" height="22" rx="5" class="bx-fut"/><text x="1042" y="32" class="t3">future</text>
+    <path d="M18,62 H62" class="fb"/><text x="70" y="66" class="t3">feedback loop (numbered as in plan‑swarm@2.1; 7 and 8 are new)</text>
+    <text x="600" y="66" class="t3">◆ human pill = step ends in a human approval phrase</text>
+  </g>
+</svg>
+<figcaption>Figure 2b: Optionality. Offered gates and add‑ons run only on the user's "yes". The tier (§6) changes how strongly they're recommended, never whether they're offered. Swap‑ins produce the same artifacts, so downstream steps don't notice the difference.</figcaption>
+</figure>
+
+<table>
+<thead><tr><th style="width:20%">Element</th><th style="width:12%">Kind</th><th style="width:22%">Decided by · when</th><th style="width:13%">Default</th><th style="width:18%">Tier effect</th><th>If skipped</th></tr></thead>
+<tbody>
+<tr><td>6 human gates (intent, spec, plan, commit, PR, release)</td><td><span class="pill p-a">mandatory</span></td><td>never skippable; enforced by nonce</td><td>on</td><td>none</td><td>n/a: the gate blocks the operation</td></tr>
+<tr><td><code>spec-deliberator</code></td><td><span class="pill p-b">add‑on</span></td><td>user, after spec draft</td><td>off</td><td>recommended at critical or multi‑team constraints</td><td><code>usage.md</code>: declined + tier</td></tr>
+<tr><td><code>spec-validator</code></td><td><span class="pill p-b">offered gate</span></td><td>user, at spec gate</td><td>offered</td><td>recommended ≥ elevated</td><td><code>usage.md</code>: declined + tier</td></tr>
+<tr><td><code>visual-product-owner</code></td><td><span class="pill p-g">swap‑in</span></td><td>user, at Phase 1</td><td><code>product-owner</code></td><td>none</td><td>same <code>spec.md</code>, no HTML</td></tr>
+<tr><td><code>plan-deliberator</code></td><td><span class="pill p-b">add‑on</span></td><td>user, after plan draft</td><td>off</td><td>recommended at critical or multi‑subsystem</td><td><code>usage.md</code>: declined + tier</td></tr>
+<tr><td><code>plan-validator</code></td><td><span class="pill p-b">offered gate</span></td><td>user, at plan gate</td><td>offered</td><td>recommended ≥ elevated or irreversible steps</td><td><code>usage.md</code>: declined + tier</td></tr>
+<tr><td><code>visual-architect</code></td><td><span class="pill p-g">swap‑in</span></td><td>user, at Phase 2</td><td><code>architect</code></td><td>none</td><td>same <code>plan.md</code>, no HTML</td></tr>
+<tr><td><code>simplifier</code></td><td><span class="pill p-b">add‑on</span></td><td>user, per group</td><td>off</td><td>none</td><td>nothing recorded</td></tr>
+<tr><td><code>implementation-validator</code></td><td><span class="pill p-b">offered gate</span></td><td>user, per group</td><td>offered</td><td>recommended ≥ elevated; claim‑refutation at critical</td><td><code>usage.md</code>: declined + tier</td></tr>
+<tr><td><code>visual-implementation-recap</code></td><td><span class="pill p-b">add‑on</span></td><td>user, at commit gate</td><td>on request (routine) · default (elevated+)</td><td>sets the default</td><td>PR body without recap</td></tr>
+<tr><td>PR stage</td><td><span class="pill p-g">swap‑in</span></td><td><code>swarm.md delivery.mode</code></td><td><code>pr</code></td><td>none</td><td>ledger rows carry <code>mode=local</code></td></tr>
+<tr><td>maintain loop</td><td><span class="pill p-x">future</span></td><td>n/a</td><td>n/a</td><td>n/a</td><td>n/a</td></tr>
+</tbody>
+</table>
+
+<h3>Stage contracts</h3>
+<table>
+<thead><tr><th style="width:13%">Stage</th><th style="width:18%">Entered when</th><th style="width:18%">Actor</th><th style="width:22%">Exit evidence</th><th>Human decision</th></tr></thead>
+<tbody>
+<tr><td>Intent</td><td>A file appears in <code>plans/intents/</code></td><td>originator + PO (intent mode)</td><td><code>{m}/intent.md</code> committed, roadmap entry</td><td><code>approve intent {slug} as {m}</code> · or close</td></tr>
+<tr><td>Research</td><td>Intent accepted</td><td>Explore (very thorough)</td><td><code>intent.md § Codebase context</code></td><td>none</td></tr>
+<tr><td>Spec</td><td>Context present</td><td>PO (+ gates if accepted)</td><td><code>spec.md</code> + any gate reports committed</td><td><code>approve spec {m}</code></td></tr>
+<tr><td>Plan</td><td>Spec approved</td><td>architect (+ gates)</td><td><code>plan.md</code> with proposed tier</td><td>(none until review gate)</td></tr>
+<tr><td>Review gate</td><td>Plan and accepted gates done</td><td>supervisor presents</td><td>plan commit + ledger entry + <code>swarm/{m}</code></td><td><code>approve plan {m} [tier=…]</code></td></tr>
+<tr><td>Build</td><td>Plan approved</td><td>engineer ×≤5</td><td>all group tasks <code>[x]</code>, WIP on <code>swarm-wip/*</code></td><td>none (blocked → Path B)</td></tr>
+<tr><td>Audit</td><td>Group built and squashed</td><td>auditor</td><td><code>audit.md</code> PASS for group</td><td>none</td></tr>
+<tr><td>Commit</td><td>Audit PASS (+ impl gate if accepted)</td><td>auditor commits</td><td>group commit on <code>swarm/{m}</code></td><td><code>approve commit {m} g{n}</code></td></tr>
+<tr><td>PR</td><td>Last group committed (PR mode)</td><td>supervisor pushes and opens</td><td>PR open, CI green</td><td><code>approve pr {m}</code>, then code owner merges</td></tr>
+<tr><td>Release</td><td>All milestones in the release are DONE</td><td>supervisor tags, PO updates roadmap</td><td>annotated tag, roadmap Shipped</td><td><code>approve release v{x}</code></td></tr>
+</tbody>
+</table>
+</section>
+
+<!-- ============================================================ 4 -->
+<section id="state">
+<h2>4 · Milestone state machine</h2>
+<p>State is <b>derived</b>, never stored. The supervisor (and <code>lib/metrics.py</code>) computes it from committed artifacts and ledger entries. This is today's orientation step made precise, and it means a crashed or new session always resumes correctly.</p>
+<figure>
+<svg viewBox="0 0 1000 320" role="img" aria-label="Milestone state machine">
+  <defs>
+    <marker id="a4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="mk"/></marker>
+    <marker id="a4r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="mk-r"/></marker>
+  </defs>
+  <!-- closed -->
+  <rect x="20" y="8" width="165" height="30" rx="8" class="bx-opt"/><text x="102" y="28" text-anchor="middle" class="t3">CLOSED (rejected)</text>
+  <path d="M102,70 V40" class="fl" marker-end="url(#a4)"/>
+  <!-- row 1 -->
+  <rect x="20" y="70" width="165" height="44" rx="8" class="bx"/><text x="102" y="89" text-anchor="middle" class="t1">INBOX</text><text x="102" y="106" text-anchor="middle" class="mono">plans/intents/*.md</text>
+  <rect x="215" y="70" width="165" height="44" rx="8" class="bx"/><text x="297" y="89" text-anchor="middle" class="t1">ACCEPTED</text><text x="297" y="106" text-anchor="middle" class="mono">ledger: intent</text>
+  <rect x="410" y="70" width="165" height="44" rx="8" class="bx"/><text x="492" y="89" text-anchor="middle" class="t1">SPECIFIED</text><text x="492" y="106" text-anchor="middle" class="mono">ledger: spec</text>
+  <rect x="605" y="70" width="165" height="44" rx="8" class="bx"/><text x="687" y="89" text-anchor="middle" class="t1">PLANNED</text><text x="687" y="106" text-anchor="middle" class="mono">plan.md + tier</text>
+  <rect x="800" y="70" width="165" height="44" rx="8" class="bx-h"/><text x="882" y="89" text-anchor="middle" class="t1">APPROVED</text><text x="882" y="106" text-anchor="middle" class="mono">ledger: plan</text>
+  <g class="fl" marker-end="url(#a4)"><path d="M185,92 H213"/><path d="M380,92 H408"/><path d="M575,92 H603"/><path d="M770,92 H798"/></g>
+  <path d="M882,114 V198" class="fl" marker-end="url(#a4)"/>
+  <!-- row 2 -->
+  <rect x="820" y="200" width="160" height="44" rx="8" class="bx"/><text x="900" y="219" text-anchor="middle" class="t1">BUILDING g</text><text x="900" y="236" text-anchor="middle" class="mono">open tasks in g</text>
+  <rect x="655" y="200" width="150" height="44" rx="8" class="bx"/><text x="730" y="219" text-anchor="middle" class="t1">AUDITED g</text><text x="730" y="236" text-anchor="middle" class="mono">audit.md PASS g</text>
+  <rect x="490" y="200" width="150" height="44" rx="8" class="bx-h"/><text x="565" y="219" text-anchor="middle" class="t1">COMMITTED g</text><text x="565" y="236" text-anchor="middle" class="mono">ledger: commit g</text>
+  <rect x="325" y="200" width="150" height="44" rx="8" class="bx-pr"/><text x="400" y="219" text-anchor="middle" class="t1">IN REVIEW</text><text x="400" y="236" text-anchor="middle" class="mono">ledger: pr · PR open</text>
+  <rect x="160" y="200" width="150" height="44" rx="8" class="bx-pr"/><text x="235" y="219" text-anchor="middle" class="t1">DONE</text><text x="235" y="236" text-anchor="middle" class="mono">merged · roadmap ✓</text>
+  <rect x="10" y="200" width="135" height="44" rx="8" class="bx-pr"/><text x="77" y="219" text-anchor="middle" class="t1">SHIPPED</text><text x="77" y="236" text-anchor="middle" class="mono">ledger: release</text>
+  <g class="fl" marker-end="url(#a4)"><path d="M820,222 H807"/><path d="M655,222 H642"/><path d="M490,222 H477"/><path d="M325,222 H312"/><path d="M160,222 H147"/></g>
+  <!-- loops -->
+  <path d="M730,244 C730,292 900,292 900,247" class="fb" marker-end="url(#a4r)"/>
+  <text x="815" y="306" text-anchor="middle" class="t2">FAIL → Path A (≤ 3 rounds)</text>
+  <path d="M565,200 C565,150 860,150 860,198" class="fb" marker-end="url(#a4r)"/>
+  <text x="600" y="160" class="t2">more groups</text>
+  <path d="M840,200 L700,116" class="fb" style="stroke-dasharray:5 3" marker-end="url(#a4r)"/>
+  <text x="722" y="140" text-anchor="end" class="t2">Path B · re‑plan</text>
+  <text x="400" y="290" text-anchor="middle" class="t2">local mode: COMMITTED (last g) → DONE directly</text>
+</svg>
+<figcaption>Figure 3: Each state lists the evidence that proves it. "ledger: X" means an <code>approvals.md</code> entry of kind X exists for the milestone.</figcaption>
+</figure>
+<h3>Resume algorithm (supervisor orientation)</h3>
+<ol>
+  <li>Read <code>plans/swarm.md</code>, <code>00-ROADMAP.md</code>, <code>plans/intents/</code>, and every <code>active_milestones/*/</code>.</li>
+  <li>For each milestone, take the <b>furthest</b> state whose evidence exists and whose predecessors' evidence also exists. A gap (e.g. a <code>plan.md</code> without <code>ledger: spec</code>) is reported as an inconsistency, not skipped.</li>
+  <li>Check the control‑plane heartbeat (§5.1). If it's missing, report "enforcement off" before anything else.</li>
+  <li>Report <em>(milestone, state, next action, agent, required human decision)</em> and wait. This is unchanged from today.</li>
+</ol>
+</section>
+
+<!-- ============================================================ 5 -->
+<section id="control">
+<h2>5 · Control plane</h2>
+<p>A small set of deterministic scripts in <code>lib/</code>, wired by the plugin's <code>hooks/hooks.json</code>. It holds all <em>authority</em>. Everything it decides is logged, and nothing it enforces depends on a model following instructions.</p>
+
+<h3 id="hooks">5.1 Hook map</h3>
+<table>
+<thead><tr><th style="width:15%">Event</th><th style="width:18%">Matcher</th><th style="width:14%">Script</th><th>Behavior</th><th style="width:9%">Status</th></tr></thead>
+<tbody>
+<tr><td><code>SessionStart</code></td><td>*</td><td><code>health.py</code></td><td>Writes a heartbeat (plugin version, time) to <code>${CLAUDE_PLUGIN_DATA}</code> and injects "swarm enforcement active". The supervisor refuses gated operations if no fresh heartbeat exists, which catches <code>allowManagedHooksOnly</code> / <code>disableAllHooks</code>.</td><td><span class="pill p-g">confirmed</span></td></tr>
+<tr><td><code>UserPromptSubmit</code></td><td>*</td><td><code>approve.py</code></td><td>Parses approval phrases (§5.2). On a match: mints a nonce, appends the ledger line, and returns context "nonce minted for commit/auth‑mvp/g2, expires 15 min". Non‑matching prompts pass through untouched.</td><td><span class="pill p-g">confirmed</span></td></tr>
+<tr><td><code>PreToolUse</code></td><td><code>Bash</code> + <code>if: Bash(git *)</code></td><td><code>gate.py</code></td><td>Applies the git policy table (§5.3). Exit 2 with a reason on deny.</td><td><span class="pill p-g">confirmed</span></td></tr>
+<tr><td><code>PreToolUse</code></td><td><code>Write|Edit|Bash</code></td><td><code>gate.py --guard</code></td><td>Denies any access to the nonce store path and any write to <code>approvals.md</code>. Only <code>approve.py</code> writes the ledger.</td><td><span class="pill p-g">confirmed</span></td></tr>
+<tr><td><code>PreToolUse</code></td><td><code>Agent</code></td><td><code>gate.py --dispatch</code></td><td>Denies dispatching <code>plan:engineer</code> for a milestone with no <code>ledger: plan</code> entry. This makes the review gate deterministic.</td><td><span class="pill p-a">verify</span></td></tr>
+<tr><td><code>SubagentStop</code></td><td>*</td><td><code>usage.py</code></td><td>Appends the dispatch's tokens, tool uses, and duration to <code>usage.md</code>, replacing today's hand‑written line. Falls back to supervisor‑written lines if the payload lacks totals.</td><td><span class="pill p-a">verify</span></td></tr>
+<tr><td>git <code>pre-commit</code></td><td>all commits in the repo</td><td><code>gate.py --git-hook</code></td><td>Second layer (D10). Runs the same commit policy for commits made by any process inside a Claude Code session (detected by env), so a <code>python -c "subprocess…git commit"</code> can't slip past the string matcher. Human commits outside Claude are unaffected.</td><td><span class="pill p-a">verify env</span></td></tr>
+</tbody>
+</table>
+
+<h3 id="approval">5.2 Approval protocol</h3>
+<p>Grammar (case‑insensitive, the whole prompt must match):</p>
+<pre><code>approve intent  &lt;slug&gt; as &lt;moniker&gt;
+approve spec    &lt;moniker&gt;
+approve plan    &lt;moniker&gt; [tier=routine|elevated|critical]
+approve commit  &lt;moniker&gt; g&lt;n&gt;
+approve pr      &lt;moniker&gt;
+approve release &lt;version&gt;</code></pre>
+<p>Requiring the whole prompt to match is deliberate. "yes", "ok", or an approval phrase buried in a paragraph never mints anything. The supervisor always prints the exact phrase to type.</p>
+<figure>
+<svg viewBox="0 0 1000 480" role="img" aria-label="Approval nonce sequence">
+  <defs>
+    <marker id="a5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="mk"/></marker>
+    <marker id="a5r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="mk-r"/></marker>
+    <marker id="a5g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="mk-gr"/></marker>
+  </defs>
+  <!-- participants -->
+  <g>
+    <rect x="20"  y="14" width="120" height="34" rx="8" class="bx-h"/><text x="80"  y="36" text-anchor="middle" class="t3">Human</text>
+    <rect x="185" y="14" width="130" height="34" rx="8" class="bx-ctl"/><text x="250" y="36" text-anchor="middle" class="t3">approve.py</text>
+    <rect x="355" y="14" width="130" height="34" rx="8" class="bx"/><text x="420" y="36" text-anchor="middle" class="t3">supervisor</text>
+    <rect x="525" y="14" width="130" height="34" rx="8" class="bx"/><text x="590" y="36" text-anchor="middle" class="t3">auditor</text>
+    <rect x="695" y="14" width="130" height="34" rx="8" class="bx-ctl"/><text x="760" y="36" text-anchor="middle" class="t3">gate.py</text>
+    <rect x="860" y="14" width="120" height="34" rx="8" class="bx"/><text x="920" y="36" text-anchor="middle" class="t3">git</text>
+  </g>
+  <g class="ll"><path d="M80,48 V465"/><path d="M250,48 V465"/><path d="M420,48 V465"/><path d="M590,48 V465"/><path d="M760,48 V465"/><path d="M920,48 V465"/></g>
+  <!-- 1 -->
+  <path d="M420,84 H84" class="fl" marker-end="url(#a5)"/>
+  <text x="252" y="76" text-anchor="middle" class="t2">① diffstat + drafted message · "type: approve commit auth-mvp g2"</text>
+  <!-- 2 -->
+  <path d="M80,124 H246" class="fl" marker-end="url(#a5)"/>
+  <text x="165" y="116" text-anchor="middle" class="t2">② prompt (UserPromptSubmit)</text>
+  <!-- 3 self -->
+  <rect x="160" y="140" width="180" height="46" rx="6" class="bx-ctl"/>
+  <text x="250" y="158" text-anchor="middle" class="t2">③ exact‑match phrase → mint</text>
+  <text x="250" y="175" text-anchor="middle" class="mono">{kind,m,g,HEAD,exp:15m}</text>
+  <!-- 4 ledger -->
+  <path d="M250,206 H916" class="fl" marker-end="url(#a5)"/>
+  <text x="590" y="200" text-anchor="middle" class="t2">④ append approvals.md (who · kind · m · g · tier · HEAD · nonce‑id)</text>
+  <!-- 5 -->
+  <path d="M420,246 H586" class="fl" marker-end="url(#a5)"/>
+  <text x="503" y="238" text-anchor="middle" class="t2">⑤ dispatch: commit g2, message</text>
+  <!-- 6 -->
+  <path d="M590,286 H756" class="fl" marker-end="url(#a5)"/>
+  <text x="673" y="278" text-anchor="middle" class="t2">⑥ Bash: git commit -m …</text>
+  <!-- 7 self -->
+  <rect x="670" y="302" width="180" height="46" rx="6" class="bx-ctl"/>
+  <text x="760" y="320" text-anchor="middle" class="t2">⑦ verify kind · m · g · HEAD</text>
+  <text x="760" y="337" text-anchor="middle" class="t2">unexpired · unused → consume</text>
+  <!-- 8 allow -->
+  <path d="M760,372 H916" class="ok" marker-end="url(#a5g)"/>
+  <text x="838" y="365" text-anchor="middle" class="t2" style="fill:var(--green)">⑧ allow (exit 0)</text>
+  <!-- 9 deny -->
+  <path d="M756,420 H594" class="no" marker-end="url(#a5r)"/>
+  <text x="675" y="412" text-anchor="middle" class="t2" style="fill:var(--red)">⑨ else deny (exit 2) + reason</text>
+  <path d="M590,444 H424" class="no" marker-end="url(#a5r)"/>
+  <text x="507" y="460" text-anchor="middle" class="t2" style="fill:var(--red)">reports blocked → supervisor re‑asks</text>
+</svg>
+<figcaption>Figure 4: Commit approval. The ledger line is written at <em>mint</em> time (the human event), so it's in the working tree and lands in the group commit it authorizes. The same shape applies to intent, spec, plan, PR, and release, with the consuming operation changed.</figcaption>
+</figure>
+<p><b>Nonce record</b> (in <code>${CLAUDE_PLUGIN_DATA}/approvals/&lt;repo-id&gt;/</code>, outside the repo, guarded by <code>gate.py --guard</code>):</p>
+<pre><code>{ "id": "n_7f3c9a", "kind": "commit", "moniker": "auth-mvp", "group": 2,
+  "head": "4e1b0c2", "tier": "elevated", "who": "dan@example.com",
+  "created": "2026-09-24T14:02:11Z", "expires": "2026-09-24T14:17:11Z", "used": false }</code></pre>
+<p><b>Binding to HEAD</b> means an approval can't be spent after unrelated commits land. The approved <em>diff</em> is shown, but it isn't cryptographically bound, because the auditor stages after approval. Binding the staged tree hash is a listed hardening option (§17).</p>
+
+<h3 id="policy">5.3 Git policy (enforced by <code>gate.py</code>)</h3>
+<table>
+<thead><tr><th style="width:36%">Operation</th><th style="width:28%">Requirement</th><th>Rationale</th></tr></thead>
+<tbody>
+<tr><td><code>git commit</code> on <code>swarm/{m}</code> (PR mode) or current branch (local mode), staged paths ⊄ <code>plans/</code></td><td>unused <code>commit</code> nonce for m / g</td><td>Only approved groups become history.</td></tr>
+<tr><td><code>git commit</code> with staged paths ⊆ <code>plans/</code></td><td>unused <code>intent</code>, <code>spec</code>, or <code>plan</code> nonce</td><td>Artifact commits at each gate (playbook timing).</td></tr>
+<tr><td><code>git commit</code> on <code>swarm-wip/{m}/*</code></td><td>allowed; must not stage <code>approvals.md</code></td><td>Engineer WIP in worktrees (D9). Never pushed.</td></tr>
+<tr><td><code>git push</code> of <code>swarm/{m}</code> (first push)</td><td>unused <code>pr</code> nonce</td><td>Opening a PR is an outward‑facing act.</td></tr>
+<tr><td><code>git push</code> to an open PR branch</td><td>last commit carries a consumed <code>commit</code> nonce</td><td>Fix groups flow without re‑approving the PR.</td></tr>
+<tr><td><code>git push</code> of <code>intent/*</code>, paths ⊆ <code>plans/intents/</code></td><td>allowed (CI only, future)</td><td>Lets the triage workflow file intents as PRs.</td></tr>
+<tr><td><code>git tag</code>, <code>git push --tags</code></td><td>unused <code>release</code> nonce</td><td>Release is the last human decision.</td></tr>
+<tr><td>push to the default branch · <code>push --force</code> · <code>reset --hard</code> / <code>rebase</code> on <code>swarm/*</code></td><td>always denied</td><td>Merge happens on GitHub. Evidence history is append‑only.</td></tr>
+<tr><td><code>git worktree</code>, <code>branch</code>, <code>merge --squash --no-commit</code>, read‑only git</td><td>allowed</td><td>Orchestration, not authority.</td></tr>
+</tbody>
+</table>
+
+<h3 id="threat">5.4 Threat model</h3>
+<table>
+<thead><tr><th style="width:36%">Threat</th><th style="width:12%">In scope</th><th>How it's handled</th></tr></thead>
+<tbody>
+<tr><td>Agent drift: an engineer "helpfully" commits, or the supervisor skips the review gate</td><td><span class="pill p-g">yes</span></td><td><code>gate.py</code> denies. The <code>--dispatch</code> check blocks pre‑approval engineers.</td></tr>
+<tr><td>Prompt injection from repo content or web pages telling an agent to commit or push</td><td><span class="pill p-g">yes</span></td><td>Nonces mint only from <code>UserPromptSubmit</code>. Subagent messages and tool results never fire it.</td></tr>
+<tr><td>Stale approval (approved, then more changes landed)</td><td><span class="pill p-g">yes</span></td><td>HEAD binding, 15‑minute expiry, single use.</td></tr>
+<tr><td>Agent forges a ledger entry or nonce</td><td><span class="pill p-g">yes</span></td><td><code>--guard</code> denies tool access to the store and ledger. The git hook re‑checks.</td></tr>
+<tr><td>Commit through an unusual path (subprocess, script)</td><td><span class="pill p-a">partial</span></td><td>git <code>pre-commit</code> layer (D10). In PR mode, branch protection is the final backstop.</td></tr>
+<tr><td>Admin disables plugin hooks</td><td><span class="pill p-a">detect</span></td><td>No heartbeat → the supervisor refuses gated steps and reports. Remedy: adopt <code>gate.py</code> as a managed hook (template).</td></tr>
+<tr><td>Malicious human with shell access</td><td><span class="pill p-r">no</span></td><td>Out of scope locally. The PR path, with branch protection and code‑owner review, governs what reaches the default branch.</td></tr>
+</tbody>
+</table>
+</section>
+
+<!-- ============================================================ 6 -->
+<section id="tiers">
+<h2>6 · Risk tiers</h2>
+<p><code>lib/tier.py</code> is a deterministic classifier. It runs three times, and its result can only <b>rise</b> automatically. Lowering it requires <code>tier=</code> in the human's <code>approve plan</code> phrase, which puts the reason on the record.</p>
+<table>
+<thead><tr><th style="width:18%">Checkpoint</th><th style="width:34%">Inputs</th><th>Output</th></tr></thead>
+<tbody>
+<tr><td>Intent accepted</td><td>intent text keywords</td><td>proposed tier in <code>intent.md</code> front matter</td></tr>
+<tr><td>Plan written</td><td>+ <code>plan.md</code> Affected Files paths, irreversible steps (migration, backfill, delete)</td><td>proposed tier in the <code>plan.md</code> header, with the matching rules listed</td></tr>
+<tr><td>Before PR push</td><td>+ actual diff paths and size</td><td>if higher than confirmed: supervisor stops and asks for a new <code>approve plan … tier=</code></td></tr>
+</tbody>
+</table>
+<p><b>Effect (per D7, gates stay offered):</b> the tier sets how strongly the supervisor recommends each gate and which <code>tally.py --gate</code> it suggests. It also sets whether the recap is rendered by default. Every <em>declined</em> gate is logged to <code>usage.md</code> with the tier (<code>gate offered: plan-validator · tier elevated · declined</code>), so accepted risk is visible in the audit trail.</p>
+<table>
+<thead><tr><th>Tier</th><th>Spec gates</th><th>Plan gates</th><th>Implementation gate</th><th>Suggested vote</th><th>Recap</th></tr></thead>
+<tbody>
+<tr><td><span class="pill p-x">routine</span></td><td>offer</td><td>offer</td><td>offer</td><td>2‑of‑3</td><td>on request</td></tr>
+<tr><td><span class="pill p-a">elevated</span></td><td>recommend validator</td><td>recommend validator</td><td>recommend</td><td>2‑of‑3</td><td>default</td></tr>
+<tr><td><span class="pill p-r">critical</span></td><td>recommend deliberator → validator</td><td>recommend deliberator → validator</td><td>recommend, claim‑refutation mode</td><td><code>--gate 1</code></td><td>default</td></tr>
+</tbody>
+</table>
+</section>
+
+<!-- ============================================================ 7 -->
+<section id="build">
+<h2>7 · Build topology: worktrees and branches</h2>
+<figure>
+<svg viewBox="0 0 1000 270" role="img" aria-label="Branch and worktree model">
+  <text x="20" y="44" class="mono">main</text>
+  <text x="20" y="104" class="mono">swarm/auth-mvp</text>
+  <text x="20" y="164" class="mono">swarm-wip/…/1.A · 2.A</text>
+  <text x="20" y="214" class="mono">swarm-wip/…/1.B</text>
+  <!-- main -->
+  <path d="M140,40 H960" class="ln-m"/>
+  <circle cx="160" cy="40" r="6" class="dot-m"/><circle cx="210" cy="40" r="6" class="dot-m"/>
+  <!-- swarm branch -->
+  <path d="M210,40 L250,100 H880" class="ln-s"/>
+  <circle cx="250" cy="100" r="7" class="dot-c"/><text x="240" y="130" text-anchor="end" class="t2">plan commit 🔒</text>
+  <!-- group 1 worktrees -->
+  <path d="M270,100 L300,160 H380 L440,100" class="ln-w"/>
+  <path d="M270,100 L300,210 H350 L440,100" class="ln-w"/>
+  <circle cx="330" cy="160" r="5" class="dot-w"/><circle cx="370" cy="160" r="5" class="dot-w"/>
+  <circle cx="330" cy="210" r="5" class="dot-w"/>
+  <text x="445" y="152" class="t2">squash, no commit</text>
+  <text x="485" y="128" text-anchor="middle" class="t2">audit</text>
+  <circle cx="530" cy="100" r="7" class="dot-c"/><text x="530" y="84" text-anchor="middle" class="t2">G1 commit 🔒</text>
+  <!-- group 2 -->
+  <path d="M545,100 L575,160 H660 L710,100" class="ln-w"/>
+  <circle cx="605" cy="160" r="5" class="dot-w"/><circle cx="640" cy="160" r="5" class="dot-w"/>
+  <circle cx="770" cy="100" r="7" class="dot-c"/><text x="770" y="84" text-anchor="middle" class="t2">G2 commit 🔒</text>
+  <!-- PR -->
+  <path d="M880,100 L930,40" class="ln-s"/>
+  <circle cx="930" cy="40" r="7" class="dot-s"/>
+  <text x="858" y="128" text-anchor="middle" class="t2">push 🔒 · PR · CI</text>
+  <text x="930" y="24" text-anchor="middle" class="t2">code owner merges</text>
+  <text x="330" y="246" class="t2">green dashed = engineer worktrees (isolation: worktree, based on swarm/{m} HEAD) · WIP commits allowed · never pushed</text>
+</svg>
+<figcaption>Figure 5: One milestone branch, one worktree per task, one squash per group, one audited commit per group, one PR.</figcaption>
+</figure>
+<ul>
+  <li><b>Dispatch.</b> The supervisor dispatches up to <code>engineers.max_concurrent</code> (default 5) engineers per message with <code>isolation: "worktree"</code>, based on <code>swarm/{m}</code> HEAD. Larger groups run in batches.</li>
+  <li><b>Integration.</b> After the batch, the supervisor runs <code>git merge --squash --no-commit</code> for each worktree branch into the milestone checkout. File overlap is impossible if the plan is right, so a conflict is treated as a <em>plan defect</em> → Path B.</li>
+  <li><b>Why squash:</b> the audit sees exactly one group diff, the commit gate approves exactly that diff, and history holds one commit per approved group.</li>
+  <li><b>Cleanup.</b> Worktree branches are deleted after the group commit. Their WIP never reaches the remote (the policy denies pushing <code>swarm-wip/*</code>).</li>
+  <li><b>Local mode.</b> Same flow with the current branch standing in for <code>swarm/{m}</code>, and no PR.</li>
+</ul>
+</section>
+
+<!-- ============================================================ 8 -->
+<section id="delivery">
+<h2>8 · Delivery</h2>
+<table>
+<thead><tr><th style="width:18%"></th><th style="width:41%">PR mode (default)</th><th>Local mode (opt‑in)</th></tr></thead>
+<tbody>
+<tr><td>Configured by</td><td><code>delivery.mode: pr</code></td><td><code>delivery.mode: local</code>, recorded in each ledger line</td></tr>
+<tr><td>Branch</td><td><code>swarm/{m}</code> from the default branch at <code>approve plan</code></td><td>current branch</td></tr>
+<tr><td>Deliverable commits</td><td>one per group, by the auditor, nonce‑gated</td><td>same</td></tr>
+<tr><td>Outward step</td><td><code>approve pr {m}</code> → push → <code>gh pr create</code></td><td>none</td></tr>
+<tr><td>Review</td><td>CI: Code Review via <code>REVIEW.md</code> + optional <code>implementation-validator</code> PR mode; code owner</td><td>only the in‑session gates</td></tr>
+<tr><td>DONE when</td><td>PR merged (the supervisor sees the merge on next orientation)</td><td>last group committed</td></tr>
+</tbody>
+</table>
+<h3>PR anatomy</h3>
+<pre><code>title:  feat(auth-mvp): OAuth login MVP            ← from the intent's outcome line
+body:
+  ## Intent        link to {m}/intent.md · originator · accepted-by
+  ## What changed  per-group summary (from the group commit messages)
+  ## Gates         one verdict line per report in adversarial-reviews/ and deliberations/
+                   + declined gates with tier (from usage.md)
+  ## Audit         audit.md verdict + completion rate
+  ## Approvals     approvals.md rows for this milestone
+  ## Recap         visual-recap.html (artifact link)
+labels: tier:elevated · swarm</code></pre>
+<h3>CI (template <code>.github/workflows/plan-swarm.yml</code>)</h3>
+<table>
+<thead><tr><th style="width:18%">Job</th><th style="width:26%">When</th><th>What</th></tr></thead>
+<tbody>
+<tr><td>review</td><td>every PR</td><td><code>claude-code-action</code> with <code>plugins: plan@plan-skills</code>. Code Review reads <code>REVIEW.md</code>. On <code>tier:elevated</code> or higher, it also runs <code>implementation-validator</code> in PR mode and posts findings mapped to Important / Nit.</td></tr>
+<tr><td>swarm-evals</td><td>PR touches <code>.claude/**</code>, <code>plans/swarm.md</code>, or bumps the plugin pin</td><td><code>claude plugin eval --json</code>. Blocks merge below threshold.</td></tr>
+<tr><td>ledger-check</td><td>PRs from <code>swarm/*</code></td><td>Each non‑WIP commit has a matching <code>approvals.md</code> row. The tier label matches the ledger.</td></tr>
+<tr><td>metrics</td><td>on merge</td><td><code>lib/metrics.py</code> posts lead times and rework for the milestone.</td></tr>
+</tbody>
+</table>
+<p class="ev">This CI review is the <em>repository's</em> policy and runs on every PR, whoever wrote it. The swarm's in‑session gates stay offered (D7). The two coexist.</p>
+</section>
+
+<!-- ============================================================ 9 -->
+<section id="artifacts">
+<h2>9 · Artifact model &amp; contracts</h2>
+<h3>Target project layout</h3>
+<pre><code>repo/
+├── CLAUDE.md                      conventions · build/test · "Common mistakes" (auditor‑proposed)
+├── REVIEW.md                      review passes · severity map (template)
+├── .github/workflows/plan-swarm.yml
+├── .git/hooks/pre-commit          → gate.py --git-hook (template installer)
+└── plans/
+    ├── swarm.md                 tiers · limits · delivery mode · policy skills
+    ├── 00-ROADMAP.md
+    ├── intents/                   inbox: untriaged intents (git history = survival metric)
+    │   └── 2026-09-24-oauth-login.md
+    └── active_milestones/auth-mvp/
+        ├── intent.md              git mv'd from the inbox on acceptance
+        ├── spec.md  plan.md  data-model.md  api-contracts.md
+        ├── approvals.md           ledger (written only by approve.py)
+        ├── audit.md               tracked; per‑group sections; history = rework
+        ├── usage.md               dispatch cost + declined gates
+        ├── deliberations/  adversarial-reviews/
+        └── visual-spec.html  visual-plan.html  visual-recap.html</code></pre>
+
+<h3>Artifact matrix</h3>
+<table>
+<thead><tr><th style="width:22%">Artifact</th><th style="width:20%">Written by</th><th style="width:22%">Committed at</th><th>Read by</th></tr></thead>
+<tbody>
+<tr><td><code>intents/*.md</code> → <code>intent.md</code></td><td>originator + PO · triage (future)</td><td><code>approve intent</code></td><td>Explore, PO, tier.py, PR body</td></tr>
+<tr><td><code>spec.md</code></td><td>PO (deliberator may revise)</td><td><code>approve spec</code></td><td>validators, architect, auditor</td></tr>
+<tr><td><code>plan.md</code> (+ data‑model, contracts)</td><td>architect (deliberator may revise)</td><td><code>approve plan</code></td><td>engineer, auditor, tier.py</td></tr>
+<tr><td><code>approvals.md</code></td><td><b>approve.py only</b></td><td>with the commit it authorizes</td><td>gate.py (via store), CI ledger‑check, metrics</td></tr>
+<tr><td><code>audit.md</code></td><td>auditor</td><td>with the group commit</td><td>supervisor, PR body, metrics</td></tr>
+<tr><td><code>usage.md</code></td><td>usage.py / supervisor</td><td>with each commit</td><td>metrics, PR body</td></tr>
+<tr><td>gate reports</td><td>validators / deliberators</td><td>with the next artifact commit</td><td>supervisor, PR body</td></tr>
+<tr><td><code>visual-*.html</code></td><td>renderers</td><td>with the next commit (or CI artifact)</td><td>humans</td></tr>
+</tbody>
+</table>
+
+<h3>Contract: <code>intent.md</code></h3>
+<pre><code>---
+slug: oauth-login
+originator: dan@example.com
+created: 2026-09-24
+source: human            # human | triage
+tier_proposed: elevated  # tier.py
+moniker: auth-mvp        # set on acceptance
+---
+## Problem          what hurts, for whom, with evidence
+## Outcome          the observable result that means "done"
+## Users &amp; systems  who and what is affected
+## Constraints      deadlines, compliance, compatibility
+## Open questions   what the PO must grill on
+## Codebase context appended by research (replaces plans/research/*.md)</code></pre>
+
+<h3>Contract: <code>approvals.md</code></h3>
+<pre><code>| when (UTC)           | who             | kind    | milestone | group | tier     | mode | HEAD    | nonce    |
+|----------------------|-----------------|---------|-----------|-------|----------|------|---------|----------|
+| 2026-09-24T09:12:40Z | dan@example.com | intent  | auth-mvp  |       | elevated | pr   | 91ac2e0 | n_1a2b3c |
+| 2026-09-24T11:30:02Z | dan@example.com | plan    | auth-mvp  |       | elevated | pr   | 3d77f10 | n_4d5e6f |
+| 2026-09-24T14:02:11Z | dan@example.com | commit  | auth-mvp  | 2     | elevated | pr   | 4e1b0c2 | n_7f3c9a |</code></pre>
+
+<h3>Contract: <code>plans/swarm.md</code></h3>
+<p>Markdown for people, one fenced JSON block for scripts (D13). The hooks find the block by its info‑string tag (<code>```json swarm-config</code>) and parse it with Python's built‑in <code>json</code>, so no dependency is added. This is the same idea as <code>lib/tally.py</code>'s fence extraction, but tag‑aware. <code>tally.load()</code> as written would capture the tag as payload and fail. A missing, duplicate, or invalid <code>swarm-config</code> block makes <code>gate.py</code> <b>deny</b> gated operations with the parse error as the reason.</p>
+<pre><code># Swarm configuration: auth-service
+
+## Delivery
+PRs to GitHub. Local mode is for the offline spike branch only.
+
+## Risk tiers
+`migrations/**` is critical because migrations are irreversible (§6).
+Payment code is critical per the PCI scope doc.
+
+```json swarm-config
+{
+  "version": 1,
+  "delivery":  { "mode": "pr", "host": "github" },
+  "engineers": { "max_concurrent": 5 },
+  "audit":     { "max_path_a_rounds": 3 },
+  "approvals": { "nonce_ttl_minutes": 15 },
+  "policies":  ["policy-security", "policy-api-conventions"],
+  "tiers": {
+    "critical": { "paths": ["**/auth/**", "**/payments/**", "migrations/**"],
+                  "keywords": ["pii", "payment", "token", "migration", "delete"] },
+    "elevated": { "paths": ["api/**", "**/public/**"],
+                  "keywords": ["concurrency", "cache", "schema"],
+                  "diff_lines_over": 400 }
+  }
+}
+```</code></pre>
+</section>
+
+<!-- ============================================================ 10 -->
+<section id="package">
+<h2>10 · Plugin package</h2>
+<pre><code>plugins/plan/
+├── .claude-plugin/plugin.json
+├── roles/                         ◀ canonical, hand‑written (D6)
+│   ├── supervisor.md  product-owner.md  architect.md  engineer.md  auditor.md
+│   ├── simplifier.md              ◀ now gets an agent form for free
+│   ├── spec|plan|implementation-validator.md  spec|plan-deliberator.md
+│   ├── visual-*.md
+│   └── triage.md                  ◀ future
+├── agents/                        ◀ GENERATED by lib/render_roles.py — do not edit
+├── skills/
+│   ├── &lt;role&gt;/SKILL.md            ◀ GENERATED
+│   ├── visual-*/assets|references ◀ hand‑written shared assets
+│   └── wf-trajectory/             ◀ hand‑written utility
+├── topology.md                    ◀ plan-swarm@3.0 graph (Markdown + fenced JSON; figures 2/2b are views of it)
+├── hooks/hooks.json               ◀ control plane wiring
+├── lib/
+│   ├── tally.py  gate.py  approve.py  tier.py  health.py  usage.py
+│   ├── metrics.py  render_roles.py
+│   └── tests/                     ◀ pytest (eval layer L0)
+├── evals/                         ◀ claude plugin eval cases (L1–L4)
+└── templates/                     ◀ copied into projects on opt‑in
+    ├── swarm.md  REVIEW.md  CLAUDE.md
+    ├── ci/plan-swarm.yml  git-hooks/pre-commit
+    ├── settings.gate.json  managed-settings.example.json
+    └── bands.md                 ◀ future</code></pre>
+<h3>Role source format</h3>
+<pre><code>---
+name: engineer
+agent:
+  description: |            # includes the &lt;example&gt; blocks used for auto-delegation
+    Use this agent as the Expert Builder …
+  color: green
+  model: inherit
+  tools: [Read, Write, Edit, Glob, Grep, Bash]
+skill:
+  description: Use when implementing a task from an approved plan.md …
+---
+&lt;shared body: mission, doctrine, protocol, constraints&gt;
+
+&lt;!-- @agent --&gt;
+## Orientation   (dispatched agents cannot ask the user; report instead)
+&lt;!-- @end --&gt;
+&lt;!-- @skill --&gt;
+## When invoked as a skill …
+&lt;!-- @end --&gt;</code></pre>
+<p><code>render_roles.py --check</code> runs in the plugin's CI and fails if generated files are stale. That turns today's "keep both families in sync" rule (AGENTS.md invariant #1) into a check.</p>
+</section>
+
+<!-- ============================================================ 11 -->
+<section id="roles">
+<h2>11 · Role catalog (end state)</h2>
+<table>
+<thead><tr><th style="width:15%">Role</th><th style="width:9%">Stage</th><th style="width:22%">Writes</th><th style="width:20%">Tools</th><th>Change from today</th></tr></thead>
+<tbody>
+<tr><td><code>supervisor</code></td><td>all</td><td><code>usage.md</code>; branches, squash merges, PR</td><td>all</td><td>Derived‑state orientation + heartbeat check · tier.py runs · worktree dispatch ≤5 · Path‑A cap · PR stage · prints exact approval phrases</td></tr>
+<tr><td><code>product-owner</code></td><td>1–2, 6</td><td>intents, <code>intent.md</code>, <code>spec.md</code>, roadmap</td><td>Read/Write/Edit/Glob/Grep/AskUserQuestion</td><td>Intent mode · policy skills preloaded · <em>Policy Concerns</em> section · applies spec‑validator tightenings</td></tr>
+<tr><td><code>architect</code></td><td>3</td><td><code>plan.md</code>, data‑model, contracts</td><td>Read/Write/Edit/Glob/Grep</td><td>Lists irreversible steps explicitly (tier input) · applies plan‑validator fixes</td></tr>
+<tr><td><code>engineer</code></td><td>3</td><td>code + tests in its worktree; WIP commits on <code>swarm-wip/*</code></td><td>+ Bash</td><td>Worktree‑isolated · WIP commits allowed there only</td></tr>
+<tr><td><code>simplifier</code></td><td>3</td><td>code (clarity only)</td><td>+ Bash</td><td>Gains an agent form from the single source</td></tr>
+<tr><td><code>auditor</code></td><td>4–5</td><td><code>audit.md</code> (tracked); deliverable commits</td><td>+ Bash</td><td>Commits only through a consumed nonce · proposes <code>CLAUDE.md</code> "Common mistakes" · optional UI screenshots</td></tr>
+<tr><td>spec / plan validators</td><td>2–3</td><td>review reports</td><td>all (fan‑out)</td><td><b>Report only</b>; fixes handed to the author role</td></tr>
+<tr><td><code>implementation-validator</code></td><td>4–5</td><td>review report; PR comments (PR mode)</td><td>all (fan‑out)</td><td><b>Report only</b> · PR mode reads <code>REVIEW.md</code> + policy skills</td></tr>
+<tr><td>deliberators</td><td>2–3</td><td>revised artifact + record</td><td>all (fan‑out)</td><td>Unchanged. They're generative by design.</td></tr>
+<tr><td><code>visual-*</code></td><td>2, 3, 5</td><td>HTML views</td><td>+ Bash (read‑only git)</td><td>Recap feeds the PR body</td></tr>
+<tr><td><code>triage</code> <span class="pill p-x">future</span></td><td>6</td><td><code>plans/intents/*.md</code> only</td><td>Read/Grep/Glob/Write</td><td>New. Headless. The workflow step, not the agent, commits and opens the PR.</td></tr>
+</tbody>
+</table>
+</section>
+
+<!-- ============================================================ 12 -->
+<section id="evals">
+<h2>12 · Evaluation architecture</h2>
+<table>
+<thead><tr><th style="width:8%">Layer</th><th style="width:22%">What</th><th style="width:34%">How</th><th>Threshold</th></tr></thead>
+<tbody>
+<tr><td>L0</td><td>Unit</td><td>pytest on <code>tally</code>, <code>gate</code> (policy table as cases), <code>approve</code> (grammar), <code>tier</code>, <code>render_roles</code>, <code>metrics</code></td><td>100%</td></tr>
+<tr><td>L1</td><td>Contract</td><td>Skeptic outputs parse as <code>tally.py</code> input · reports match templates (<code>regex</code> / <code>llm</code> graders)</td><td>100%</td></tr>
+<tr><td>L2</td><td>Discipline</td><td>Engineer never commits outside <code>swarm-wip/*</code> · supervisor stops at review gate · validators never Edit source · auditor refuses without a nonce (<code>tool_used</code> / <code>tool_order</code>)</td><td>100%</td></tr>
+<tr><td>L3</td><td>Capability</td><td>Seeded defects: ambiguous spec clause · false plan assumption (<code>first_domino</code>) · race in a diff (severity calibrated to high)</td><td>≥ baseline</td></tr>
+<tr><td>L4</td><td>Parity</td><td>Same fixture through agent and skill forms → equivalent artifacts (<code>llm</code> grader)</td><td>≥ baseline</td></tr>
+</tbody>
+</table>
+<pre><code>evals/
+├── l1-validator-json/        prompt.md · graders/regex.md · graders/llm.md
+├── l2-engineer-no-commit/    prompt.md · graders/tool_order.md · case.yaml (scaffold: repo + plan)
+├── l2-supervisor-stops/      …
+├── l3-plan-first-domino/     case.yaml scaffold seeds a missing method
+└── l4-parity-architect/      …</code></pre>
+<p><b>Runs:</b> every plugin PR (L0–L2 blocking, L3–L4 reported), and in adopting projects when <code>.claude/</code> or the plugin pin changes. <b>Incident → eval</b> (future): every escaped defect that traces to a swarm miss adds an L3 case.</p>
+</section>
+
+<!-- ============================================================ 13 -->
+<section id="observe">
+<h2>13 · Observability &amp; metrics</h2>
+<table>
+<thead><tr><th style="width:28%">Evidence stream</th><th style="width:30%">Source</th><th>Used for</th></tr></thead>
+<tbody>
+<tr><td>Who asked, what was agreed</td><td>commits of <code>intent.md</code>, <code>spec.md</code>, <code>plan.md</code></td><td>audit trail · lead times</td></tr>
+<tr><td>Who approved what</td><td><code>approvals.md</code> (mechanism‑written)</td><td>audit trail · CI ledger‑check</td></tr>
+<tr><td>Quality loop</td><td><code>audit.md</code> history · <code>-r2/-r3</code> reports</td><td>rework cycles · first‑pass audit rate</td></tr>
+<tr><td>Cost and risk accepted</td><td><code>usage.md</code> (hook‑written) incl. declined gates</td><td>cost per milestone · gate acceptance by tier</td></tr>
+<tr><td>Review outcome</td><td>PR history</td><td>findings resolved without manual edits</td></tr>
+<tr><td>Session telemetry</td><td>OpenTelemetry (<span class="pill p-a">verify</span>)</td><td>platform dashboards, if the org enables it</td></tr>
+</tbody>
+</table>
+<p><code>lib/metrics.py</code> reports the playbook's indicators straight from <code>git log -- plans/</code>: idea → intent, intent → spec → plan → PR merge elapsed times, first‑pass audit rate, rework per change, intent survival (inbox files accepted vs closed), and review findings closed by engineer commits.</p>
+</section>
+
+<!-- ============================================================ 14 -->
+<section id="maintain">
+<h2>14 · Maintain loop <span class="pill p-x">future · fully specified</span></h2>
+<figure>
+<svg viewBox="0 0 1000 250" role="img" aria-label="Maintain loop">
+  <defs>
+    <marker id="a6" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="mk-g"/></marker>
+  </defs>
+  <g>
+    <rect x="10"  y="40" width="125" height="100" rx="10" class="bx-fut"/>
+    <text x="72" y="66" text-anchor="middle" class="t3" font-weight="700">detector</text>
+    <text x="72" y="86" text-anchor="middle" class="t2">bands.md</text><text x="72" y="102" text-anchor="middle" class="t2">CI cron</text><text x="72" y="118" text-anchor="middle" class="t2">deterministic</text>
+
+    <rect x="147" y="40" width="125" height="100" rx="10" class="bx-fut"/>
+    <text x="209" y="66" text-anchor="middle" class="t3" font-weight="700">breach tier</text>
+    <text x="209" y="86" text-anchor="middle" class="t2">1σ log</text><text x="209" y="102" text-anchor="middle" class="t2">2σ diagnose</text><text x="209" y="118" text-anchor="middle" class="t2">3σ propose</text>
+
+    <rect x="284" y="40" width="125" height="100" rx="10" class="bx-fut"/>
+    <text x="346" y="66" text-anchor="middle" class="t3" font-weight="700">triage agent</text>
+    <text x="346" y="86" text-anchor="middle" class="t2">claude -p</text><text x="346" y="102" text-anchor="middle" class="t2">--agent plan:triage</text><text x="346" y="118" text-anchor="middle" class="t2">writes intent only</text>
+
+    <rect x="421" y="40" width="125" height="100" rx="10" class="bx-fut"/>
+    <text x="483" y="66" text-anchor="middle" class="t3" font-weight="700">intent PR</text>
+    <text x="483" y="86" text-anchor="middle" class="t2">branch intent/*</text><text x="483" y="102" text-anchor="middle" class="t2">plans/intents/ only</text><text x="483" y="118" text-anchor="middle" class="t2">workflow commits</text>
+
+    <rect x="558" y="40" width="125" height="100" rx="10" class="bx-h"/>
+    <text x="620" y="66" text-anchor="middle" class="t3" font-weight="700">PO triage</text>
+    <text x="620" y="86" text-anchor="middle" class="t2">human</text><text x="620" y="102" text-anchor="middle" class="t2">merge = accept</text><text x="620" y="118" text-anchor="middle" class="t2">close = reject</text>
+
+    <rect x="695" y="40" width="125" height="100" rx="10" class="bx"/>
+    <text x="757" y="66" text-anchor="middle" class="t3" font-weight="700">lifecycle</text>
+    <text x="757" y="86" text-anchor="middle" class="t2">§3, unchanged</text><text x="757" y="102" text-anchor="middle" class="t2">all human gates</text><text x="757" y="118" text-anchor="middle" class="t2">apply</text>
+
+    <rect x="832" y="40" width="150" height="100" rx="10" class="bx-fut"/>
+    <text x="907" y="66" text-anchor="middle" class="t3" font-weight="700">learn</text>
+    <text x="907" y="86" text-anchor="middle" class="t2">regression test</text><text x="907" y="102" text-anchor="middle" class="t2">+ L3 eval if swarm miss</text><text x="907" y="118" text-anchor="middle" class="t2">band retuned</text>
+  </g>
+  <g class="fut" marker-end="url(#a6)">
+    <path d="M135,90 H145"/><path d="M272,90 H282"/><path d="M409,90 H419"/><path d="M546,90 H556"/><path d="M683,90 H693"/><path d="M820,90 H830"/>
+  </g>
+  <path d="M907,140 V195 H72 V142" class="fut" marker-end="url(#a6)"/>
+  <text x="490" y="215" text-anchor="middle" class="t2">closes the loop: the same class of incident should recur less</text>
+</svg>
+<figcaption>Figure 6: Nobody starts the detection or the diagnosis. A human still decides whether it becomes work.</figcaption>
+</figure>
+<h3>Contract: <code>bands.md</code></h3>
+<p>The playbook calls this file <code>bands.yaml</code>. It follows the same Markdown + fenced‑JSON convention as <code>swarm.md</code>, so the CI detector needs only built‑in Python. Service owners write why each band is set where it is.</p>
+<pre><code># Detection bands
+
+## ci-flaky-rate
+Owned by platform. 7‑day window smooths weekend noise.
+
+## p95-latency-checkout
+Owned by checkout. Fixed baseline from the Q3 load test.
+
+```json bands-config
+{
+  "version": 1,
+  "signals": [
+    { "id": "ci-flaky-rate", "source": "github-actions",
+      "query": "failed_jobs_ratio{workflow=\"ci\"}", "window": "7d",
+      "band": { "baseline": "rolling_mean", "sigma": "rolling_std" },
+      "tiers": { "log": 1, "diagnose": 2, "propose": 3 }, "owner": "team-platform" },
+    { "id": "p95-latency-checkout", "source": "prometheus",
+      "query": "histogram_quantile(0.95, ...)",
+      "band": { "baseline": "250ms", "sigma": "40ms" },
+      "tiers": { "log": 1, "diagnose": 2, "propose": 3 }, "owner": "team-checkout" }
+  ]
+}
+```</code></pre>
+<h3>Guardrails</h3>
+<ul>
+  <li><b>The triage agent can write only intents:</b> tools <code>Read/Grep/Glob/Write</code>, and <code>gate.py</code> allows writes under <code>plans/intents/</code> only. It has no <code>Bash</code>, so it can't commit. The workflow's deterministic step commits and opens the PR.</li>
+  <li><b>No autonomous remediation.</b> The playbook allows quarantining flaky tests or opening reverts at 3σ. That is left as an explicit future extension that needs its own tier and approval kind.</li>
+  <li><b>Evidence required.</b> <code>source: triage</code> intents must include the breached signal, its window, and the queries used. The PO closes intents that don't.</li>
+</ul>
+</section>
+
+<!-- ============================================================ 15 -->
+<section id="failures">
+<h2>15 · Failure modes &amp; recovery</h2>
+<table>
+<thead><tr><th style="width:30%">Failure</th><th style="width:30%">Detected by</th><th>Recovery</th></tr></thead>
+<tbody>
+<tr><td>Plugin hooks disabled by admin</td><td>missing heartbeat</td><td>Supervisor refuses gated steps and reports "enforcement off". The platform adopts <code>gate.py</code> as a managed hook.</td></tr>
+<tr><td>Nonce expired or HEAD moved</td><td><code>gate.py</code> deny reason</td><td>Supervisor re‑shows the current diff and asks for the phrase again.</td></tr>
+<tr><td>Worktree squash conflict</td><td><code>merge --squash</code> exit status</td><td>Treated as a plan defect → Path B. The changed plan needs a new <code>approve plan</code>.</td></tr>
+<tr><td>Path A exceeds 3 rounds</td><td>supervisor round counter (from <code>audit.md</code> history)</td><td>Escalate to a human with each round's findings. The human picks: re‑plan, drop the task, or take over.</td></tr>
+<tr><td>Skeptic returns prose</td><td>JSON parse</td><td>Re‑dispatch (today's rule). Two failures → report the panel as degraded.</td></tr>
+<tr><td>Tier under‑classified</td><td>re‑check at plan and PR</td><td>Auto‑raise and stop for a new <code>approve plan … tier=</code>.</td></tr>
+<tr><td>PR review finds a defect</td><td>CI review / code owner</td><td>Fix group on <code>swarm/{m}</code>: engineer → audit → commit gate → push.</td></tr>
+<tr><td>Session lost mid‑milestone</td><td>n/a</td><td>Derived state (§4) resumes from artifacts. Uncommitted worktrees are listed for triage.</td></tr>
+<tr><td>Generated role files hand‑edited</td><td><code>render_roles.py --check</code> in CI</td><td>Move the edit into <code>roles/</code> and regenerate.</td></tr>
+</tbody>
+</table>
+</section>
+
+<!-- ============================================================ 16 -->
+<section id="trace">
+<h2>16 · Playbook traceability</h2>
+<table>
+<thead><tr><th style="width:26%">Playbook element</th><th>Where it lives in the end state</th></tr></thead>
+<tbody>
+<tr><td>Plan · <code>intent.md</code> committed by the PO</td><td><code>plans/intents/</code> inbox → <code>approve intent</code> → <code>{m}/intent.md</code> (§3, §9)</td></tr>
+<tr><td>Design · <code>spec.md</code> under policy skills</td><td>PO + <code>swarm.md policies</code> + Policy Concerns · <code>approve spec</code> (§9, §11)</td></tr>
+<tr><td>Build · plan mode, <code>plan.md</code> committed</td><td>Read‑only architect · <code>approve plan</code> commits the plan before any engineer (§3, §5.1)</td></tr>
+<tr><td>Build · <code>CLAUDE.md</code> as memory</td><td>Read by all roles · fed by the auditor's "Common mistakes" (§11)</td></tr>
+<tr><td>Build · skills, hooks</td><td><code>roles/</code> → generated skills · <code>hooks/hooks.json</code> control plane (§5, §10)</td></tr>
+<tr><td>Build · parallel sessions in worktrees</td><td>Engineers ×≤5 with <code>isolation: worktree</code> (§7)</td></tr>
+<tr><td>Test · self‑verification</td><td>TDD engineer + auditor build/test + anti‑shortcut (unchanged)</td></tr>
+<tr><td>Test · continuous evals of agent config</td><td>L0–L4 in plugin CI and in adopting projects (§12)</td></tr>
+<tr><td>Deploy · AI PR review vs <code>REVIEW.md</code></td><td>CI review job + <code>implementation-validator</code> PR mode (§8)</td></tr>
+<tr><td>Deploy · hooks as approval gates</td><td>Nonce protocol + git policy (§5.2–5.3)</td></tr>
+<tr><td>Deploy · headless CI, MCP, sandbox</td><td><code>claude-code-action</code> template · MCP optional · sandbox profile template</td></tr>
+<tr><td>Maintain · bands → <code>intent.md</code></td><td>§14 (future)</td></tr>
+<tr><td>Separation of duties</td><td>Reviewers never write · auditor‑only deliverable commits · human nonce (§1, §11)</td></tr>
+<tr><td>Evidence: git, PR, CI logs, OTel</td><td><code>approvals.md</code>, tracked <code>audit.md</code>, <code>usage.md</code>, PR body, metrics (§13)</td></tr>
+<tr><td>Leading and lagging metrics</td><td><code>lib/metrics.py</code> (§13)</td></tr>
+</tbody>
+</table>
+</section>
+
+<!-- ============================================================ 17 -->
+<section id="verify">
+<h2>17 · To verify before build</h2>
+<table>
+<thead><tr><th style="width:36%">Assumption</th><th style="width:34%">If false</th><th>Where</th></tr></thead>
+<tbody>
+<tr><td><code>PreToolUse</code> can match the <code>Agent</code> tool and read <code>subagent_type</code></td><td>Review gate stays prompt‑enforced for dispatch. Commits are still gated.</td><td>§5.1</td></tr>
+<tr><td>Worktree base can be pinned to <code>swarm/{m}</code> HEAD</td><td>Supervisor creates worktrees itself with <code>git worktree add</code> and dispatches engineers into them.</td><td>§7</td></tr>
+<tr><td>Claude Code marks its shells with an env var the git hook can read</td><td>The git hook checks for a supervisor‑written session marker file instead.</td><td>§5.1 (D10)</td></tr>
+<tr><td><code>SubagentStop</code> payload carries token and duration totals</td><td>Supervisor keeps writing <code>usage.md</code> lines, as today.</td><td>§5.1</td></tr>
+<tr><td>Plugin‑agent frontmatter support (disputed in the feasibility review)</td><td>Not relied on anywhere. The generator emits only fields known to work.</td><td>§10</td></tr>
+<tr><td>OpenTelemetry export details</td><td>Omit from the templates.</td><td>§13</td></tr>
+<tr><td>Hardening: bind the nonce to the staged tree hash</td><td>Keep the HEAD binding. Document the gap.</td><td>§5.2</td></tr>
+</tbody>
+</table>
+</section>
+
+<footer>Proposed architecture · 24 Sep 2026 · baseline <code>a54fa10</code> · self‑contained, no external assets · no code was changed to produce this document. Companion: <a href="feasible.html">feasible.html</a> (gap analysis and phased roadmap).</footer>
+</main>
+</div>
+</body>
+</html>

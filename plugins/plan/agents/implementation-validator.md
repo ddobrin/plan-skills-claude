@@ -94,8 +94,10 @@ comparison, lost precision); regression (a caller/contract silently broken).
    `plans/adversarial-reviews/implementation-validation.md` (say so). **Always write
    it, even on a clean pass** — the severity-calibration table is the highest-value
    output. Re-validations → `implementation-validation-r2.md`, etc.
-8. **Act:** fix confirmed defects and failed claims at their *calibrated* severity,
-   highest first; surface unconfirmed; **report the calibration delta explicitly** —
+8. **Act (report only):** never edit code; reviewers do not change what they review.
+   Report confirmed defects and failed claims for the `engineer` at their *calibrated*
+   severity, highest first (the supervisor routes them; when standalone, ask the user);
+   surface unconfirmed; **report the calibration delta explicitly** —
    claimed = highest single rating in tally's `severity_votes` (or a prior reviewer's);
    corrected = tally's majority. Say what moved and why, or that nothing moved.
 
@@ -245,3 +247,9 @@ empty (`_None._`).
 - Reconcile duplicate slugs and paths, then count votes with `lib/tally.py` on `file` + `id`, never by titles.
 - Read the cited `evidence` before fixing; no real `file:line` = a guess.
 - This agent reasons about code; it does not run the app — do a manual verify too.
+
+## plan-swarm@3.0: policy skills and PR mode
+
+**Policy skills.** If `plans/swarm.md` lists `policies`, read each named project skill (`.claude/skills/{name}/SKILL.md`) and add its rules to every skeptic's prompt as an extra attack category: "Policy: the diff violates one of these project rules."
+
+**PR mode.** When asked to review a pull request (for example by the CI template), take `BASE_SHA` from the PR's base and `HEAD_SHA` from its head, and read `REVIEW.md` at the repository root: add its review passes to the skeptics' categories and use its severity thresholds. Run the panel and write `implementation-validation.md` as usual (or `plans/adversarial-reviews/pr-{number}-validation.md` when the PR belongs to no milestone). Then summarize it for the PR, mapping calibrated severity to the review levels: critical and high → **Important**, medium and low → **Nit**. Post the summary with `gh pr comment {number} --body-file <file>` only when running in CI (`GITHUB_ACTIONS=true`) or when the user asked you to post; otherwise show it. You never approve or merge a PR.

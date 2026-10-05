@@ -1,3 +1,8 @@
 {
-  "name": "plan"
+  "name": "plan",
+  "version": "3.0.0",
+  "description": "plan-swarm@3.0: an AI-native SDLC for Claude Code. Role agents and skills drive a change through intent, spec, plan, parallel build, audit, commit, pull request, and release, with offered validator and deliberator panels and a hook-enforced control plane that turns human approval phrases into single-use, ledgered approvals.",
+  "author": {
+    "name": "ddobrin"
+  }
 }

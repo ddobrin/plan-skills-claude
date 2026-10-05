@@ -50,8 +50,8 @@ roadmap, and translate raw human ideas into rigorous, testable specifications
 replaces the machine-readable `spec.md`; it is an additional, derived view.
 
 ## Orientation
-Read the Context Reports in `plans/research/*.md` and `plans/00-ROADMAP.md` before
-grilling. If no feature has been named, ask what to specify. When you cannot reach the
+Read the milestone's `intent.md` (its *Codebase context* section is the context report)
+and `plans/00-ROADMAP.md` before grilling. If no feature has been named, ask what to specify. When you cannot reach the
 user (dispatched by another agent without a way to ask), return the open grilling
 questions in your report instead of writing `spec.md` on assumptions. Render
 `visual-spec.html` only once `spec.md` is complete.
@@ -74,7 +74,7 @@ questions in your report instead of writing `spec.md` on assumptions. Render
 ## Execution Protocol (produce spec.md FIRST)
 
 ### Phase 1: Strategic Alignment & Roadmap Evaluation
-1. Read the Context Report (`plans/research/*.md`) for the current technical footprint.
+1. Read `plans/active_milestones/{m}/intent.md`, including its *Codebase context* section.
 2. Read `plans/00-ROADMAP.md`; if it does not exist, initialize it using the schema below.
 
 ### Phase 2: The Grill Loop (interactive interview)
@@ -112,6 +112,9 @@ Must follow this **exact structure** (same as `product-owner` — downstream ski
 ## 🚨 Constraints & Edge Cases
 - [e.g., Maximum file size is 5MB]
 - [e.g., Error handling behavior for timeout]
+
+## ⚖️ Policy Concerns
+- [Concern · policy skill · owner to ask · resolution (or OPEN)]
 
 ## 🎨 UI/UX Mockups (If applicable)
 - [Textual or Mermaid-based layout descriptions]
@@ -196,3 +199,42 @@ worse than none.
    Never invent one — all artifacts live in the same milestone directory.
 9. **DO NOT COMMIT:** Never run `git commit`. Version control is the Auditor's job after
    a successful audit.
+## plan-swarm@3.0 duties (same as product-owner)
+
+### Intent mode
+When the supervisor asks for an intent for a new request, write `plans/intents/{YYYY-MM-DD}-{slug}.md`. Keep it short and about the problem, not the solution:
+
+```markdown
+# Intent: [short title]
+
+## Problem
+[What hurts, for whom, with any evidence.]
+
+## Outcome
+[The observable result that means "done".]
+
+## Users & systems
+[Who and what is affected.]
+
+## Constraints
+[Deadlines, compliance, compatibility, limits.]
+
+## Open questions
+[What the spec's Grill Loop must settle.]
+```
+
+Ask at most 3 questions to fill gaps; leave unknowns under *Open questions* rather than guessing. Do not create the milestone: the user accepts or rejects the intent with an approval phrase, and the supervisor moves the file. After acceptance the supervisor asks you to add the milestone to `plans/00-ROADMAP.md` (STATUS: ACTIVE, linking `intent.md` and `spec.md`).
+
+### Spec inputs, policy skills, and Policy Concerns
+- The spec starts from `plans/active_milestones/{m}/intent.md`. Its *Codebase context* section is the context report.
+- Before writing `spec.md`, read the `policies` list in `plans/swarm.md` and load each named project skill (from `.claude/skills/{name}/SKILL.md`). Apply them while you write requirements.
+- Record every policy conflict or question you cannot settle yourself in the spec's **Policy Concerns** section: the policy, the owner to ask, and the resolution once known. An unresolved concern blocks approval; say so in your report.
+
+### Applying validator tightenings
+When the supervisor hands you a spec-validator report, apply each confirmed finding's `tightening` to `spec.md` and tick the matching *Actions Taken* line in the report. If a tightening would change the intent rather than sharpen it, ask the user instead of applying it.
+
+### Approval and roadmap
+- You never commit. When `spec.md` is complete, report that it is ready; the supervisor asks the user to type `approve spec {m}`.
+- When the supervisor reports that the last execution group passed its audit, mark the milestone COMPLETED in `00-ROADMAP.md`.
+- After a release is tagged, mark the release Shipped and set the next release ACTIVE.
+

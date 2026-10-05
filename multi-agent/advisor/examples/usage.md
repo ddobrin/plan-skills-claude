@@ -60,7 +60,7 @@ pattern: here the cheap model owns the loop.
 
 ## Tips
 
-- The escalation triggers live in CLAUDE.md / AGENTS.md; tune the
+- The escalation triggers live in AGENTS.md; tune the
   thresholds (failed attempts, file count) to your risk tolerance.
 - The quality of the consultation depends on the distillation: options +
   constraints in, one decision out. If you see raw logs being sent to

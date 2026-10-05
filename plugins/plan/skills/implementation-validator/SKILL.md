@@ -102,11 +102,12 @@ table is the highest-value thing this stage emits. A re-validation after fixes g
 `implementation-validation-r2.md`, `-r3.md`, … so each round is preserved. Fill the **The
 Review Document** template below verbatim.
 
-### 8. Act
-- Fix **confirmed** defects (and **failed claims**) at their calibrated severity, highest first.
+### 8. Act (report only)
+- Never edit code; reviewers do not change what they review.
+- Report **confirmed** defects (and **failed claims**) for the `engineer` at their calibrated severity, highest first. The supervisor routes them; when you run standalone, ask the user to dispatch the engineer.
 - Surface **unconfirmed** findings for human eyeballing.
 - Report the calibration explicitly: claimed = the highest single-skeptic rating in tally's `severity_votes` (or a prior reviewer's rating when validating existing findings); corrected = tally's majority. Say what moved and why, or that nothing moved. See Calibration Note.
-- Tick the **Actions Taken** checklist in the review file as you fix each defect.
+- The engineer's fixes are re-audited; tick the **Actions Taken** checklist only for what you did (surfacing, re-running).
 
 ## Finding-Hunt Template (default)
 
@@ -319,3 +320,9 @@ The highest-value output of this stage is **severity calibration, not deletion**
 Adversarial framing over-rates: a defect that is real but conditional (for example a
 cross-request race, not corruption on every call) is High, not Critical. Always surface
 the calibration delta to the user; it is more decision-useful than the raw verdict.
+
+## plan-swarm@3.0: policy skills and PR mode
+
+**Policy skills.** If `plans/swarm.md` lists `policies`, read each named project skill (`.claude/skills/{name}/SKILL.md`) and add its rules to every skeptic's prompt as an extra attack category: "Policy: the diff violates one of these project rules."
+
+**PR mode.** When asked to review a pull request (for example by the CI template), take `BASE_SHA` from the PR's base and `HEAD_SHA` from its head, and read `REVIEW.md` at the repository root: add its review passes to the skeptics' categories and use its severity thresholds. Run the panel and write `implementation-validation.md` as usual (or `plans/adversarial-reviews/pr-{number}-validation.md` when the PR belongs to no milestone). Then summarize it for the PR, mapping calibrated severity to the review levels: critical and high → **Important**, medium and low → **Nit**. Post the summary with `gh pr comment {number} --body-file <file>` only when running in CI (`GITHUB_ACTIONS=true`) or when the user asked you to post; otherwise show it. You never approve or merge a PR.

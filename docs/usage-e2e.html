@@ -1,0 +1,505 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>plan-swarm@3.0 end to end: one milestone, every stage</title>
+<style>
+  :root{
+    --bg:#fbfaf7; --panel:#ffffff; --ink:#1d1d1f; --muted:#5f6368; --line:#e4e1da;
+    --accent:#c2562c; --blue:#2f5bd3; --green:#1f7a4d; --amber:#a86a00; --red:#b3261e; --purple:#7b3fd1; --gray:#8a8f98;
+    --g-bg:#e8f5ee; --a-bg:#fff4dc; --r-bg:#fde8e6; --b-bg:#e9efff; --p-bg:#f1eafd; --code:#f3f1ec; --term:#1e1e20; --termink:#e8e6e1;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#141414; --panel:#1c1c1e; --ink:#ececec; --muted:#a1a1a6; --line:#2e2e30;
+      --accent:#e0794f; --blue:#7c9cff; --green:#5cc98f; --amber:#e7b04a; --red:#ff7b72; --purple:#b38cff; --gray:#8d8d93;
+      --g-bg:#16301f; --a-bg:#33290f; --r-bg:#3a1a18; --b-bg:#1b2442; --p-bg:#2a1f3d; --code:#242426; --term:#0c0c0d; --termink:#e8e6e1; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Helvetica,Arial,sans-serif}
+  .wrap{display:grid;grid-template-columns:230px minmax(0,1fr);gap:44px;max-width:1240px;margin:0 auto;padding:40px 28px 90px}
+  nav{position:sticky;top:24px;align-self:start;font-size:13.5px;max-height:calc(100vh - 48px);overflow:auto}
+  nav b{display:block;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-size:11.5px;margin:14px 0 6px}
+  nav b:first-child{margin-top:0}
+  nav a{display:block;color:var(--ink);text-decoration:none;padding:2px 0 2px 10px;border-left:2px solid var(--line)}
+  nav a:hover{border-left-color:var(--accent);color:var(--accent)}
+  @media (max-width:980px){.wrap{grid-template-columns:1fr}nav{display:none}}
+  h1{font-size:36px;line-height:1.12;margin:0 0 8px;letter-spacing:-.015em}
+  h2{font-size:23px;margin:58px 0 12px;padding-top:12px;border-top:1px solid var(--line)}
+  h3{font-size:17px;margin:22px 0 6px}
+  p{margin:10px 0}
+  .sub{color:var(--muted);font-size:17px;margin:0 0 20px}
+  .meta{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:13px;color:var(--muted);margin-bottom:22px}
+  code{font:13.5px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--code);padding:1px 5px;border-radius:4px}
+  a{color:var(--blue)}
+  table{width:100%;border-collapse:collapse;background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden;font-size:14.5px;margin:12px 0}
+  th,td{text-align:left;vertical-align:top;padding:9px 12px;border-bottom:1px solid var(--line)}
+  th{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);background:var(--code)}
+  tr:last-child td{border-bottom:0}
+  .pill{display:inline-block;font-size:11.5px;font-weight:650;padding:2px 8px;border-radius:999px;white-space:nowrap;vertical-align:1px}
+  .you{background:var(--a-bg);color:var(--amber)} .swarm{background:var(--b-bg);color:var(--blue)} .opt{background:var(--p-bg);color:var(--purple)}
+  .ci{background:var(--g-bg);color:var(--green)} .fut{background:var(--code);color:var(--muted)}
+  .callout{background:var(--b-bg);border-radius:10px;padding:14px 18px;margin:14px 0;font-size:15px}
+  .note{background:var(--a-bg)}
+  .big3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:14px 0}
+  @media (max-width:860px){.big3{grid-template-columns:1fr}}
+  .b3{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;font-size:14.5px}
+  .b3 b{display:block;font-size:15.5px;margin-bottom:4px}
+  /* journey strip */
+  .journey{display:flex;flex-wrap:wrap;gap:6px;align-items:stretch;margin:16px 0}
+  .j{flex:1 1 104px;background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:8px 9px;font-size:12.5px;text-align:center;border-top:4px solid var(--blue)}
+  .j b{display:block;font-size:13px}
+  .j.h{border-top-color:var(--amber);background:var(--a-bg)} .j.c{border-top-color:var(--green)} .j.f{border-top-color:var(--gray);border-style:dashed}
+  .j a{color:inherit;text-decoration:none}
+  /* stage cards */
+  .stage{background:var(--panel);border:1px solid var(--line);border-left:5px solid var(--blue);border-radius:12px;padding:18px 22px 14px;margin:18px 0}
+  .stage.h{border-left-color:var(--amber)} .stage.c{border-left-color:var(--green)} .stage.f{border-left-color:var(--gray);border-left-style:dashed}
+  .stage h3{margin:0 0 2px;font-size:19px}
+  .stage .goal{color:var(--muted);margin:0 0 10px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px 22px}
+  @media (max-width:860px){.grid2{grid-template-columns:1fr}}
+  .lbl{font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin:10px 0 2px}
+  .stage ul{margin:4px 0 6px;padding-left:20px}
+  .stage li{margin:2px 0}
+  .done{background:var(--g-bg);border-radius:8px;padding:8px 12px;font-size:14.5px;margin:10px 0 4px}
+  .trouble{font-size:14px;color:var(--muted);margin-top:6px}
+  pre.term{background:var(--term);color:var(--termink);border-radius:10px;padding:14px 16px;overflow:auto;font:13px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace;margin:10px 0}
+  pre.term .me{color:#f5c26b} pre.term .sw{color:#8fb4ff} pre.term .dim{color:#9a9a9f} pre.term .ok{color:#7fd6a4} pre.term .bad{color:#ff8f86}
+  pre.file{background:var(--code);border:1px solid var(--line);border-radius:10px;padding:12px 14px;overflow:auto;font:12.5px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;margin:10px 0}
+  kbd{font:12.5px ui-monospace,Menlo,monospace;background:var(--panel);border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:1px 6px}
+  footer{margin-top:64px;font-size:12.5px;color:var(--muted);border-top:1px solid var(--line);padding-top:16px}
+
+  .step{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--line);border-radius:10px;padding:10px 14px;margin:10px 0}
+  .step.s-prompt{border-left-color:var(--amber)} .step.s-blocked,.step.s-git-hook{border-left-color:var(--red)}
+  .step.s-ran,.step.s-ci,.step.s-dispatched{border-left-color:var(--green)} .step.s-file{border-left-color:var(--purple)} .step.s-hook{border-left-color:var(--blue)}
+  .step .head{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:14.5px}
+  .step .in{margin:6px 0 2px;font-size:13px;display:flex;gap:8px;align-items:baseline}
+  .step .in .k{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);min-width:64px}
+  .step .in code{white-space:pre-wrap;word-break:break-word}
+  .step .note{font-size:13px;color:var(--muted);margin:4px 0}
+  pre.out{background:var(--term);color:var(--termink);border-radius:8px;padding:10px 12px;margin:6px 0 2px;overflow:auto;font:12.3px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre-wrap;word-break:break-word}
+  details summary{cursor:pointer;font-size:13px;color:var(--blue);margin-top:6px}
+  .sn{display:inline-block;background:var(--code);border-radius:6px;padding:0 8px;margin-right:4px;color:var(--muted);font-size:17px}
+  .pill.a{background:var(--a-bg);color:var(--amber)} .pill.r{background:var(--r-bg);color:var(--red)} .pill.g{background:var(--g-bg);color:var(--green)}
+  .pill.b{background:var(--b-bg);color:var(--blue)} .pill.p{background:var(--p-bg);color:var(--purple)} .pill.x{background:var(--code);color:var(--muted)}
+  .journey a{text-decoration:none;color:inherit}
+  .j{display:block}
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:16px 0}
+  @media (max-width:860px){.kpis{grid-template-columns:repeat(2,1fr)}}
+  .kpi{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+  .kpi .n{font-size:26px;font-weight:750;line-height:1.1} .kpi .l{font-size:12.5px;color:var(--muted)}
+  .ev{font-size:12.5px;color:var(--muted)}
+</style></head>
+<body><div class="wrap">
+<nav><b>Overview</b><a href="#about">About this run</a><a href="#glance">At a glance</a><b>Stages</b><a href="#st0">0 · Setup</a><a href="#st1">1 · Intent</a><a href="#st2">2 · Accept the intent</a><a href="#st3">3 · Research</a><a href="#st4">4 · Spec</a><a href="#st5">5 · Plan</a><a href="#st6">6 · Approve the plan</a><a href="#st7">7 · Build (group 1)</a><a href="#st8">8 · Audit (group 1)</a><a href="#st9">9 · Commit gate (group 1)</a><a href="#st10">10 · Group 2 and the last commit</a><a href="#st11">11 · Pull request</a><a href="#st12">12 · Release</a><a href="#st13">13 · Measure</a><b>After</b><a href="#blocked">Everything that was refused</a><a href="#repro">Reproduce it</a></nav>
+<main>
+<h1>plan‑swarm@3.0 end to end</h1>
+<p class="sub">One milestone, <em>login rate limiting</em>, taken from an empty setup to a tagged release. Every output below is what the plugin actually printed.</p>
+<div class="meta"><span>Plugin 3.0.0</span><span>Scenario: a small Python app, <code>~/shop</code>, with a bare <code>origin</code></span><span>Concepts: <a href="playbook.html">playbook.html</a> · System: <a href="ai-dlc.html">ai-dlc.html</a></span></div>
+
+<section id="about">
+<div class="callout"><b>How this document was made.</b> <code>examples/e2e_demo.py</code> drove the milestone in a scratch repository. It feeds the plugin's hooks the same JSON events Claude Code sends (<code>SessionStart</code>, <code>UserPromptSubmit</code> for what you type, <code>PreToolUse</code> before every agent command) and runs a command only when the gate allows it, exactly as Claude Code does. The three git hooks (<code>pre-commit</code>, <code>pre-merge-commit</code>, <code>pre-push</code>) were installed by <code>swarm-init</code> and ran on every real commit and push.
+<br><br><b>Real vs example.</b> Hook messages, gate decisions, script output, git results, test results, the pre-push verdicts, and the CI ledger job are <b>real output</b>. What the agents would write (intent, spec, plan, code, audit text) is <span class="pill p">example content</span> supplied by the script, since no model is called. SHAs and nonce ids differ on every run.</div>
+</section>
+
+<section id="glance">
+<h2>At a glance</h2>
+<div class="kpis">
+<div class="kpi"><div class="n">7</div><div class="l">approval phrases typed by the developer</div></div>
+<div class="kpi"><div class="n">6</div><div class="l">commits on <code>swarm/login-rate-limit</code>, each with a ledger row</div></div>
+<div class="kpi"><div class="n">10</div><div class="l">attempts refused (shortcuts, premature steps, merges)</div></div>
+<div class="kpi"><div class="n">70</div><div class="l">captured steps across 14 stages</div></div>
+</div>
+<div class="journey"><a class="j" href="#st0"><b>0</b>Setup</a><a class="j" href="#st1"><b>1</b>Intent</a><a class="j h" href="#st2"><b>2</b>Accept the intent</a><a class="j" href="#st3"><b>3</b>Research</a><a class="j h" href="#st4"><b>4</b>Spec</a><a class="j" href="#st5"><b>5</b>Plan</a><a class="j h" href="#st6"><b>6</b>Approve the plan</a><a class="j" href="#st7"><b>7</b>Build (group 1)</a><a class="j" href="#st8"><b>8</b>Audit (group 1)</a><a class="j h" href="#st9"><b>9</b>Commit gate (group 1)</a><a class="j h" href="#st10"><b>10</b>Group 2 and the last commit</a><a class="j h" href="#st11"><b>11</b>Pull request</a><a class="j h" href="#st12"><b>12</b>Release</a><a class="j" href="#st13"><b>13</b>Measure</a></div>
+<p class="ev">Amber stages are where you type an approval phrase.</p>
+<h3>Everything you type in the whole milestone</h3>
+<ol><li><code>approve intent login-rate-limit as login-rate-limit</code> <span class='ev'>(2 · Accept the intent)</span></li><li><code>approve spec login-rate-limit</code> <span class='ev'>(4 · Spec)</span></li><li><code>approve plan login-rate-limit</code> <span class='ev'>(6 · Approve the plan)</span></li><li><code>approve commit login-rate-limit g1</code> <span class='ev'>(9 · Commit gate (group 1))</span></li><li><code>approve commit login-rate-limit g2</code> <span class='ev'>(10 · Group 2 and the last commit)</span></li><li><code>approve pr login-rate-limit</code> <span class='ev'>(11 · Pull request)</span></li><li><code>approve release v1.0.0</code> <span class='ev'>(12 · Release)</span></li></ol>
+<p>Plus your original request, answers to the Grill Loop, and yes / no to the offered checks. Every other step below is the swarm's.</p>
+</section>
+
+<section id="st0" class="stagesec">
+<h2><span class="sn">0</span> Setup: Prepare the repository once</h2>
+<div class="grid2"><div><div class="lbl">What happens</div><p>Install the plugin, run <code>swarm-init</code>, and commit what it installs yourself. Opening Claude Code fires the <code>SessionStart</code> hook; the supervisor's first act in every session is to check that enforcement is active.</p></div><div><div class="lbl">You do</div><p>Install the plugin (<code>/plugin install plan@plan-skills</code>, or <code>--plugin-dir</code> until 3.0 is published), type <code>/plan:swarm-init</code>, fill in <code>AGENTS.md</code>, commit, and start <code>claude --agent plan:supervisor</code>.</p></div></div>
+<div class="step s-script"><div class="head"><span class="pill x">script</span><b>swarm-init preview</b></div><div class="in"><span class="k">command</span><code>python3 ${CLAUDE_PLUGIN_ROOT}/lib/swarm_init.py --dry-run</code></div><pre class="out">would install  swarm   plans/swarm.md
+would install  hook:pre-commit .git/hooks/pre-commit
+would install  hook:pre-merge-commit .git/hooks/pre-merge-commit
+would install  hook:pre-push .git/hooks/pre-push
+would install  review  REVIEW.md
+would install  ci      .github/workflows/plan-swarm.yml
+       exists  agents  AGENTS.md</pre></div><div class="step s-script"><div class="head"><span class="pill x">script</span><b>swarm-init install</b></div><div class="in"><span class="k">command</span><code>python3 ${CLAUDE_PLUGIN_ROOT}/lib/swarm_init.py --only swarm,hook,review,ci</code></div><pre class="out">    installed  swarm   plans/swarm.md
+    installed  hook:pre-commit .git/hooks/pre-commit
+    installed  hook:pre-merge-commit .git/hooks/pre-merge-commit
+    installed  hook:pre-push .git/hooks/pre-push
+    installed  review  REVIEW.md
+    installed  ci      .github/workflows/plan-swarm.yml</pre></div><div class="step s-note"><div class="head"><span class="pill x">note</span><b>you commit the setup yourself</b></div><pre class="out">(committed by the developer outside Claude Code; the swarm never commits its own settings)</pre></div><div class="step s-hook"><div class="head"><span class="pill b">hook</span><b>SessionStart hook</b></div><div class="in"><span class="k">command</span><code>claude  (open Claude Code in the repo)</code></div><pre class="out">plan-swarm 3.0.0: enforcement active. Delivery mode pr, up to 5 engineers, Path A capped at 3 rounds. Commits, pushes, and tags need an exact approval phrase from the user.</pre></div><div class="step s-ran"><div class="head"><span class="pill g">ran</span><b>supervisor orientation: health.py --status</b></div><div class="in"><span class="k">command</span><code>python3 &quot;${CLAUDE_PLUGIN_ROOT}/lib/health.py&quot; --status</code></div><pre class="out">{
+  &quot;swarm_repo&quot;: true,
+  &quot;config&quot;: &quot;valid&quot;,
+  &quot;mode&quot;: &quot;pr&quot;,
+  &quot;max_engineers&quot;: 5,
+  &quot;max_path_a_rounds&quot;: 3,
+  &quot;heartbeat_age_seconds&quot;: 0,
+  &quot;git_hook&quot;: &quot;installed&quot;,
+  &quot;plugin_version&quot;: &quot;3.0.0&quot;,
+  &quot;enforcement&quot;: &quot;active&quot;
+}</pre></div>
+</section>
+<section id="st1" class="stagesec">
+<h2><span class="sn">1</span> Intent: Describe the problem</h2>
+<div class="grid2"><div><div class="lbl">What happens</div><p>Your request is an ordinary prompt, so the approval hook ignores it. The product owner turns it into a short intent in the inbox. The tier script reads only the wording at this point, so the tier starts at <b>routine</b>. Nothing can be committed yet.</p></div><div><div class="lbl">You do</div><p>Describe what hurts and what done looks like; answer a few questions.</p></div></div>
+<div class="step s-prompt"><div class="head"><span class="pill a">you type</span><b>you type: Be the supervisor. Login gets brute-forced; limit failed attempts per account and per IP.</b></div><div class="in"><span class="k">prompt</span><code>Be the supervisor. Login gets brute-forced; limit failed attempts per account and per IP.</code></div><div class="note">An ordinary prompt: the approval hook ignores it.</div><pre class="out">(no output: not an approval phrase)</pre></div><div class="step s-file"><div class="head"><span class="pill p">file</span> <span class="pill p">example content</span><b>product-owner (intent mode) writes the intent</b></div><div class="in"><span class="k">file</span><code>plans/intents/2026-09-25-login-rate-limit.md</code></div><details><summary>show 17 lines</summary><pre class="out"># Intent: Login rate limiting
+
+## Problem
+The login endpoint accepts unlimited failed attempts, so accounts can be brute-forced.
+
+## Outcome
+After repeated failures an account (and a noisy IP) is locked out for a while, and
+the response never reveals whether the account exists.
+
+## Users &amp; systems
+Everyone who logs in; `src/shop/routes/login.py`; the auth package.
+
+## Constraints
+No new infrastructure (in-memory is acceptable for v1).
+
+## Open questions
+Thresholds and lockout duration; whether internal IPs are exempt.</pre></details></div><div class="step s-ran"><div class="head"><span class="pill g">ran</span><b>supervisor: propose a tier from the intent</b></div><div class="in"><span class="k">command</span><code>python3 &quot;${CLAUDE_PLUGIN_ROOT}/lib/tier.py&quot; --milestone login-rate-limit --stage intent --intent-file plans/intents/2026-09-25-login-rate-limit.md --write</code></div><pre class="out">{
+  &quot;tier&quot;: &quot;routine&quot;,
+  &quot;reasons&quot;: [],
+  &quot;previous&quot;: &quot;routine&quot;,
+  &quot;confirmed&quot;: null,
+  &quot;raised&quot;: false,
+  &quot;exceeds_confirmed&quot;: false
+}</pre></div><div class="step s-blocked"><div class="head"><span class="pill r">blocked · exit 2</span><b>an agent tries to commit before approval</b></div><div class="in"><span class="k">command</span><code>git add plans &amp;&amp; git commit -m &#x27;docs: intent&#x27;</code></div><pre class="out">plan-swarm: no valid approval for this commit on branch swarm/&lt;milestone&gt;. Ask the user to type exactly: approve commit &lt;milestone&gt; g&lt;n&gt; / approve intent &lt;slug&gt; as &lt;milestone&gt; / approve spec &lt;milestone&gt; / approve plan &lt;milestone&gt;</pre></div>
+</section>
+<section id="st2" class="stagesec">
+<h2><span class="sn">2</span> Accept the intent: Turn the intent into a milestone</h2>
+<div class="grid2"><div><div class="lbl">What happens</div><p>Your phrase mints a single-use approval and writes the first ledger row (already staged). The supervisor creates <code>swarm/login-rate-limit</code>, moves the intent into the milestone, the product owner adds the roadmap entry, and the auditor makes the first artifact commit. Both commit layers pass because the approval exists.</p></div><div><div class="lbl">You do</div><p>Type <code>approve intent login-rate-limit as login-rate-limit</code>.</p></div></div>
+<div class="step s-prompt"><div class="head"><span class="pill a">you type</span><b>you type: approve intent login-rate-limit as login-rate-limit</b></div><div class="in"><span class="k">prompt</span><code>approve intent login-rate-limit as login-rate-limit</code></div><pre class="out">plan-swarm: approval recorded for intent login-rate-limit (nonce n_56b4e9d79fde, valid once until 05:10 UTC while HEAD stays at 42b3ffdbe870). Next: create branch swarm/login-rate-limit (pr mode), move the intent into the milestone, and commit plans/.</pre></div><div class="step s-ran"><div class="head"><span class="pill g">ran</span><b>supervisor: create the milestone branch</b></div><div class="in"><span class="k">command</span><code>git switch -c swarm/login-rate-limit</code></div><pre class="out">Switched to a new branch &#x27;swarm/login-rate-limit&#x27;</pre></div><div class="step s-ran"><div class="head"><span class="pill g">ran</span><b>supervisor: move the intent into the milestone</b></div><div class="in"><span class="k">command</span><code>mkdir -p plans/active_milestones/login-rate-limit &amp;&amp; mv plans/intents/2026-09-25-login-rate-limit.md plans/active_milestones/login-rate-limit/intent.md</code></div><pre class="out">(no output)</pre></div><div class="step s-file"><div class="head"><span class="pill p">file</span><b>product-owner adds the roadmap entry</b></div><div class="in"><span class="k">file</span><code>plans/00-ROADMAP.md</code></div><pre class="out"># Swarm Master Roadmap
+
+## 📦 Release v1.0.0 (Target Date: 2026-10-15) - STATUS: ACTIVE
+- [ ] **Milestone 1: Login rate limiting** - STATUS: ACTIVE
+  - *Intent:* `plans/active_milestones/login-rate-limit/intent.md`
+  - *Spec:* `plans/active_milestones/login-rate-limit/spec.md`</pre></div><div class="step s-ran"><div class="head"><span class="pill g">ran</span><b>auditor: artifact commit</b></div><div class="in"><span class="k">command</span><code>git add plans/ &amp;&amp; git commit -m &#x27;docs(login-rate-limit): accept intent&#x27; -- plans/</code></div><pre class="out">[swarm/login-rate-limit f87e548] docs(login-rate-limit): accept intent
+ 3 files changed, 33 insertions(+)
+ create mode 100644 plans/00-ROADMAP.md
+ create mode 100644 plans/active_milestones/login-rate-limit/approvals.md
+ create mode 100644 plans/active_milestones/login-rate-limit/intent.md</pre></div>
+</section>
+<section id="st3" class="stagesec">
+<h2><span class="sn">3</span> Research: Learn the code</h2>
+<div class="grid2"><div><div class="lbl">What happens</div><p>An explorer appends a <em>Codebase context</em> section to the intent. It is committed with the spec.</p></div><div><div class="lbl">You do</div><p>Nothing.</p></div></div>
+<div class="step s-file"><div class="head"><span class="pill p">file</span> <span class="pill p">example content</span><b>Explore appends Codebase context</b></div><div class="in"><span class="k">file</span><code>plans/active_milestones/login-rate-limit/intent.md (appended)</code></div><pre class="out">## Codebase context
+- `src/shop/routes/login.py::login(username, password, ip, users)` returns 200/401 dicts; no state.
+- Password checks live in `src/shop/auth/passwords.py`; tests in `tests/test_login.py` (pytest, `pythonpath = src`).
+- No existing rate limiting, cache, or clock abstraction.</pre></div>
+</section>
+<section id="st4" class="stagesec">
+<h2><span class="sn">4</span> Spec: Agree on testable requirements</h2>
+<div class="grid2"><div><div class="lbl">What happens</div><p>After the Grill Loop the product owner writes a Gherkin spec with a Policy Concerns section. The supervisor logs the dispatch cost and your decision to skip the offered spec-deliberator. Your phrase authorizes the spec commit.</p></div><div><div class="lbl">You do</div><p>Answer the Grill Loop, decide on the offered checks, then type <code>approve spec login-rate-limit</code>.</p></div></div>
+<div class="step s-file"><div class="head"><span class="pill p">file</span> <span class="pill p">example content</span><b>product-owner writes spec.md after the Grill Loop</b></div><div class="in"><span class="k">file</span><code>plans/active_milestones/login-rate-limit/spec.md</code></div><details><summary>show 27 lines</summary><pre class="out"># Product Specification: Login rate limiting
+
+## 🎯 Executive Summary
+*   **Goal:** Stop brute-force login attempts without revealing which accounts exist.
+*   **Target User:** Every account holder; the security team.
+*   **Business Value:** Removes the top finding of the last security review.
+
+## 📋 Acceptance Criteria
+- **Scenario:** Account lockout
+  - **Given** 5 failed logins for one account within 15 minutes
+  - **When** a 6th attempt arrives, even with the right password
+  - **Then** the response is 429 with the generic lockout message for 15 minutes
+- **Scenario:** No account enumeration
+  - **Given** an unknown username
+  - **When** it fails 5 times
+  - **Then** the responses are identical to a real account&#x27;s
+- **Scenario:** Noisy IP
+  - **Given** 20 failures from one IP within 15 minutes across accounts
+  - **When** another attempt arrives from that IP
+  - **Then** it gets 429 with the same message
+
+## 🚨 Constraints &amp; Edge Cases
+- In-memory counters (single instance) for v1; counters reset on restart.
+- No exemptions for internal IPs.
+
+## ⚖️ Policy Concerns
+- None open (lockout messages follow the security policy&#x27;s no-enumeration rule).</pre></details></div><div class="step s-ran"><div class="head"><span class="pill g">ran</span><b>supervisor: cost log</b></div><div class="in"><span class="k">command</span><code>python3 &quot;${CLAUDE_PLUGIN_ROOT}/lib/usage.py&quot; log --milestone login-rate-limit --phase 1 --agent product-owner --tokens 18400 --tools 9 --ms 142000</code></div><pre class="out">~/shop/plans/active_milestones/login-rate-limit/usage.md</pre></div><div class="step s-ran"><div class="head"><span class="pill g">ran</span><b>you decline the offered spec-deliberator; the supervisor logs it</b></div><div class="in"><span class="k">command</span><code>python3 &quot;${CLAUDE_PLUGIN_ROOT}/lib/usage.py&quot; decline --milestone login-rate-limit --phase 1b --gate spec-deliberator</code></div><pre class="out">~/shop/plans/active_milestones/login-rate-limit/usage.md</pre></div><div class="step s-prompt"><div class="head"><span class="pill a">you type</span><b>you type: approve spec login-rate-limit</b></div><div class="in"><span class="k">prompt</span><code>approve spec login-rate-limit</code></div><pre class="out">plan-swarm: approval recorded for spec login-rate-limit (nonce n_694f3c81ef6c, valid once until 05:10 UTC while HEAD stays at f87e5482e148). Next: commit spec.md and its gate reports (plans/ paths only).</pre></div><div class="step s-ran"><div class="head"><span class="pill g">ran</span><b>auditor: artifact commit</b></div><div class="in"><span class="k">command</span><code>git add plans/ &amp;&amp; git commit -m &#x27;docs(login-rate-limit): spec&#x27; -- plans/</code></div><pre class="out">[swarm/login-rate-limit d826521] docs(login-rate-limit): spec
+ 4 files changed, 41 insertions(+)
+ create mode 100644 plans/active_milestones/login-rate-limit/spec.md
+ create mode 100644 plans/active_milestones/login-rate-limit/usage.md</pre></div>
+</section>
+<section id="st5" class="stagesec">
+<h2><span class="sn">5</span> Plan: Plan in parallel groups</h2>
+<div class="grid2"><div><div class="lbl">What happens</div><p>The architect reads the code and writes two execution groups with disjoint files. Re-checking the tier now that files are named raises it to <b>critical</b>: the plan touches <code>**/auth/**</code> and the spec mentions passwords. The supervisor would now recommend the validators.</p></div><div><div class="lbl">You do</div><p>Read the plan (or the visual HTML).</p></div></div>
+<div class="step s-file"><div class="head"><span class="pill p">file</span> <span class="pill p">example content</span><b>architect writes plan.md</b></div><div class="in"><span class="k">file</span><code>plans/active_milestones/login-rate-limit/plan.md</code></div><details><summary>show 18 lines</summary><pre class="out"># Technical Plan: login-rate-limit
+
+## 🔍 Analysis &amp; Context
+*   **Objective:** Lock out accounts and noisy IPs after repeated login failures.
+*   **Affected Files:** `src/shop/auth/attempts.py`, `src/shop/auth/messages.py`, `src/shop/routes/login.py`
+*   **Risks/Edge Cases:** clock handling; identical responses for unknown users.
+*   **Irreversible Steps:** None
+
+## 📋 Task Execution (Parallel Groups)
+### Group 1 (Parallel Execution - Independent Tasks)
+- [ ] Task 1.A: attempt counter → `src/shop/auth/attempts.py`, `tests/test_attempts.py`
+- [ ] Task 1.B: lockout message → `src/shop/auth/messages.py`, `tests/test_messages.py`
+
+### Group 2 (Sequential Execution - Depends on Group 1)
+- [ ] Task 2.A: enforce limits in login → `src/shop/routes/login.py`, `tests/test_login.py`
+
+## 🎯 Success Criteria
+*   `uvx pytest -q` passes; every acceptance criterion has a test.</pre></details></div><div class="step s-ran"><div class="head"><span class="pill g">ran</span><b>supervisor: re-check the tier</b></div><div class="in"><span class="k">command</span><code>python3 &quot;${CLAUDE_PLUGIN_ROOT}/lib/tier.py&quot; --milestone login-rate-limit --stage plan --write</code></div><pre class="out">{
+  &quot;tier&quot;: &quot;critical&quot;,
+  &quot;reasons&quot;: [
+    &quot;keyword &#x27;password&#x27;&quot;,
+    &quot;path src/shop/auth/attempts.py matches **/auth/**&quot;
+  ],
+  &quot;previous&quot;: &quot;routine&quot;,
+  &quot;confirmed&quot;: null,
+  &quot;raised&quot;: true,
+  &quot;exceeds_confirmed&quot;: false
+}</pre></div>
+</section>
+<section id="st6" class="stagesec">
+<h2><span class="sn">6</span> Approve the plan: The go / no-go</h2>
+<div class="grid2"><div><div class="lbl">What happens</div><p>Before your approval the gate refuses to start an engineer. Your phrase confirms the plan and its critical tier; the auditor commits the plan, and engineers are unblocked.</p></div><div><div class="lbl">You do</div><p>Type <code>approve plan login-rate-limit</code> (or <code>… tier=elevated</code> to change the tier on the record).</p></div></div>
+<div class="step s-blocked"><div class="head"><span class="pill r">blocked · exit 2</span><b>dispatch plan:engineer</b></div><div class="in"><span class="k">Agent tool</span><code>Implement Task 1.A defined in plans/active_milestones/login-rate-limit/plan.md</code></div><div class="note">Before approval.</div><pre class="out">plan-swarm: engineers cannot start on login-rate-limit before the plan is approved. Ask the user to type exactly: approve plan login-rate-limit</pre></div><div class="step s-prompt"><div class="head"><span class="pill a">you type</span><b>you type: approve plan login-rate-limit</b></div><div class="in"><span class="k">prompt</span><code>approve plan login-rate-limit</code></div><pre class="out">plan-swarm: approval recorded for plan login-rate-limit (nonce n_bd55660b5a3f, valid once until 05:10 UTC while HEAD stays at d8265218ec9c). Tier: critical. Next: commit the plan (plans/ paths only), then dispatch engineers.</pre></div><div class="step s-ran"><div class="head"><span class="pill g">ran</span><b>auditor: artifact commit</b></div><div class="in"><span class="k">command</span><code>git add plans/ &amp;&amp; git commit -m &#x27;docs(login-rate-limit): plan&#x27; -- plans/</code></div><pre class="out">[swarm/login-rate-limit 5739431] docs(login-rate-limit): plan
+ 2 files changed, 21 insertions(+)
+ create mode 100644 plans/active_milestones/login-rate-limit/plan.md</pre></div><div class="step s-dispatched"><div class="head"><span class="pill g">dispatch allowed</span><b>dispatch plan:engineer</b></div><div class="in"><span class="k">Agent tool</span><code>Implement Task 1.A defined in plans/active_milestones/login-rate-limit/plan.md</code></div><div class="note">After approval.</div><pre class="out">(allowed)</pre></div>
+</section>
+<section id="st7" class="stagesec">
+<h2><span class="sn">7</span> Build (group 1): Engineers build in parallel worktrees</h2>
+<div class="grid2"><div><div class="lbl">What happens</div><p>Each task gets its own worktree and <code>swarm-wip/…</code> branch. A WIP commit inside a worktree is allowed; the same command in the main checkout is refused. <code>worktree.py squash</code> commits any leftover WIP, checks the tasks touched different files, and stages the whole group without committing.</p></div><div><div class="lbl">You do</div><p>Nothing: this runs on its own.</p></div></div>
+<div class="step s-ran"><div class="head"><span class="pill g">ran</span><b>supervisor: worktree for 1.A</b></div><div class="in"><span class="k">command</span><code>python3 &quot;${CLAUDE_PLUGIN_ROOT}/lib/worktree.py&quot; create --milestone login-rate-limit --task 1.A</code></div><pre class="out">{
+  &quot;task&quot;: &quot;1.A&quot;,
+  &quot;branch&quot;: &quot;swarm-wip/login-rate-limit/1.A&quot;,
+  &quot;path&quot;: &quot;~/shop/.swarm/worktrees/login-rate-limit/1.A&quot;,
+  &quot;created&quot;: true
+}</pre></div><div class="step s-ran"><div class="head"><span class="pill g">ran</span><b>supervisor: worktree for 1.B</b></div><div class="in"><span class="k">command</span><code>python3 &quot;${CLAUDE_PLUGIN_ROOT}/lib/worktree.py&quot; create --milestone login-rate-limit --task 1.B</code></div><pre class="out">{
+  &quot;task&quot;: &quot;1.B&quot;,
+  &quot;branch&quot;: &quot;swarm-wip/login-rate-limit/1.B&quot;,
+  &quot;path&quot;: &quot;~/shop/.swarm/worktrees/login-rate-limit/1.B&quot;,
+  &quot;created&quot;: true
+}</pre></div><div class="step s-note"><div class="head"><span class="pill x">note</span> <span class="pill p">example content</span><b>engineers write code + tests in their worktrees (TDD)</b></div><pre class="out">src/shop/auth/attempts.py + tests/test_attempts.py  (1.A)
+src/shop/auth/messages.py + tests/test_messages.py  (1.B)</pre></div><div class="step s-ran"><div class="head"><span class="pill g">ran</span><b>engineer 1.A: WIP commit in its worktree</b></div><div class="in"><span class="k">command</span><code>cd ~/shop/.swarm/worktrees/login-rate-limit/1.A &amp;&amp; git add -A &amp;&amp; git commit -m &#x27;wip(login-rate-limit): 1.A counter&#x27;</code></div><pre class="out">[swarm-wip/login-rate-limit/1.A 650e0b6] wip(login-rate-limit): 1.A counter
+ 2 files changed, 30 insertions(+)
+ create mode 100644 src/shop/auth/attempts.py
+ create mode 100644 tests/test_attempts.py</pre></div><div class="step s-blocked"><div class="head"><span class="pill r">blocked · exit 2</span><b>an engineer tries to commit in the main checkout</b></div><div class="in"><span class="k">command</span><code>git add -A &amp;&amp; git commit -m &#x27;sneak it in&#x27;</code></div><pre class="out">plan-swarm: no valid approval for this commit. Ask the user to type exactly: approve commit login-rate-limit g&lt;n&gt;</pre></div><div class="step s-ran"><div class="head"><span class="pill g">ran</span><b>supervisor: integrate the group (1.B&#x27;s work is auto-committed as WIP)</b></div><div class="in"><span class="k">command</span><code>python3 &quot;${CLAUDE_PLUGIN_ROOT}/lib/worktree.py&quot; squash --milestone login-rate-limit</code></div><pre class="out">{
+  &quot;squashed&quot;: [
+    &quot;1.A&quot;,
+    &quot;1.B&quot;
+  ],
+  &quot;files&quot;: [
+    &quot;src/shop/auth/attempts.py&quot;,
+    &quot;src/shop/auth/messages.py&quot;,
+    &quot;tests/test_attempts.py&quot;,
+    &quot;tests/test_messages.py&quot;
+  ]
+}</pre></div><div class="step s-ran"><div class="head"><span class="pill g">ran</span><b>staged group diff</b></div><div class="in"><span class="k">command</span><code>git diff --cached --stat</code></div><pre class="out"> src/shop/auth/attempts.py | 15 +++++++++++++++
+ src/shop/auth/messages.py |  1 +
+ tests/test_attempts.py    | 15 +++++++++++++++
+ tests/test_messages.py    |  5 +++++
+ 4 files changed, 36 insertions(+)</pre></div>
+</section>
+<section id="st8" class="stagesec">
+<h2><span class="sn">8</span> Audit (group 1): Prove it works</h2>
+<div class="grid2"><div><div class="lbl">What happens</div><p>The auditor runs exactly the test command from <code>AGENTS.md</code> (a real result below) and records the round. You decline the offered implementation validator for this group; the decline is logged with the tier.</p></div><div><div class="lbl">You do</div><p>Decide on the offered implementation validator.</p></div></div>
+<div class="step s-ran"><div class="head"><span class="pill g">ran</span><b>auditor runs the tests from AGENTS.md</b></div><div class="in"><span class="k">command</span><code>uvx pytest -q</code></div><pre class="out">5 passed in 0.02s</pre></div><div class="step s-file"><div class="head"><span class="pill p">file</span> <span class="pill p">example content</span><b>auditor records the round</b></div><div class="in"><span class="k">file</span><code>plans/active_milestones/login-rate-limit/audit.md</code></div><details><summary>show 17 lines</summary><pre class="out"># Audit: login-rate-limit
+
+### Group 1 · Round 1 · PASS
+*   **Completion:** 2/2 steps verified
+*   **Tasks:** Task 1.A: ✅ · Task 1.B: ✅
+
+#### Step 1.A: attempt counter
+*   **Status:** ✅ Verified
+*   **Evidence:** `AttemptCounter.is_locked` in `src/shop/auth/attempts.py` lines 13-14 counts failures inside the window
+*   **Dynamic Check:** `uvx pytest -q` → 5 passed in 0.02s
+
+#### Anti-Shortcut &amp; Quality Scan
+*   **Placeholders/TODOs/Deferred Work:** None found
+*   **Test Integrity:** Tests are robust
+
+#### Conclusion
+PASS.</pre></details></div><div class="step s-ran"><div class="head"><span class="pill g">ran</span><b>you decline the implementation gate for group 1</b></div><div class="in"><span class="k">command</span><code>python3 &quot;${CLAUDE_PLUGIN_ROOT}/lib/usage.py&quot; decline --milestone login-rate-limit --phase 4 --gate implementation-validator</code></div><pre class="out">~/shop/plans/active_milestones/login-rate-limit/usage.md</pre></div>
+</section>
+<section id="st9" class="stagesec">
+<h2><span class="sn">9</span> Commit gate (group 1): One audited group, one commit</h2>
+<div class="grid2"><div><div class="lbl">What happens</div><p>The auditor is refused until you type the phrase. The commit then passes the Claude Code gate and the git pre-commit hook, and it contains the code, the audit round, the ticked plan, the cost log, and the ledger row. Reusing the approval is refused.</p></div><div><div class="lbl">You do</div><p>Review the diffstat and message, then type <code>approve commit login-rate-limit g1</code>.</p></div></div>
+<div class="step s-blocked"><div class="head"><span class="pill r">blocked · exit 2</span><b>auditor tries before your approval</b></div><div class="in"><span class="k">command</span><code>git add plans/ &amp;&amp; git commit -m &#x27;feat(login-rate-limit): attempt counter and lockout message&#x27;</code></div><pre class="out">plan-swarm: no valid approval for this commit. Ask the user to type exactly: approve commit login-rate-limit g&lt;n&gt;</pre></div><div class="step s-prompt"><div class="head"><span class="pill a">you type</span><b>you type: approve commit login-rate-limit g1</b></div><div class="in"><span class="k">prompt</span><code>approve commit login-rate-limit g1</code></div><pre class="out">plan-swarm: approval recorded for commit login-rate-limit g1 (nonce n_07a09f103970, valid once until 05:10 UTC while HEAD stays at 573943198c3b). Tier: critical. Next: have the auditor create the group commit.</pre></div><div class="step s-ran"><div class="head"><span class="pill g">ran</span><b>auditor: group commit (both git-hook layers pass)</b></div><div class="in"><span class="k">command</span><code>git add plans/ &amp;&amp; git commit -m &#x27;feat(login-rate-limit): attempt counter and lockout message&#x27;</code></div><pre class="out">[swarm/login-rate-limit b04bb27] feat(login-rate-limit): attempt counter and lockout message
+ 8 files changed, 57 insertions(+), 2 deletions(-)
+ create mode 100644 plans/active_milestones/login-rate-limit/audit.md
+ create mode 100644 src/shop/auth/attempts.py
+ create mode 100644 src/shop/auth/messages.py
+ create mode 100644 tests/test_attempts.py
+ create mode 100644 tests/test_messages.py</pre></div><div class="step s-blocked"><div class="head"><span class="pill r">blocked · exit 2</span><b>reusing the approval</b></div><div class="in"><span class="k">command</span><code>git commit --allow-empty -m &#x27;one more&#x27;</code></div><pre class="out">plan-swarm: no valid approval for this commit (commit-login-rate-limit-g1 was already used). Ask the user to type exactly: approve commit login-rate-limit g&lt;n&gt;</pre></div><div class="step s-ran"><div class="head"><span class="pill g">ran</span><b>supervisor: clean up worktrees</b></div><div class="in"><span class="k">command</span><code>python3 &quot;${CLAUDE_PLUGIN_ROOT}/lib/worktree.py&quot; cleanup --milestone login-rate-limit</code></div><pre class="out">{
+  &quot;removed&quot;: [
+    &quot;swarm-wip/login-rate-limit/1.A&quot;,
+    &quot;swarm-wip/login-rate-limit/1.B&quot;
+  ]
+}</pre></div>
+</section>
+<section id="st10" class="stagesec">
+<h2><span class="sn">10</span> Group 2 and the last commit: The last group</h2>
+<div class="grid2"><div><div class="lbl">What happens</div><p>Same loop for group 2. Before the last commit the product owner marks the milestone COMPLETED in the roadmap, so that change ships inside the PR.</p></div><div><div class="lbl">You do</div><p>Type <code>approve commit login-rate-limit g2</code>.</p></div></div>
+<div class="step s-ran"><div class="head"><span class="pill g">ran</span><b>supervisor: worktree for 2.A</b></div><div class="in"><span class="k">command</span><code>python3 &quot;${CLAUDE_PLUGIN_ROOT}/lib/worktree.py&quot; create --milestone login-rate-limit --task 2.A</code></div><pre class="out">{
+  &quot;task&quot;: &quot;2.A&quot;,
+  &quot;branch&quot;: &quot;swarm-wip/login-rate-limit/2.A&quot;,
+  &quot;path&quot;: &quot;~/shop/.swarm/worktrees/login-rate-limit/2.A&quot;,
+  &quot;created&quot;: true
+}</pre></div><div class="step s-ran"><div class="head"><span class="pill g">ran</span><b>supervisor: integrate group 2</b></div><div class="in"><span class="k">command</span><code>python3 &quot;${CLAUDE_PLUGIN_ROOT}/lib/worktree.py&quot; squash --milestone login-rate-limit</code></div><pre class="out">{
+  &quot;squashed&quot;: [
+    &quot;2.A&quot;
+  ],
+  &quot;files&quot;: [
+    &quot;src/shop/routes/login.py&quot;,
+    &quot;tests/test_login.py&quot;
+  ]
+}</pre></div><div class="step s-ran"><div class="head"><span class="pill g">ran</span><b>auditor: group 2 passes; product-owner marks the milestone COMPLETED</b></div><div class="in"><span class="k">command</span><code>uvx pytest -q</code></div><pre class="out">6 passed in 0.02s</pre></div><div class="step s-prompt"><div class="head"><span class="pill a">you type</span><b>you type: approve commit login-rate-limit g2</b></div><div class="in"><span class="k">prompt</span><code>approve commit login-rate-limit g2</code></div><pre class="out">plan-swarm: approval recorded for commit login-rate-limit g2 (nonce n_2c91ecb994ce, valid once until 05:10 UTC while HEAD stays at b04bb2731125). Tier: critical. Next: have the auditor create the group commit.</pre></div><div class="step s-ran"><div class="head"><span class="pill g">ran</span><b>auditor: group commit</b></div><div class="in"><span class="k">command</span><code>git add plans/ &amp;&amp; git commit -m &#x27;feat(login-rate-limit): enforce limits in login&#x27;</code></div><pre class="out">[swarm/login-rate-limit 846a51f] feat(login-rate-limit): enforce limits in login
+ 6 files changed, 23 insertions(+), 3 deletions(-)</pre></div><div class="step s-ran"><div class="head"><span class="pill g">ran</span><b>supervisor: clean up worktrees</b></div><div class="in"><span class="k">command</span><code>python3 &quot;${CLAUDE_PLUGIN_ROOT}/lib/worktree.py&quot; cleanup --milestone login-rate-limit</code></div><pre class="out">{
+  &quot;removed&quot;: [
+    &quot;swarm-wip/login-rate-limit/2.A&quot;
+  ]
+}</pre></div>
+</section>
+<section id="st11" class="stagesec">
+<h2><span class="sn">11</span> Pull request: Open the PR</h2>
+<div class="grid2"><div><div class="lbl">What happens</div><p>The tier is checked against the real diff. Without your approval the push is refused twice: by the Claude Code gate, and by the git pre-push hook even outside Claude Code. After <code>approve pr</code> the auditor records the approval in a ledger-only commit; the push then passes the pre-push hook, which checked every commit against the ledger. The PR body is generated from committed artifacts, and the CI ledger job accepts all six commits. Agents cannot merge.</p></div><div><div class="lbl">You do</div><p>Type <code>approve pr login-rate-limit</code>; a code owner reviews and merges on GitHub.</p></div></div>
+<div class="step s-ran"><div class="head"><span class="pill g">ran</span><b>supervisor: tier check on the real diff</b></div><div class="in"><span class="k">command</span><code>python3 &quot;${CLAUDE_PLUGIN_ROOT}/lib/tier.py&quot; --milestone login-rate-limit --stage diff --write</code></div><pre class="out">{
+  &quot;tier&quot;: &quot;critical&quot;,
+  &quot;reasons&quot;: [
+    &quot;keyword &#x27;password&#x27;&quot;,
+    &quot;path src/shop/auth/attempts.py matches **/auth/**&quot;
+  ],
+  &quot;previous&quot;: &quot;critical&quot;,
+  &quot;confirmed&quot;: &quot;critical&quot;,
+  &quot;raised&quot;: false,
+  &quot;exceeds_confirmed&quot;: false
+}</pre></div><div class="step s-blocked"><div class="head"><span class="pill r">blocked · exit 2</span><b>supervisor tries to push before approval</b></div><div class="in"><span class="k">command</span><code>git push -u origin swarm/login-rate-limit</code></div><pre class="out">plan-swarm: opening the PR needs approval. Ask the user to type exactly: approve pr login-rate-limit</pre></div><div class="step s-git-hook"><div class="head"><span class="pill r">git hook</span><b>…and outside Claude Code the pre-push hook refuses too</b></div><div class="in"><span class="k">command</span><code>git push origin swarm/login-rate-limit</code></div><pre class="out">plan-swarm: opening the PR for login-rate-limit needs `approve pr login-rate-limit` at this commit
+error: failed to push some refs to &#x27;origin.git&#x27;</pre></div><div class="step s-prompt"><div class="head"><span class="pill a">you type</span><b>you type: approve pr login-rate-limit</b></div><div class="in"><span class="k">prompt</span><code>approve pr login-rate-limit</code></div><pre class="out">plan-swarm: approval recorded for pr login-rate-limit (nonce n_fa609e962fc0, valid once until 05:10 UTC while HEAD stays at 846a51f057a3). Tier: critical. Next: push swarm/login-rate-limit and open the pull request.</pre></div><div class="step s-ran"><div class="head"><span class="pill g">ran</span><b>auditor: commit the PR approval (ledger-only commit)</b></div><div class="in"><span class="k">command</span><code>git commit -m &#x27;docs(login-rate-limit): record PR approval&#x27; -- plans/active_milestones/login-rate-limit/approvals.md</code></div><pre class="out">[swarm/login-rate-limit 4c2ea1e] docs(login-rate-limit): record PR approval
+ 1 file changed, 1 insertion(+)</pre></div><div class="step s-ran"><div class="head"><span class="pill g">ran</span><b>supervisor: push (the pre-push hook checks every commit)</b></div><div class="in"><span class="k">command</span><code>git push -u origin swarm/login-rate-limit</code></div><pre class="out">branch &#x27;swarm/login-rate-limit&#x27; set up to track &#x27;origin/swarm/login-rate-limit&#x27;.
+To origin.git
+ * [new branch]      swarm/login-rate-limit -&gt; swarm/login-rate-limit</pre></div><div class="step s-script"><div class="head"><span class="pill x">script</span><b>PR title (lib/prbody.py)</b></div><div class="in"><span class="k">command</span><code>python3 &quot;${CLAUDE_PLUGIN_ROOT}/lib/prbody.py&quot; --milestone login-rate-limit --title</code></div><pre class="out">feat(login-rate-limit): Login rate limiting</pre></div><div class="step s-script"><div class="head"><span class="pill x">script</span><b>PR body (lib/prbody.py)</b></div><div class="in"><span class="k">command</span><code>python3 &quot;${CLAUDE_PLUGIN_ROOT}/lib/prbody.py&quot; --milestone login-rate-limit</code></div><details><summary>show 33 lines</summary><pre class="out">## Intent
+From `plans/active_milestones/login-rate-limit/intent.md`.
+**Problem.** The login endpoint accepts unlimited failed attempts, so accounts can be brute-forced.
+**Outcome.** After repeated failures an account (and a noisy IP) is locked out for a while, and the response never reveals whether the account exists.
+
+## What changed
+- f87e548 docs(login-rate-limit): accept intent
+- d826521 docs(login-rate-limit): spec
+- 5739431 docs(login-rate-limit): plan
+- b04bb27 feat(login-rate-limit): attempt counter and lockout message
+- 846a51f feat(login-rate-limit): enforce limits in login
+- 4c2ea1e docs(login-rate-limit): record PR approval
+
+## Gates
+_No offered gate was run._
+Declined: spec-deliberator (no tier), implementation-validator (critical).
+
+## Audit
+- Group 1 · Round 1 · PASS
+- Group 2 · Round 1 · PASS
+
+## Approvals
+| when (UTC) | who | kind | group | tier |
+|---|---|---|---|---|
+| 2026-09-25T04:55:41Z | dev@shop.example | intent |  |  |
+| 2026-09-25T04:55:43Z | dev@shop.example | spec |  |  |
+| 2026-09-25T04:55:44Z | dev@shop.example | plan |  | critical |
+| 2026-09-25T04:55:48Z | dev@shop.example | commit | 1 | critical |
+| 2026-09-25T04:55:50Z | dev@shop.example | commit | 2 | critical |
+| 2026-09-25T04:55:52Z | dev@shop.example | pr |  | critical |
+
+---
+_Generated by plan-swarm `lib/prbody.py` from committed artifacts._</pre></details></div><div class="step s-ci"><div class="head"><span class="pill g">CI</span><b>CI ledger job (from templates/ci/plan-swarm.yml)</b></div><div class="in"><span class="k">command</span><code>ledger job on the PR</code></div><pre class="out">milestone login-rate-limit: 6 commits, 6 approvals, tier critical</pre></div><div class="step s-blocked"><div class="head"><span class="pill r">blocked · exit 2</span><b>an agent tries to merge the PR</b></div><div class="in"><span class="k">command</span><code>gh pr merge 1 --squash</code></div><pre class="out">plan-swarm: merging or approving pull requests is for people on GitHub</pre></div><div class="step s-note"><div class="head"><span class="pill x">note</span><b>a code owner merges the PR on GitHub</b></div><pre class="out">origin/main now points at the milestone tip (simulated merge; merge strategy is the host&#x27;s choice)</pre></div>
+</section>
+<section id="st12" class="stagesec">
+<h2><span class="sn">12</span> Release: Tag the release</h2>
+<div class="grid2"><div><div class="lbl">What happens</div><p>Switching and pulling in one command is refused: the gate judges a command before it runs, so the pull would still be seen on the swarm branch. As separate commands they pass. Your phrase authorizes the tag and its push; pushing <code>main</code> is always refused.</p></div><div><div class="lbl">You do</div><p>Type <code>approve release v1.0.0</code> and agree to push the tag.</p></div></div>
+<div class="step s-blocked"><div class="head"><span class="pill r">blocked · exit 2</span><b>supervisor tries switch + pull in one command</b></div><div class="in"><span class="k">command</span><code>git switch main &amp;&amp; git pull --ff-only origin main</code></div><div class="note">The gate judges a command before it runs, so the pull is still seen on the swarm branch.</div><pre class="out">plan-swarm: use `git pull --ff-only` on the default branch only</pre></div><div class="step s-ran"><div class="head"><span class="pill g">ran</span><b>supervisor: switch to the default branch</b></div><div class="in"><span class="k">command</span><code>git switch main</code></div><pre class="out">Switched to branch &#x27;main&#x27;</pre></div><div class="step s-ran"><div class="head"><span class="pill g">ran</span><b>supervisor: update it (separate command)</b></div><div class="in"><span class="k">command</span><code>git pull --ff-only origin main</code></div><details><summary>show 30 lines</summary><pre class="out">Updating 42b3ffd..4c2ea1e
+Fast-forward
+ plans/00-ROADMAP.md                                |  6 +++++
+ .../login-rate-limit/approvals.md                  | 13 +++++++++++
+ plans/active_milestones/login-rate-limit/audit.md  | 21 +++++++++++++++++
+ plans/active_milestones/login-rate-limit/intent.md | 24 +++++++++++++++++++
+ plans/active_milestones/login-rate-limit/plan.md   | 20 ++++++++++++++++
+ plans/active_milestones/login-rate-limit/spec.md   | 27 ++++++++++++++++++++++
+ plans/active_milestones/login-rate-limit/usage.md  |  9 ++++++++
+ src/shop/auth/attempts.py                          | 15 ++++++++++++
+ src/shop/auth/messages.py                          |  1 +
+ src/shop/routes/login.py                           | 11 ++++++++-
+ tests/test_attempts.py                             | 15 ++++++++++++
+ tests/test_login.py                                |  6 +++++
+ tests/test_messages.py                             |  5 ++++
+ 13 files changed, 172 insertions(+), 1 deletion(-)
+ create mode 100644 plans/00-ROADMAP.md
+ create mode 100644 plans/active_milestones/login-rate-limit/approvals.md
+ create mode 100644 plans/active_milestones/login-rate-limit/audit.md
+ create mode 100644 plans/active_milestones/login-rate-limit/intent.md
+ create mode 100644 plans/active_milestones/login-rate-limit/plan.md
+ create mode 100644 plans/active_milestones/login-rate-limit/spec.md
+ create mode 100644 plans/active_milestones/login-rate-limit/usage.md
+ create mode 100644 src/shop/auth/attempts.py
+ create mode 100644 src/shop/auth/messages.py
+ create mode 100644 tests/test_attempts.py
+ create mode 100644 tests/test_messages.py
+From /tmp/swarm-e2e/origin
+ * branch            main       -&gt; FETCH_HEAD
+   42b3ffd..4c2ea1e  main       -&gt; origin/main</pre></details></div><div class="step s-prompt"><div class="head"><span class="pill a">you type</span><b>you type: approve release v1.0.0</b></div><div class="in"><span class="k">prompt</span><code>approve release v1.0.0</code></div><pre class="out">plan-swarm: approval recorded for release v1.0.0 (nonce n_37750d49352b, valid once until 05:10 UTC while HEAD stays at 4c2ea1e34fe3). Next: create the annotated tag (and push it if the user agrees).</pre></div><div class="step s-ran"><div class="head"><span class="pill g">ran</span><b>supervisor: tag</b></div><div class="in"><span class="k">command</span><code>git tag -a v1.0.0 -m &#x27;Release v1.0.0&#x27;</code></div><pre class="out">(no output)</pre></div><div class="step s-ran"><div class="head"><span class="pill g">ran</span><b>supervisor: push the tag (you agreed)</b></div><div class="in"><span class="k">command</span><code>git push origin v1.0.0</code></div><pre class="out">To origin.git
+ * [new tag]         v1.0.0 -&gt; v1.0.0</pre></div><div class="step s-blocked"><div class="head"><span class="pill r">blocked · exit 2</span><b>an agent tries to push main</b></div><div class="in"><span class="k">command</span><code>git push origin main</code></div><pre class="out">plan-swarm: the swarm never pushes main; merges happen in the pull request</pre></div>
+</section>
+<section id="st13" class="stagesec">
+<h2><span class="sn">13</span> Measure: See what happened</h2>
+<div class="grid2"><div><div class="lbl">What happens</div><p><code>swarm-metrics</code> reads only committed files. (Lead times are 0.0h because this run took seconds; in real use they show where the milestone waited.) The branch history, the ledger, and the cost log are the audit trail.</p></div><div><div class="lbl">You do</div><p>Run the <code>swarm-metrics</code> skill whenever you like.</p></div></div>
+<div class="step s-script"><div class="head"><span class="pill x">script</span><b>swarm-metrics</b></div><div class="in"><span class="k">command</span><code>python3 &quot;${CLAUDE_PLUGIN_ROOT}/lib/metrics.py&quot; --format text</code></div><pre class="out">Intents: 0 open · 1 accepted · 0 closed · survival 1.0
+
+login-rate-limit (tier critical)
+  lead time  intent→spec 0.0h · spec→plan 0.0h · plan→commit 0.0h · commit→PR 0.0h
+  quality    2 groups · first-pass audit 1.0 · 0 failed rounds · 0 validator re-runs
+  cost       1 dispatches · 18400 tokens · declined: spec-deliberator (no tier), implementation-validator (critical)</pre></div><div class="step s-script"><div class="head"><span class="pill x">script</span><b>the milestone branch as its audit trail</b></div><div class="in"><span class="k">command</span><code>git log --format=&#x27;%h %s&#x27; main -8</code></div><pre class="out">4c2ea1e docs(login-rate-limit): record PR approval
+846a51f feat(login-rate-limit): enforce limits in login
+b04bb27 feat(login-rate-limit): attempt counter and lockout message
+5739431 docs(login-rate-limit): plan
+d826521 docs(login-rate-limit): spec
+f87e548 docs(login-rate-limit): accept intent
+42b3ffd chore: adopt plan-swarm
+e872554 initial shop app</pre></div><div class="step s-file"><div class="head"><span class="pill p">file</span><b>approvals.md (written only by the approval hook)</b></div><div class="in"><span class="k">file</span><code>plans/active_milestones/login-rate-limit/approvals.md</code></div><pre class="out"># Approvals ledger
+
+Written only by the plan-swarm approval hook (`lib/approve.py`) when a human types an
+approval phrase. Agents cannot edit this file.
+
+| when (UTC) | who | kind | milestone | group | tier | mode | HEAD | nonce |
+|---|---|---|---|---|---|---|---|---|
+| 2026-09-25T04:55:41Z | dev@shop.example | intent | login-rate-limit |  |  | pr | 42b3ffdbe870 | n_56b4e9d79fde |
+| 2026-09-25T04:55:43Z | dev@shop.example | spec | login-rate-limit |  |  | pr | f87e5482e148 | n_694f3c81ef6c |
+| 2026-09-25T04:55:44Z | dev@shop.example | plan | login-rate-limit |  | critical | pr | d8265218ec9c | n_bd55660b5a3f |
+| 2026-09-25T04:55:48Z | dev@shop.example | commit | login-rate-limit | 1 | critical | pr | 573943198c3b | n_07a09f103970 |
+| 2026-09-25T04:55:50Z | dev@shop.example | commit | login-rate-limit | 2 | critical | pr | b04bb2731125 | n_2c91ecb994ce |
+| 2026-09-25T04:55:52Z | dev@shop.example | pr | login-rate-limit |  | critical | pr | 846a51f057a3 | n_fa609e962fc0 |</pre></div><div class="step s-file"><div class="head"><span class="pill p">file</span><b>usage.md</b></div><div class="in"><span class="k">file</span><code>plans/active_milestones/login-rate-limit/usage.md</code></div><pre class="out"># Usage log
+
+One row per agent dispatch or gate decision. Written by the supervisor through `lib/usage.py`.
+
+| when (UTC) | phase | agent / gate | event | tokens | tool uses | duration (s) | tier | note |
+|---|---|---|---|---|---|---|---|---|
+| 2026-09-25T04:55:43Z | 1 | product-owner | dispatch | 18400 | 9 | 142 |  |  |
+| 2026-09-25T04:55:43Z | 1b | spec-deliberator | declined |  |  |  |  |  |
+| 2026-09-25T04:55:48Z | 4 | implementation-validator | declined |  |  |  | critical |  |</pre></div><div class="step s-script"><div class="head"><span class="pill x">script</span><b>files the milestone produced</b></div><div class="in"><span class="k">command</span><code>find plans -type f | sort</code></div><pre class="out">plans/00-ROADMAP.md
+plans/active_milestones/login-rate-limit/approvals.md
+plans/active_milestones/login-rate-limit/audit.md
+plans/active_milestones/login-rate-limit/intent.md
+plans/active_milestones/login-rate-limit/plan.md
+plans/active_milestones/login-rate-limit/spec.md
+plans/active_milestones/login-rate-limit/usage.md
+plans/approvals.md
+plans/swarm.md</pre></div>
+</section>
+
+<section id="blocked">
+<h2>Everything that was refused</h2>
+<p>Each refusal names the phrase to ask for, or the direct form to use. None suggests a way around the gate.</p>
+<table><thead><tr><th style="width:18%">Stage</th><th style="width:38%">Attempt</th><th>Reason given</th></tr></thead><tbody><tr><td>1 · Intent</td><td><code>git add plans &amp;&amp; git commit -m &#x27;docs: intent&#x27;</code></td><td>plan-swarm: no valid approval for this commit on branch swarm/&lt;milestone&gt;. Ask the user to type exactly: approve commit &lt;milestone&gt; g&lt;n&gt; / approve inten</td></tr><tr><td>6 · Approve the plan</td><td><code>Implement Task 1.A defined in plans/active_milestones/login-rate-limit/plan.md</code></td><td>plan-swarm: engineers cannot start on login-rate-limit before the plan is approved. Ask the user to type exactly: approve plan login-rate-limit</td></tr><tr><td>7 · Build (group 1)</td><td><code>git add -A &amp;&amp; git commit -m &#x27;sneak it in&#x27;</code></td><td>plan-swarm: no valid approval for this commit. Ask the user to type exactly: approve commit login-rate-limit g&lt;n&gt;</td></tr><tr><td>9 · Commit gate (group 1)</td><td><code>git add plans/ &amp;&amp; git commit -m &#x27;feat(login-rate-limit): attempt counter and lockout message&#x27</code></td><td>plan-swarm: no valid approval for this commit. Ask the user to type exactly: approve commit login-rate-limit g&lt;n&gt;</td></tr><tr><td>9 · Commit gate (group 1)</td><td><code>git commit --allow-empty -m &#x27;one more&#x27;</code></td><td>plan-swarm: no valid approval for this commit (commit-login-rate-limit-g1 was already used). Ask the user to type exactly: approve commit login-rate-limit g&lt;n&gt;</td></tr><tr><td>11 · Pull request</td><td><code>git push -u origin swarm/login-rate-limit</code></td><td>plan-swarm: opening the PR needs approval. Ask the user to type exactly: approve pr login-rate-limit</td></tr><tr><td>11 · Pull request</td><td><code>git push origin swarm/login-rate-limit</code></td><td>plan-swarm: opening the PR for login-rate-limit needs `approve pr login-rate-limit` at this commit</td></tr><tr><td>11 · Pull request</td><td><code>gh pr merge 1 --squash</code></td><td>plan-swarm: merging or approving pull requests is for people on GitHub</td></tr><tr><td>12 · Release</td><td><code>git switch main &amp;&amp; git pull --ff-only origin main</code></td><td>plan-swarm: use `git pull --ff-only` on the default branch only</td></tr><tr><td>12 · Release</td><td><code>git push origin main</code></td><td>plan-swarm: the swarm never pushes main; merges happen in the pull request</td></tr></tbody></table>
+</section>
+
+<section id="repro">
+<h2>Reproduce it</h2>
+<pre><code>python3 examples/e2e_demo.py /tmp/swarm-e2e     # writes /tmp/swarm-e2e/transcript.json
+cd /tmp/swarm-e2e/shop && git log --oneline --graph --all</code></pre>
+<p>The demo needs only <code>git</code>, <code>python3</code>, and <code>uvx</code> (for the scenario's own tests). It does not call a model and does not touch your repositories.</p>
+</section>
+<footer>plan‑swarm@3.0 end to end · generated from a real run of <code>examples/e2e_demo.py</code> · self‑contained, no external assets.</footer>
+</main></div></body></html>

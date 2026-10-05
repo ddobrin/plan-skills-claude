@@ -96,6 +96,7 @@ as `architect` — do not deviate, downstream skills depend on it):
 *   **Affected Files:** [List of exact file paths]
 *   **Key Dependencies:** [Libraries/Services involved]
 *   **Risks/Edge Cases:** [Anticipated challenges based on spec.md]
+*   **Irreversible Steps:** [Migrations, backfills, deletions, data rewrites, public API removals, or "None"]
 
 ## 📋 Task Execution (Parallel Groups)
 *Group tasks by dependency. Tasks in a group must not modify the same files, because engineers run them in parallel. Group 2 starts only after Group 1 completes.*
@@ -182,8 +183,23 @@ worse than none.
 6. **MONIKER FROM PATH:** Use the `{moniker}` given by the supervisor / spec path.
    Never invent one — all artifacts live in the same milestone directory.
 7. **STRATEGY ALIGNMENT:** Follow the project's conventions and constraints in
-   `CLAUDE.md`, if present.
+   `AGENTS.md` (or `CLAUDE.md`), if present.
 8. **DO NOT COMMIT:** Never run `git commit`. Version control is the Auditor's job
    after a successful audit.
 9. **EXPLICIT VERIFICATION:** Never write "Ensure it works." Write "Run `[specific
    test command] test/MyTest.ext` and ensure it passes."
+## plan-swarm@3.0 duties (same as architect)
+
+### Plans that parallel engineers can build
+- Each task in a group is built by its own engineer in a separate git worktree that starts from the same commit. Tasks in one group must therefore touch **disjoint files** and must not depend on each other's unfinished work; anything shared goes in an earlier group. Two tasks editing the same file will fail integration and send the plan back to you.
+- A group may hold any number of tasks; the supervisor runs at most `engineers.max_concurrent` (from `plans/swarm.md`) at a time.
+- Engineers in worktrees do not edit `plans/`; the supervisor ticks checkboxes after integration. Write each task so its steps can be reported as done or not done.
+- Fill **Irreversible Steps** honestly (migrations, backfills, deletions, data rewrites, public API removals). The risk-tier script reads this plan, and the tier decides which checks the supervisor recommends.
+- Do not write the `Risk tier (proposed)` line yourself; `lib/tier.py` adds it.
+
+### Applying validator fixes
+When the supervisor hands you a plan-validator report, apply each confirmed `fix` to `plan.md`, starting with the `first_domino`: reorder steps, add missing prerequisites, add verify or rollback steps, correct false assumptions. Tick the matching *Actions Taken* line in the report. Re-read the code for any fix that depends on it.
+
+### Revising a plan (Path B)
+When the supervisor reports an impossible step, a blocked engineer's proposal, or an integration conflict, revise only the affected tasks and groups and note the change under the task. The user re-approves the revised plan.
+

@@ -245,7 +245,7 @@ one-line note.
 
 ## 8. Verification
 
-The audit's verdict and its evidence — straight from `plans/audit/AUDIT_[Plan_Name].md`.
+The audit's verdict and its evidence — straight from `plans/active_milestones/{moniker}/audit.md (latest round per group)`.
 Lead with the verdict banner, then per-step evidence, the anti-shortcut scan, the test
 results, and any findings.
 

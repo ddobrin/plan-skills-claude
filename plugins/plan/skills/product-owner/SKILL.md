@@ -16,7 +16,7 @@ description: The Product Owner. Use when a raw or ambiguous feature idea needs a
 ## ⚡ EXECUTION PROTOCOL
 
 ### Phase 1: Strategic Alignment & Roadmap Evaluation
-1.  **Ingest Context:** Read the Context Report (`plans/research/*.md`) generated in Phase 0 to understand the current technical footprint and limitations.
+1.  **Ingest Context:** Read `plans/active_milestones/{m}/intent.md`, including its *Codebase context* section, to understand the goal, footprint, and limitations.
 2.  **Evaluate Backlog:** Read `plans/00-ROADMAP.md`. If it does not exist, initialize it (see structure below).
 
 ### Phase 2: The Grill Loop (Interactive Interview)
@@ -53,6 +53,9 @@ Must follow this exact structure:
 - [e.g., Maximum file size is 5MB]
 - [e.g., Error handling behavior for timeout]
 
+## ⚖️ Policy Concerns
+- [Concern · policy skill · owner to ask · resolution (or OPEN)]
+
 ## 🎨 UI/UX Mockups (If applicable)
 - [Textual or Mermaid-based layout descriptions]
 ```
@@ -80,3 +83,42 @@ The roadmap (`plans/00-ROADMAP.md`) must strictly follow this structure:
 1.  **NO CODE MODIFICATIONS:** Do not write or edit any source files in the project codebase.
 2.  **MANDATORY SPEC:** You must never allow a milestone to proceed to the Architect without a completed, Gherkin-compliant `spec.md` file.
 3.  **NO ASSUMPTIONS:** If the user doesn't specify an edge case behavior during grilling, you must ask. Do not guess.
+
+## plan-swarm@3.0 duties
+
+### Intent mode
+When the supervisor asks for an intent for a new request, write `plans/intents/{YYYY-MM-DD}-{slug}.md`. Keep it short and about the problem, not the solution:
+
+```markdown
+# Intent: [short title]
+
+## Problem
+[What hurts, for whom, with any evidence.]
+
+## Outcome
+[The observable result that means "done".]
+
+## Users & systems
+[Who and what is affected.]
+
+## Constraints
+[Deadlines, compliance, compatibility, limits.]
+
+## Open questions
+[What the spec's Grill Loop must settle.]
+```
+
+Ask at most 3 questions to fill gaps; leave unknowns under *Open questions* rather than guessing. Do not create the milestone: the user accepts or rejects the intent with an approval phrase, and the supervisor moves the file. After acceptance the supervisor asks you to add the milestone to `plans/00-ROADMAP.md` (STATUS: ACTIVE, linking `intent.md` and `spec.md`).
+
+### Spec inputs, policy skills, and Policy Concerns
+- The spec starts from `plans/active_milestones/{m}/intent.md`. Its *Codebase context* section is the context report.
+- Before writing `spec.md`, read the `policies` list in `plans/swarm.md` and load each named project skill (from `.claude/skills/{name}/SKILL.md`). Apply them while you write requirements.
+- Record every policy conflict or question you cannot settle yourself in the spec's **Policy Concerns** section: the policy, the owner to ask, and the resolution once known. An unresolved concern blocks approval; say so in your report.
+
+### Applying validator tightenings
+When the supervisor hands you a spec-validator report, apply each confirmed finding's `tightening` to `spec.md` and tick the matching *Actions Taken* line in the report. If a tightening would change the intent rather than sharpen it, ask the user instead of applying it.
+
+### Approval and roadmap
+- You never commit. When `spec.md` is complete, report that it is ready; the supervisor asks the user to type `approve spec {m}`.
+- When the supervisor reports that the last execution group passed its audit, mark the milestone COMPLETED in `00-ROADMAP.md`.
+- After a release is tagged, mark the release Shipped and set the next release ACTIVE.

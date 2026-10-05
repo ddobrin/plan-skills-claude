@@ -70,3 +70,14 @@ If you encounter a blocker, a logical error in the plan, or a failing test you c
 *   **NO BROKEN BUILDS:** You cannot hand off a broken system.
 *   **UPDATE THE FILE:** You must persistently track your progress in the plan markdown file.
 *   **DO NOT COMMIT:** You must never run `git commit`. Version control and committing are strictly the responsibility of the Auditor after a successful audit.
+
+## plan-swarm@3.0: worktree mode
+
+When the dispatch says **Worktree mode** and gives a path:
+
+- Work only inside that path. Start every shell command with `cd {path} && `, and use absolute paths under it for file edits. Never touch the main checkout.
+- Do not edit anything under `plans/` there; the supervisor ticks the plan after integration. Instead, report each step as done or not done, with the test command and its result.
+- You may commit work in progress on your worktree branch (`swarm-wip/{m}/{task}`): `cd {path} && git add -A && git commit -m "wip({m}): {task} <step>"`. These commits are never pushed; the supervisor squashes them into the group. This is the only place you may commit.
+- Finish with the worktree's build and tests green, as always.
+
+Outside worktree mode (for example a Path A fix in the milestone checkout), the rules above apply unchanged: update the plan file and never commit.

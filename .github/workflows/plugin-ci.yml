@@ -1,0 +1,68 @@
+name: plugin-ci
+
+on:
+  pull_request:
+    paths: ["plugins/plan/**", ".github/workflows/plugin-ci.yml"]
+  push:
+    branches: [main]
+    paths: ["plugins/plan/**", ".github/workflows/plugin-ci.yml"]
+
+jobs:
+  unit:
+    name: L0 unit tests + generated-file check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pytest
+      - name: Generated agents/ and skills/ match roles/
+        run: python3 plugins/plan/lib/render_roles.py --check
+      - name: lib tests
+        run: pytest -q plugins/plan/lib/tests
+      - name: wf-trajectory tests
+        run: pytest -q plugins/plan/skills/wf-trajectory/tests
+
+  evals:
+    name: L1-L2 plugin evals (blocking) · L3-L4 (report)
+    runs-on: ubuntu-latest
+    needs: unit
+    if: github.event_name == 'pull_request'
+    # Claude runs on Vertex AI. Keyless auth through Workload Identity Federation:
+    # secrets GCP_WORKLOAD_IDENTITY_PROVIDER and GCP_SERVICE_ACCOUNT; optional variables
+    # CLOUD_ML_REGION (default global) and VERTEX_REGION_CLAUDE_HAIKU_4_5 (the eval judge's model).
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      CLAUDE_CODE_USE_VERTEX: "1"
+      CLOUD_ML_REGION: ${{ vars.CLOUD_ML_REGION || 'global' }}
+      VERTEX_REGION_CLAUDE_HAIKU_4_5: ${{ vars.VERTEX_REGION_CLAUDE_HAIKU_4_5 || 'us-east5' }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: auth
+        uses: google-github-actions/auth@c200f3691d83b41bf9bbd8638997a462592937ed  # v2.1.13
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+      - name: Vertex project
+        env:
+          PROJECT_ID: ${{ steps.auth.outputs.project_id }}
+        run: echo "ANTHROPIC_VERTEX_PROJECT_ID=$PROJECT_ID" >> "$GITHUB_ENV"
+      - run: npm install -g @anthropic-ai/claude-code
+      # --scaffold runs each case's scaffold.sh (authored in this repo); gated tools need --allow-tools.
+      - name: Blocking evals (contract + discipline)
+        run: >
+          claude plugin eval plugins/plan --tag blocking --scaffold --trust-plugin
+          --allow-tools Bash Write Edit --ablation none --no-publish --json eval-blocking.json
+      - name: Capability and parity evals (report only)
+        continue-on-error: true
+        run: >
+          claude plugin eval plugins/plan --tag report --scaffold --trust-plugin
+          --allow-tools Bash Write Edit --ablation none --no-publish --threshold 0 --json eval-report.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: plugin-eval-results
+          path: eval-*.json

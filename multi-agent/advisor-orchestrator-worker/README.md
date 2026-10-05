@@ -38,7 +38,7 @@ large, decomposable, parallelizable work.
 ```
 advisor-orchestrator-worker/
 ├── claude-code/
-│   ├── CLAUDE.md              the loop, boundaries, budgets
+│   ├── AGENTS.md              the loop, boundaries, budgets
 │   └── agents/
 │       ├── worker.md          Sonnet stateless execution unit
 │       └── advisor.md         Fable read-only critic
@@ -59,16 +59,19 @@ advisor-orchestrator-worker/
 cd your-project
 mkdir -p .claude/agents
 cp path/to/advisor-orchestrator-worker/claude-code/agents/*.md .claude/agents/
-cat path/to/advisor-orchestrator-worker/claude-code/CLAUDE.md >> CLAUDE.md
+cat path/to/advisor-orchestrator-worker/claude-code/AGENTS.md >> AGENTS.md
 cp -r path/to/advisor-orchestrator-worker/references .claude/   # brief/consult formats
 ```
+
+- Claude Code reads a project's `AGENTS.md` only when the project has no `CLAUDE.md`. If yours has one, add the line `@AGENTS.md` to it.
+- Antigravity reads the same root `AGENTS.md`, and its version of this pattern (`antigravity/AGENTS.md`) is a different file. A project that uses both tools has one root `AGENTS.md`, so merge the two by hand.
 
 ### All projects (user-level)
 
 ```bash
 mkdir -p ~/.claude/agents
 cp path/to/advisor-orchestrator-worker/claude-code/agents/*.md ~/.claude/agents/
-cat path/to/advisor-orchestrator-worker/claude-code/CLAUDE.md >> ~/.claude/CLAUDE.md
+cat path/to/advisor-orchestrator-worker/claude-code/AGENTS.md >> ~/.claude/CLAUDE.md   # user-level instructions file
 cp -r path/to/advisor-orchestrator-worker/references ~/.claude/
 ```
 

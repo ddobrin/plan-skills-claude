@@ -28,7 +28,7 @@ Run this **after the audit exists** (ideally PASS). The git diff + `plan.md` + a
 ### 2. Gather the grounding (read-only)
 *   **The diff:** the milestone's changes are its earlier group commits plus the current group's uncommitted work. Take the milestone base from `git log` (the parent of the milestone's first group commit; `HEAD` if no group is committed yet) and run `git diff <base>`, `git diff --stat <base>`, and `git status` to enumerate created/modified/deleted files and per-file line counts. Use these verbatim — do not estimate.
 *   **The plan:** read `plans/active_milestones/{moniker}/plan.md` for the task checklist and the engineer's `[x]` / `(Status: …)` annotations.
-*   **The audit:** read `plans/audit/AUDIT_[Plan_Name].md` for the verdict, per-step evidence, the anti-shortcut scan, and any findings (including `implementation-validator` severity calibrations).
+*   **The audit:** read `plans/active_milestones/{moniker}/audit.md (latest round per group)` for the verdict, per-step evidence, the anti-shortcut scan, and any findings (including `implementation-validator` severity calibrations).
 *   **The spec (optional):** read `spec.md` to phrase the outcome brief in user terms.
 
 ### 3. Fill the nine surfaces
@@ -70,3 +70,9 @@ Run this **after the audit exists** (ideally PASS). The git diff + `plan.md` + a
 8.  **SELF-CONTAINED:** One HTML file. The only external dependencies are the pinned CDN scripts at *view* time; diffs and code render with pure CSS (no library needed). No build step, no server, no local assets.
 9.  **HONEST NOTES:** The Notes surface holds static author annotations baked in at generation time — not a live, persisted, or multi-user system. Do not imply otherwise.
 10. **MONIKER FROM PATH:** Use the `{moniker}` given by the supervisor / milestone path. Never invent one — `visual-recap.html` lives in the same milestone directory as `spec.md` and `plan.md`.
+
+## plan-swarm@3.0 notes
+
+- At the commit gate the group's changes are staged: include them with `git diff --cached` (and `--stat`), alongside earlier group commits on `swarm/{moniker}`.
+- The audit is the milestone's tracked `audit.md`; show the latest round of each group, and say so when earlier rounds failed.
+- In pr mode the pull-request body (`lib/prbody.py`) links `visual-recap.html`, so render it before the supervisor opens the PR.

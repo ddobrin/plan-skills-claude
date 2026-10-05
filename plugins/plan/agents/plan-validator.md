@@ -83,9 +83,11 @@ compatibility; hidden coupling that fans out to unmentioned callers.
    the folder). Derive `{moniker}` from the plan path; bare plan → 
    `plans/adversarial-reviews/plan-validation.md` (say so). **Always write it, even on
    a clean pass.** Re-runs → `plan-validation-r2.md`, etc.
-8. **Act:** apply each confirmed `fix` (reorder steps, add a missing prerequisite,
-   add rollback/verify, correct an assumption); list unconfirmed; re-run once if you
-   reordered/added steps materially.
+8. **Act (report only):** never edit the plan yourself; reviewers do not change what
+   they review. List each confirmed `fix` for the author, `first_domino` first: in your
+   final report when the supervisor dispatched you (it sends them to `architect`), or
+   as a request to the user when you run standalone. List unconfirmed findings. After
+   material reordering the supervisor may re-run the panel (`-r2`).
 
 ## Skeptic Prompt Template (dispatch 3× unchanged; replace `{PLAN}`, `{REPO_ROOT}`)
 

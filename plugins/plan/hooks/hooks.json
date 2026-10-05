@@ -1,0 +1,27 @@
+{
+  "description": "plan-swarm control plane: heartbeat, approval nonces, and the git/file/dispatch gate. Active only in repositories with plans/swarm.md.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          { "type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/lib/health.py\"", "timeout": 20 }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          { "type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/lib/approve.py\"", "timeout": 20 }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash|Write|Edit|MultiEdit|NotebookEdit|Agent|Task",
+        "hooks": [
+          { "type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/lib/gate.py\"", "timeout": 20 }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,486 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The AI‑Native SDLC with plan‑swarm@3.0</title>
+<style>
+  :root{
+    --bg:#fbfaf7; --panel:#ffffff; --ink:#1d1d1f; --muted:#5f6368; --line:#e4e1da; --line2:#b9b4aa;
+    --accent:#c2562c; --blue:#2f5bd3; --green:#1f7a4d; --amber:#a86a00; --red:#b3261e; --purple:#7b3fd1; --gray:#8a8f98;
+    --g-bg:#e8f5ee; --a-bg:#fff4dc; --r-bg:#fde8e6; --b-bg:#e9efff; --p-bg:#f1eafd; --code:#f3f1ec; --term:#1e1e20; --termink:#e8e6e1;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#141414; --panel:#1c1c1e; --ink:#ececec; --muted:#a1a1a6; --line:#2e2e30; --line2:#55555a;
+      --accent:#e0794f; --blue:#7c9cff; --green:#5cc98f; --amber:#e7b04a; --red:#ff7b72; --purple:#b38cff; --gray:#8d8d93;
+      --g-bg:#16301f; --a-bg:#33290f; --r-bg:#3a1a18; --b-bg:#1b2442; --p-bg:#2a1f3d; --code:#242426; --term:#0c0c0d; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Helvetica,Arial,sans-serif}
+  .wrap{display:grid;grid-template-columns:230px minmax(0,1fr);gap:44px;max-width:1300px;margin:0 auto;padding:40px 28px 90px}
+  nav{position:sticky;top:24px;align-self:start;font-size:13.5px;max-height:calc(100vh - 48px);overflow:auto}
+  nav b{display:block;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-size:11.5px;margin:14px 0 6px}
+  nav b:first-child{margin-top:0}
+  nav a{display:block;color:var(--ink);text-decoration:none;padding:2px 0 2px 10px;border-left:2px solid var(--line)}
+  nav a:hover{border-left-color:var(--accent);color:var(--accent)}
+  @media (max-width:980px){.wrap{grid-template-columns:1fr}nav{display:none}}
+  h1{font-size:38px;line-height:1.1;margin:0 0 8px;letter-spacing:-.015em}
+  h2{font-size:23px;margin:58px 0 12px;padding-top:12px;border-top:1px solid var(--line)}
+  h3{font-size:17px;margin:22px 0 6px}
+  p{margin:10px 0}
+  .sub{color:var(--muted);font-size:17.5px;margin:0 0 18px}
+  .meta{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:13px;color:var(--muted);margin-bottom:22px}
+  code{font:13.5px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--code);padding:1px 5px;border-radius:4px}
+  pre{background:var(--code);border:1px solid var(--line);border-radius:10px;padding:13px 15px;overflow:auto;font:12.8px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace;margin:10px 0}
+  pre code{background:none;padding:0}
+  pre.term{background:var(--term);color:var(--termink);border:0}
+  a{color:var(--blue)}
+  table{width:100%;border-collapse:collapse;background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden;font-size:14.3px;margin:12px 0}
+  th,td{text-align:left;vertical-align:top;padding:8px 12px;border-bottom:1px solid var(--line)}
+  th{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);background:var(--code)}
+  tr:last-child td{border-bottom:0}
+  .pill{display:inline-block;font-size:11.5px;font-weight:650;padding:2px 8px;border-radius:999px;white-space:nowrap}
+  .g{background:var(--g-bg);color:var(--green)} .a{background:var(--a-bg);color:var(--amber)} .r{background:var(--r-bg);color:var(--red)}
+  .b{background:var(--b-bg);color:var(--blue)} .p{background:var(--p-bg);color:var(--purple)} .x{background:var(--code);color:var(--muted)}
+  .hero{background:var(--panel);border:1px solid var(--line);border-left:5px solid var(--accent);border-radius:12px;padding:20px 24px;margin:6px 0 18px;font-size:16.5px}
+  .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin:16px 0}
+  @media (max-width:900px){.kpis{grid-template-columns:repeat(2,1fr)}}
+  .kpi{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:13px 15px}
+  .kpi .n{font-size:27px;font-weight:750;line-height:1.1}
+  .kpi .l{font-size:12.5px;color:var(--muted)}
+  .three{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:12px 0}
+  @media (max-width:900px){.three{grid-template-columns:1fr}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;font-size:14.5px}
+  .card b{display:block;font-size:15.5px;margin-bottom:4px}
+  .callout{background:var(--b-bg);border-radius:10px;padding:14px 18px;margin:14px 0;font-size:15px}
+  .warn{background:var(--a-bg)}
+  figure{margin:16px 0 8px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px}
+  figure svg{width:100%;height:auto;display:block}
+  figcaption{font-size:12.5px;color:var(--muted);margin-top:8px}
+  .ev{font-size:12.8px;color:var(--muted)}
+  footer{margin-top:64px;font-size:12.5px;color:var(--muted);border-top:1px solid var(--line);padding-top:16px}
+  /* svg */
+  svg text{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Helvetica,Arial,sans-serif;fill:var(--ink)}
+  .bx{fill:var(--panel);stroke:var(--line2);stroke-width:1.3}
+  .bx-h{fill:var(--a-bg);stroke:var(--amber);stroke-width:1.5}
+  .bx-ai{fill:var(--b-bg);stroke:var(--blue);stroke-width:1.4}
+  .bx-g{fill:var(--g-bg);stroke:var(--green);stroke-width:1.4}
+  .bx-p{fill:var(--p-bg);stroke:var(--purple);stroke-width:1.4}
+  .bx-f{fill:none;stroke:var(--gray);stroke-width:1.3;stroke-dasharray:4 4}
+  .bx-c{fill:var(--a-bg);stroke:var(--amber);stroke-width:1.2}
+  .t1{font-size:14px;font-weight:700} .t2{font-size:11.5px;fill:var(--muted)} .t3{font-size:12.5px}
+  .hd{font-size:11px;fill:var(--muted);letter-spacing:.08em;text-transform:uppercase;font-weight:650}
+  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px}
+  .fl{stroke:var(--ink);stroke-width:1.4;fill:none} .fut{stroke:var(--gray);stroke-width:1.4;fill:none;stroke-dasharray:4 4}
+  .ok{stroke:var(--green);stroke-width:1.4;fill:none} .no{stroke:var(--red);stroke-width:1.4;fill:none;stroke-dasharray:5 3}
+  .ll{stroke:var(--line2);stroke-width:1;stroke-dasharray:3 4} .lk{stroke:var(--amber);stroke-width:1.2;fill:none;stroke-dasharray:3 3}
+  .mk{fill:var(--ink)} .mk-g{fill:var(--gray)} .mk-gr{fill:var(--green)} .mk-r{fill:var(--red)} .mk-a{fill:var(--amber)}
+  .ln-m{stroke:var(--gray);stroke-width:3;fill:none} .ln-s{stroke:var(--blue);stroke-width:3;fill:none}
+  .dot-m{fill:var(--gray)} .dot-s{fill:var(--blue)} .dot-c{fill:var(--amber);stroke:var(--ink);stroke-width:1}
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav>
+  <b>Overview</b>
+  <a href="#summary">Summary</a>
+  <a href="#principles">What "AI‑native" means here</a>
+  <a href="#loop">The loop</a>
+  <a href="#people">People and agents</a>
+  <b>How it works</b>
+  <a href="#stages">Stage by stage</a>
+  <a href="#control">The control plane</a>
+  <a href="#evidence">The evidence chain</a>
+  <a href="#build">Parallel build</a>
+  <a href="#quality">The quality system</a>
+  <a href="#evals">Continuous evals</a>
+  <a href="#metrics">Metrics</a>
+  <b>Using it</b>
+  <a href="#adopt">Adopting it</a>
+  <a href="#trace">Playbook traceability</a>
+  <a href="#verified">Verification record</a>
+  <a href="#limits">Limits and roadmap</a>
+  <a href="#files">File index</a>
+</nav>
+
+<main>
+<h1>The AI‑Native SDLC with plan‑swarm@3.0</h1>
+<p class="sub">How the <code>plan</code> plugin for Claude Code implements an AI‑native software development lifecycle: agents do the work, people make the decisions, hooks hold the authority, and git keeps the record.</p>
+<div class="meta">
+  <span>Plugin <b>plan 3.0.0</b></span>
+  <span>Topology <code>plugins/plan/topology.md</code> (plan‑swarm@3.0)</span>
+  <span>Reference: <a href="https://claude.com/blog/the-ai-native-sdlc-playbook">The AI‑Native SDLC Playbook</a></span>
+  <span>25 Sep 2026</span>
+</div>
+
+<!-- ============================================================ summary -->
+<section id="summary">
+<div class="hero">plan‑swarm@3.0 takes a change from <b>intent</b> to <b>merged pull request</b> through a fixed sequence of stages. Each stage commits one Markdown artifact that the next stage reads. Specialist agents write the intent, spec, plan, code, and audit. The <b>developer makes six decisions</b>, each by typing an exact approval phrase. A <b>control plane of Claude Code hooks</b> turns each phrase into a single‑use approval and refuses every commit, push, or tag that lacks one. Every approval lands in a ledger that is committed with the change it authorizes, so the milestone's state and its audit trail are both just <code>git log</code>.</div>
+<div class="kpis">
+  <div class="kpi"><div class="n">6</div><div class="l">human decisions per change, each an exact phrase</div></div>
+  <div class="kpi"><div class="n">14 → 28</div><div class="l">role files → generated agent + skill forms</div></div>
+  <div class="kpi"><div class="n">265</div><div class="l">automated tests (243 control plane incl. 113 security regressions, 22 utility)</div></div>
+  <div class="kpi"><div class="n">9</div><div class="l">eval cases: contract, discipline, capability, parity</div></div>
+  <div class="kpi"><div class="n">0</div><div class="l">third‑party dependencies in the control plane</div></div>
+</div>
+</section>
+
+<!-- ============================================================ principles -->
+<section id="principles">
+<h2>What "AI‑native" means here</h2>
+<p>The playbook's premise is that agents made writing code cheap, so the bottleneck moved to the human‑speed work around it: deciding what to build, reviewing it, and trusting it. plan‑swarm answers each part of that:</p>
+<div class="three">
+  <div class="card"><b>Artifacts, not meetings</b>Every stage ends in a committed file: <code>intent.md</code> → <code>spec.md</code> → <code>plan.md</code> → code + <code>audit.md</code> → PR. The next agent reads the file, not a chat summary, so any session can stop and any other can resume.</div>
+  <div class="card"><b>People decide, agents execute</b>Agents ask the questions, write, build, verify, and review. People approve intent, spec, plan, each commit, the PR, and the release. Nothing crosses those lines without them.</div>
+  <div class="card"><b>Mechanism, not promises</b>The rules that matter are enforced by hooks and a git hook, not by prompts asking agents to behave. Prompts carry judgment; code carries authority.</div>
+</div>
+</section>
+
+<!-- ============================================================ loop -->
+<section id="loop">
+<h2>The loop</h2>
+<p>The playbook's six stages, and what plan‑swarm does in each. 🔒 marks a human approval phrase.</p>
+<figure>
+<svg viewBox="0 0 1200 430" role="img" aria-label="AI-native SDLC loop">
+  <defs>
+    <marker id="l-k" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="mk"/></marker>
+    <marker id="l-g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="mk-g"/></marker>
+  </defs>
+  <!-- stage headers -->
+  <g>
+    <rect x="10"  y="20" width="180" height="46" rx="10" class="bx-p"/><text x="100" y="41" text-anchor="middle" class="t1">1 · Plan</text><text x="100" y="57" text-anchor="middle" class="t2">what and why</text>
+    <rect x="208" y="20" width="180" height="46" rx="10" class="bx-p"/><text x="298" y="41" text-anchor="middle" class="t1">2 · Design</text><text x="298" y="57" text-anchor="middle" class="t2">testable requirements</text>
+    <rect x="406" y="20" width="180" height="46" rx="10" class="bx-ai"/><text x="496" y="41" text-anchor="middle" class="t1">3 · Build</text><text x="496" y="57" text-anchor="middle" class="t2">plan, then code</text>
+    <rect x="604" y="20" width="180" height="46" rx="10" class="bx-ai"/><text x="694" y="41" text-anchor="middle" class="t1">4 · Test</text><text x="694" y="57" text-anchor="middle" class="t2">prove it works</text>
+    <rect x="802" y="20" width="180" height="46" rx="10" class="bx-g"/><text x="892" y="41" text-anchor="middle" class="t1">5 · Deploy</text><text x="892" y="57" text-anchor="middle" class="t2">review and ship</text>
+    <rect x="1000" y="20" width="190" height="46" rx="10" class="bx-f"/><text x="1095" y="41" text-anchor="middle" class="t1">6 · Maintain</text><text x="1095" y="57" text-anchor="middle" class="t2">future</text>
+  </g>
+  <g class="fl" marker-end="url(#l-k)"><path d="M190,43 H206"/><path d="M388,43 H404"/><path d="M586,43 H602"/><path d="M784,43 H800"/></g>
+  <path d="M982,43 H998" class="fut" marker-end="url(#l-g)"/>
+  <!-- row labels -->
+  <text x="10" y="92" class="hd">agents</text>
+  <text x="10" y="192" class="hd">committed artifact</text>
+  <text x="10" y="268" class="hd">human decision</text>
+  <!-- agents row -->
+  <g class="t3">
+    <text x="18" y="114">product‑owner (intent)</text><text x="18" y="132">Explore (research)</text>
+    <text x="216" y="114">product‑owner</text><text x="216" y="132">+ spec‑deliberator*</text><text x="216" y="150">+ spec‑validator*</text>
+    <text x="414" y="114">architect → plan‑validator*</text><text x="414" y="132">engineer ×≤5 (worktrees)</text><text x="414" y="150">simplifier*</text>
+    <text x="612" y="114">engineer (TDD)</text><text x="612" y="132">auditor (rounds)</text><text x="612" y="150">implementation‑validator*</text>
+    <text x="810" y="114">auditor commits</text><text x="810" y="132">supervisor opens PR</text><text x="810" y="150">CI review · code owner</text>
+    <text x="1008" y="114" style="fill:var(--muted)">detector (bands.md)</text><text x="1008" y="132" style="fill:var(--muted)">triage agent</text>
+  </g>
+  <!-- artifacts row -->
+  <g class="mono">
+    <text x="18" y="214">intents/{date}-{slug}.md</text><text x="18" y="232">→ {m}/intent.md</text>
+    <text x="216" y="214">spec.md</text><text x="216" y="232">adversarial-reviews/</text><text x="216" y="250">deliberations/</text>
+    <text x="414" y="214">plan.md (+ tier)</text><text x="414" y="232">code + tests</text><text x="414" y="250">swarm-wip/* (WIP)</text>
+    <text x="612" y="214">audit.md</text><text x="612" y="232">implementation-</text><text x="612" y="250">  validation.md</text>
+    <text x="810" y="214">group commits</text><text x="810" y="232">approvals.md</text><text x="810" y="250">PR · tag</text>
+    <text x="1008" y="214" style="fill:var(--muted)">intents/*.md</text><text x="1008" y="232" style="fill:var(--muted)">(evidence)</text>
+  </g>
+  <!-- decisions row -->
+  <g>
+    <rect x="14" y="276" width="172" height="30" rx="8" class="bx-h"/><text x="100" y="296" text-anchor="middle" class="mono">🔒 approve intent</text>
+    <rect x="212" y="276" width="172" height="30" rx="8" class="bx-h"/><text x="298" y="296" text-anchor="middle" class="mono">🔒 approve spec</text>
+    <rect x="410" y="276" width="172" height="30" rx="8" class="bx-h"/><text x="496" y="296" text-anchor="middle" class="mono">🔒 approve plan</text>
+    <rect x="608" y="276" width="172" height="30" rx="8" class="bx"/><text x="694" y="296" text-anchor="middle" class="t2">yes / no to offered checks*</text>
+    <rect x="806" y="276" width="172" height="30" rx="8" class="bx-h"/><text x="892" y="296" text-anchor="middle" class="mono">🔒 commit · pr · release</text>
+    <rect x="1004" y="276" width="182" height="30" rx="8" class="bx-f"/><text x="1095" y="296" text-anchor="middle" class="t2">merge = accept intent</text>
+  </g>
+  <!-- loop back -->
+  <path d="M1095,306 V360 H100 V310" class="fut" marker-end="url(#l-g)"/>
+  <text x="600" y="380" text-anchor="middle" class="t2">the loop closes when production signals write new intents (Maintain, future); today every loop starts with a person</text>
+  <path d="M694,160 C694,176 560,176 530,160" class="fl" marker-end="url(#l-k)"/>
+  <text x="612" y="183" class="t2">Path A · ≤3 rounds</text>
+  <text x="10" y="416" class="t2">* offered: runs only on the user's yes; recommended by the milestone's risk tier (routine · elevated · critical)</text>
+</svg>
+<figcaption>Figure 1: The AI‑native SDLC as plan‑swarm@3.0 runs it. Each column commits its artifact before the next column starts; the six amber boxes are the only places a person must act.</figcaption>
+</figure>
+</section>
+
+<!-- ============================================================ people -->
+<section id="people">
+<h2>People and agents</h2>
+<table>
+<thead><tr><th style="width:18%">Who</th><th style="width:44%">Does</th><th>Never</th></tr></thead>
+<tbody>
+<tr><td><b>Developer</b> (originator, approver)</td><td>Describes intents, answers the Grill Loop, accepts or declines offered checks, types the six approval phrases.</td><td>Needs to write the spec, plan, or boilerplate code.</td></tr>
+<tr><td><b>Code owner</b></td><td>Reviews and merges the PR on GitHub.</td><td>Sees a change that skipped the swarm's gates: CI's ledger check fails it.</td></tr>
+<tr><td><b>Platform team</b></td><td>Installs CI secrets; adopts the gate as a managed hook where plugin hooks are disabled.</td><td>Needs to change the plugin.</td></tr>
+<tr><td><code>supervisor</code></td><td>Derives state, dispatches, offers gates by tier, prints approval phrases, runs worktrees, opens the PR.</td><td>Codes, commits, or approves.</td></tr>
+<tr><td><code>product-owner</code></td><td>Writes intents and Gherkin specs, loads policy skills, owns the roadmap, applies spec tightenings.</td><td>Designs implementation or runs shell commands.</td></tr>
+<tr><td><code>architect</code></td><td>Reads code, writes micro‑stepped test‑first plans in parallel groups, applies plan fixes.</td><td>Edits source (it has no shell).</td></tr>
+<tr><td><code>engineer</code></td><td>Implements one task under TDD, in its own worktree.</td><td>Commits outside its worktree branch, or expands scope.</td></tr>
+<tr><td><code>auditor</code></td><td>Verifies with evidence, builds, tests, hunts shortcuts, records rounds; makes every deliverable commit.</td><td>Fixes code, or commits without an approval.</td></tr>
+<tr><td>validators · deliberators</td><td>Attack (3 independent skeptics, 2‑of‑3) or improve (delegates with disjoint knowledge) an artifact.</td><td>Validators never edit what they review.</td></tr>
+</tbody>
+</table>
+</section>
+
+<!-- ============================================================ stages -->
+<section id="stages">
+<h2>Stage by stage</h2>
+<p>A compact reference. The developer's view of each stage, with example output, is in <a href="playbook.html">playbook.html</a>.</p>
+<table>
+<thead><tr><th style="width:14%">Stage</th><th style="width:30%">What happens</th><th style="width:22%">Artifact</th><th>Gate · enforcement</th></tr></thead>
+<tbody>
+<tr><td>Intent</td><td>Product owner drafts the problem and outcome; <code>tier.py</code> proposes a tier from the wording.</td><td><code>plans/intents/…md</code></td><td>🔒 <code>approve intent</code> → branch <code>swarm/{m}</code>, intent moved and committed</td></tr>
+<tr><td>Research</td><td>Explore appends a <em>Codebase context</em> section.</td><td><code>intent.md</code></td><td>none</td></tr>
+<tr><td>Spec</td><td>Grill Loop; policy skills applied; <em>Policy Concerns</em> recorded. Offered: deliberator, validator.</td><td><code>spec.md</code></td><td>🔒 <code>approve spec</code> → artifact commit</td></tr>
+<tr><td>Plan</td><td>Architect reads code, writes parallel groups and <em>Irreversible Steps</em>; tier re‑checked. Offered: deliberator, validator.</td><td><code>plan.md</code></td><td>🔒 <code>approve plan [tier=…]</code> → artifact commit; engineers unblocked</td></tr>
+<tr><td>Build</td><td>≤5 engineers in worktrees; <code>worktree.py squash</code> stages the group (overlap = plan defect). Offered: simplifier.</td><td>staged group diff</td><td>dispatch blocked before plan approval</td></tr>
+<tr><td>Audit</td><td>Evidence, build, tests, anti‑shortcut; FAIL → Path A (≤3 rounds, then the user decides).</td><td><code>audit.md</code></td><td>offered: implementation‑validator, recap</td></tr>
+<tr><td>Commit</td><td>Auditor commits the audited group.</td><td>group commit</td><td>🔒 <code>approve commit {m} g{n}</code>; gate + git hook</td></tr>
+<tr><td>PR</td><td>Tier re‑checked on the real diff; the PR approval is recorded in a ledger‑only commit; PR body built from artifacts; CI ledger check and review.</td><td>PR</td><td>🔒 <code>approve pr</code> for the first push; code owner merges</td></tr>
+<tr><td>Release</td><td>Annotated tag on the default branch; roadmap marked Shipped.</td><td>tag</td><td>🔒 <code>approve release</code></td></tr>
+</tbody>
+</table>
+</section>
+
+<!-- ============================================================ control -->
+<section id="control">
+<h2>The control plane</h2>
+<p>One Claude Code hook per event plus three git hooks, all standard‑library Python. They are active in repositories that contain <code>plans/swarm.md</code>, and stay active (failing closed) if that file disappears after <code>swarm-init</code> marked the repository.</p>
+<table>
+<thead><tr><th style="width:20%">Hook</th><th style="width:16%">Script</th><th>Responsibility</th></tr></thead>
+<tbody>
+<tr><td><code>SessionStart</code></td><td><code>health.py</code></td><td>Heartbeat; refreshes the git hook's copy of the gate; tells the session whether enforcement is active.</td></tr>
+<tr><td><code>UserPromptSubmit</code></td><td><code>approve.py</code></td><td>If the <em>whole</em> prompt is an approval phrase, mints a single‑use approval bound to HEAD (15 min) and appends a row to <code>approvals.md</code>.</td></tr>
+<tr><td><code>PreToolUse</code></td><td><code>gate.py</code></td><td>Consumes approvals for commits, first PR pushes, and tags; blocks default‑branch and force pushes, history rewrites on swarm branches, hook bypasses, writes to protected files, and engineers before plan approval. Follows <code>cd</code> inside a command.</td></tr>
+<tr><td>git <code>pre-commit</code> · <code>pre-merge-commit</code></td><td><code>gate.py --git-hook</code></td><td>Second layer for commits, whatever started them: allowed only with the one‑time, 60‑second ticket the first layer issued, and a plans‑only approval cannot carry code. WIP is exempt only inside the swarm's own linked worktrees.</td></tr>
+<tr><td>git <code>pre-push</code></td><td><code>gate.py --pre-push</code></td><td>Second layer for pushes: only fast‑forwards of <code>swarm/{m}</code> in which every new commit's parent matches an intent/spec/plan/commit row of the ledger (a <code>pr</code> row authorizes only the ledger‑only commit that records it; the first push also needs that row). Other branches and tags are refused while a swarm session is active, so people can still push their own work when Claude Code is not running.</td></tr>
+</tbody>
+</table>
+<figure>
+<svg viewBox="0 0 1000 330" role="img" aria-label="Approval handshake">
+  <defs>
+    <marker id="h-k" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="mk"/></marker>
+    <marker id="h-g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="mk-gr"/></marker>
+    <marker id="h-r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="mk-r"/></marker>
+  </defs>
+  <rect x="20"  y="12" width="130" height="32" rx="8" class="bx-h"/><text x="85"  y="33" text-anchor="middle" class="t3">Developer</text>
+  <rect x="210" y="12" width="130" height="32" rx="8" class="bx-c"/><text x="275" y="33" text-anchor="middle" class="t3">approve.py</text>
+  <rect x="400" y="12" width="130" height="32" rx="8" class="bx"/><text x="465" y="33" text-anchor="middle" class="t3">supervisor · auditor</text>
+  <rect x="590" y="12" width="130" height="32" rx="8" class="bx-c"/><text x="655" y="33" text-anchor="middle" class="t3">gate.py</text>
+  <rect x="780" y="12" width="200" height="32" rx="8" class="bx-g"/><text x="880" y="33" text-anchor="middle" class="t3">git · CI ledger check</text>
+  <g class="ll"><path d="M85,44 V315"/><path d="M275,44 V315"/><path d="M465,44 V315"/><path d="M655,44 V315"/><path d="M880,44 V315"/></g>
+  <path d="M465,72 H89" class="fl" marker-end="url(#h-k)"/><text x="277" y="65" text-anchor="middle" class="t2">① shows the diff · "type: approve commit auth-mvp g2"</text>
+  <path d="M85,106 H271" class="fl" marker-end="url(#h-k)"/><text x="178" y="99" text-anchor="middle" class="t2">② types the phrase (whole message)</text>
+  <path d="M275,140 H876" class="fl" marker-end="url(#h-k)"/><text x="575" y="133" text-anchor="middle" class="t2">③ single‑use approval {kind, m, g, HEAD, 15 min} · ledger row (HEAD = parent of the coming commit)</text>
+  <path d="M465,176 H651" class="fl" marker-end="url(#h-k)"/><text x="558" y="169" text-anchor="middle" class="t2">④ auditor: git commit -m …</text>
+  <path d="M655,210 H876" class="ok" marker-end="url(#h-g)"/><text x="765" y="203" text-anchor="middle" class="t2" style="fill:var(--green)">⑤ valid → consume, ticket, allow</text>
+  <path d="M651,244 H469" class="no" marker-end="url(#h-r)"/><text x="560" y="237" text-anchor="middle" class="t2" style="fill:var(--red)">⑤′ else deny (exit 2) + the phrase to ask for</text>
+  <rect x="770" y="266" width="220" height="44" rx="6" class="bx-g"/>
+  <text x="880" y="284" text-anchor="middle" class="t2">⑥ on the PR, CI checks each commit's</text>
+  <text x="880" y="300" text-anchor="middle" class="t2">parent against the ledger's HEAD</text>
+</svg>
+<figcaption>Figure 2: One approval, one operation. A reused, expired, or stale approval (HEAD moved) is refused with a reason naming the phrase to ask for.</figcaption>
+</figure>
+<h3>Approval phrases</h3>
+<pre><code>approve intent  &lt;slug&gt; as &lt;milestone&gt;     approve commit  &lt;milestone&gt; g&lt;n&gt;
+approve spec    &lt;milestone&gt;                approve pr      &lt;milestone&gt;
+approve plan    &lt;milestone&gt; [tier=…]       approve release &lt;version&gt;</code></pre>
+<h3>What the gate refuses</h3>
+<table>
+<thead><tr><th style="width:44%">Operation</th><th>Rule</th></tr></thead>
+<tbody>
+<tr><td><code>git commit</code> (code)</td><td>needs <code>approve commit</code> for the milestone, on <code>swarm/{m}</code> in pr mode</td></tr>
+<tr><td><code>git commit</code> touching only <code>plans/</code></td><td>needs <code>approve intent|spec|plan</code> for that milestone (pathspec commits classified by their paths)</td></tr>
+<tr><td><code>git commit</code> on <code>swarm-wip/{m}/{task}</code></td><td>allowed (engineer WIP), never pushed, never including <code>approvals.md</code></td></tr>
+<tr><td>first <code>git push</code> of <code>swarm/{m}</code> · <code>git tag</code> · pushing tags</td><td>need <code>approve pr</code> · <code>approve release</code></td></tr>
+<tr><td>push to the default branch or other branches · bare <code>git push</code> · <code>--tags</code> · force, delete, mirror (including abbreviations like <code>--del</code> and clusters like <code>-uf</code>) · <code>--no-verify</code> · <code>--amend</code> · rebase · <code>checkout -B</code> / <code>branch -C</code> · fetch into local refs · <code>pull</code> except <code>--ff-only</code> off swarm branches · history plumbing (<code>update-ref</code>, <code>am</code>, <code>send-pack</code>…)</td><td>always refused</td></tr>
+<tr><td>git aliases, unknown subcommands, <code>-c alias.*|remote.*|core.hooksPath…</code>, <code>--config-env</code>, <code>GIT_DIR</code>/<code>GIT_CONFIG_*</code> variables, git hidden in <code>bash -c</code>, <code>eval</code>, <code>xargs</code>, backticks · <code>gh pr merge</code>, <code>gh release create</code>, write <code>gh api</code> calls</td><td>always refused</td></tr>
+<tr><td>agent access to the git directory (resolved through symlinks, case‑insensitive on macOS); writes to <code>approvals.md</code>, <code>plans/swarm.md</code> and its folders, the plugin, or Claude settings; running the control plane's own scripts</td><td>always refused</td></tr>
+<tr><td>dispatching <code>plan:engineer</code> for a milestone</td><td>needs a <code>plan</code> row in its ledger</td></tr>
+</tbody>
+</table>
+<p class="ev">Fail closed: if <code>plans/swarm.md</code> is invalid, or missing after activation, gated operations are refused and every other check still runs; any internal error in the gate refuses the tool call (exit 2). If an organization disables plugin hooks, the heartbeat goes stale, <code>health.py --status</code> reports <b>enforcement off</b>, and the supervisor refuses gated steps.</p>
+<h3>Threat model</h3>
+<div class="callout warn">The local control plane is a guard against <b>well‑meaning agents that try to unblock themselves</b>: the realistic failure of an AI‑native workflow. It is not a sandbox against a determined adversary: an agent with shell access runs with the same operating‑system privileges as the hooks and could, with deliberate effort, write files the parser does not recognize. The authoritative controls are therefore server‑side: <b>branch protection</b> on the default branch, the <b>CI ledger check</b>, and <b>code‑owner review</b> of every PR. The local layers make the approved path the only easy path, and make every deviation visible.</div>
+</section>
+
+<!-- ============================================================ evidence -->
+<section id="evidence">
+<h2>The evidence chain</h2>
+<p>The playbook's governance model says "the chain of commits is the audit trail: who asked for what, what the agent produced, and who approved it." In plan‑swarm that chain is literal: each approval is bound to the HEAD it was typed at, which is exactly the <b>parent</b> of the commit it authorizes.</p>
+<figure>
+<svg viewBox="0 0 1000 250" role="img" aria-label="Evidence chain">
+  <text x="20" y="44" class="mono">main</text><text x="20" y="104" class="mono">swarm/auth-mvp</text>
+  <path d="M130,40 H960" class="ln-m"/><circle cx="150" cy="40" r="6" class="dot-m"/>
+  <path d="M150,40 L190,100 H880" class="ln-s"/>
+  <circle cx="230" cy="100" r="8" class="dot-c"/><text x="230" y="80" text-anchor="middle" class="mono">a1 intent</text>
+  <circle cx="380" cy="100" r="8" class="dot-c"/><text x="380" y="80" text-anchor="middle" class="mono">b2 spec</text>
+  <circle cx="530" cy="100" r="8" class="dot-c"/><text x="530" y="80" text-anchor="middle" class="mono">c3 plan</text>
+  <circle cx="680" cy="100" r="8" class="dot-c"/><text x="680" y="80" text-anchor="middle" class="mono">d4 g1</text>
+  <circle cx="830" cy="100" r="8" class="dot-c"/><text x="830" y="80" text-anchor="middle" class="mono">e5 g2</text>
+  <path d="M880,100 L930,40" class="ln-s"/><circle cx="930" cy="40" r="7" class="dot-s"/><text x="930" y="24" text-anchor="middle" class="t2">merged PR</text>
+  <!-- ledger rows -->
+  <g>
+    <rect x="157" y="150" width="146" height="56" rx="6" class="bx-c"/><text x="164" y="168" class="mono">intent · HEAD 9f0</text><text x="164" y="184" class="mono">who dev@… 09:12</text><text x="164" y="199" class="t2">parent of a1 = 9f0 ✓</text>
+    <rect x="307" y="150" width="146" height="56" rx="6" class="bx-c"/><text x="314" y="168" class="mono">spec · HEAD a1</text><text x="314" y="184" class="mono">who dev@… 10:40</text><text x="314" y="199" class="t2">parent of b2 = a1 ✓</text>
+    <rect x="457" y="150" width="146" height="56" rx="6" class="bx-c"/><text x="464" y="168" class="mono">plan · HEAD b2</text><text x="464" y="184" class="mono">tier elevated</text><text x="464" y="199" class="t2">parent of c3 = b2 ✓</text>
+    <rect x="607" y="150" width="146" height="56" rx="6" class="bx-c"/><text x="614" y="168" class="mono">commit g1 · HEAD c3</text><text x="614" y="184" class="mono">who dev@… 14:02</text><text x="614" y="199" class="t2">parent of d4 = c3 ✓</text>
+    <rect x="757" y="150" width="146" height="56" rx="6" class="bx-c"/><text x="764" y="168" class="mono">commit g2 · HEAD d4</text><text x="764" y="184" class="mono">who dev@… 16:31</text><text x="764" y="199" class="t2">parent of e5 = d4 ✓</text>
+  </g>
+  <g class="lk"><path d="M230,108 V150"/><path d="M380,108 V150"/><path d="M530,108 V150"/><path d="M680,108 V150"/><path d="M830,108 V150"/></g>
+  <text x="20" y="235" class="t2">approvals.md rows (written by approve.py, committed with the change they authorize). CI's ledger job fails the PR if any commit's parent has no matching row.</text>
+</svg>
+<figcaption>Figure 3: A milestone branch as its own audit trail. A commit that bypassed the swarm (for example with <code>--no-verify</code> outside Claude Code) has no matching row and fails CI.</figcaption>
+</figure>
+<p>The approval hook <b>stages</b> the new ledger row the moment the phrase is typed, so the row always ships inside the commit it authorizes. Only intent, spec, plan, and commit rows authorize commits; a <code>pr</code> row authorizes the first push plus the single ledger‑only commit that records it, and a <code>release</code> row authorizes the tag (its row is committed with the next milestone's intent commit).</p>
+<p>Beyond the ledger, each milestone folder holds the reasons: the intent and its research, the spec and every validation or deliberation report (re‑runs preserved as <code>-r2</code>), the plan with its tier, every audit round, and <code>usage.md</code> with the cost of each dispatch and every offered check the developer declined, with the tier it was declined at.</p>
+</section>
+
+<!-- ============================================================ build -->
+<section id="build">
+<h2>Parallel build</h2>
+<ul>
+  <li>The architect groups tasks so that tasks in one group touch <b>disjoint files</b>.</li>
+  <li>For each task the supervisor runs <code>worktree.py create</code>: branch <code>swarm-wip/{m}/{task}</code>, checkout under <code>.swarm/worktrees/</code> (excluded locally), starting at the milestone's HEAD. Up to <code>engineers.max_concurrent</code> (5) engineers run at once.</li>
+  <li>Engineers work only in their worktree, may make WIP commits there, and report their steps (they do not edit <code>plan.md</code>, so parallel tasks never conflict on it).</li>
+  <li><code>worktree.py squash</code> auto‑commits leftover WIP, refuses to integrate if two tasks touched the same file or a task touched <code>plans/</code> (a plan defect: Path B), and otherwise stages the whole group with <code>git merge --squash</code>, no commit. The auditor audits exactly the diff the developer will approve.</li>
+</ul>
+</section>
+
+<!-- ============================================================ quality -->
+<section id="quality">
+<h2>The quality system</h2>
+<div class="three">
+  <div class="card"><b>Test‑first by construction</b>Every plan task starts with a test step; engineers work Red → Green → Refactor; the auditor fails any new behavior without tests, and hunts TODOs, skipped or gutted tests, and hard‑coded answers.</div>
+  <div class="card"><b>Independent skeptics</b>Spec, plan, and implementation validators each dispatch 3 skeptics with no shared context; <code>tally.py</code> keeps findings 2 of 3 agree on and reports the rest. The implementation validator's key output is <b>calibrated severity</b>.</div>
+  <div class="card"><b>Deliberation for siloed knowledge</b>Deliberators give delegates deliberately different knowledge (stakeholder bundles, code territories) and drive them to one revised artifact, deciding trade‑offs a vote cannot.</div>
+</div>
+<h3>Risk tiers and optionality</h3>
+<table>
+<thead><tr><th>Tier</th><th>Triggered by (<code>plans/swarm.md</code>)</th><th>Supervisor recommends</th><th>Vote</th></tr></thead>
+<tbody>
+<tr><td><span class="pill x">routine</span></td><td>nothing matched</td><td>offers every check, pushes none</td><td>2 of 3</td></tr>
+<tr><td><span class="pill a">elevated</span></td><td>public API, cache, schema paths/keywords; large diffs</td><td>spec, plan, and implementation validators; recap</td><td>2 of 3</td></tr>
+<tr><td><span class="pill r">critical</span></td><td>auth, payments, migrations, credentials, PII, deletions</td><td>deliberators → validators; claim‑refutation mode</td><td>any one</td></tr>
+</tbody>
+</table>
+<p class="ev">The tier is proposed at intent, re‑checked at plan and on the real diff before the PR, and can only rise automatically. The developer confirms it in <code>approve plan</code>; lowering it requires writing <code>tier=…</code>, so the choice is on the record. Tiers recommend; they never force a check.</p>
+</section>
+
+<!-- ============================================================ evals -->
+<section id="evals">
+<h2>Continuous evals</h2>
+<p>The playbook asks teams to regression‑test the agent's own configuration whenever it changes. plan‑swarm does this in five layers for its own prompts and control plane. The plugin's CI runs L0 on every pull request and push to <code>main</code> that touches <code>plugins/plan/</code>; L1–L4 are real Claude sessions and run on pull requests only. Case format and commands: <code>plugins/plan/evals/README.md</code>.</p>
+<div class="callout">These evals test the plugin, not your repository. The CI that <code>swarm-init</code> installs in a target repository (<code>templates/ci/plan-swarm.yml</code>) runs the ledger check, the <code>REVIEW.md</code> review, and the tier-gated validator panel; it does not run evals.</div>
+<table>
+<thead><tr><th style="width:10%">Layer</th><th style="width:44%">What it checks</th><th style="width:22%">How</th><th>CI</th></tr></thead>
+<tbody>
+<tr><td>L0</td><td>Control plane: every git policy row, the approval grammar, the ledger, tiers, worktrees, PR body, metrics, the CI ledger check, the pre‑push layer, and every security‑review finding; generated role files in sync</td><td>243 pytest cases on real temporary git repos · <code>render_roles.py --check</code></td><td><span class="pill r">blocking</span></td></tr>
+<tr><td>L1</td><td>Contract: validator reports carry the parsed <code>Result</code> row; validators never edit the spec</td><td><code>claude plugin eval</code> (file, regex, tool graders)</td><td><span class="pill r">blocking</span></td></tr>
+<tr><td>L2</td><td>Discipline: engineer never commits; supervisor stops at the review gate and before the PR; a new request becomes an intent, not a spec; auditor reports a blocked commit instead of bypassing</td><td><code>claude plugin eval</code> (tool_used, regex, llm)</td><td><span class="pill r">blocking</span></td></tr>
+<tr><td>L3</td><td>Capability: the plan validator finds a seeded false assumption as the first domino</td><td>regex + llm judge</td><td><span class="pill b">report</span></td></tr>
+<tr><td>L4</td><td>Parity: agent and skill forms of the architect produce the same plan structure</td><td>paired cases</td><td><span class="pill b">report</span></td></tr>
+</tbody>
+</table>
+</section>
+
+<!-- ============================================================ metrics -->
+<section id="metrics">
+<h2>Metrics</h2>
+<p><code>swarm-metrics</code> (<code>lib/metrics.py</code>) computes the playbook's indicators from committed files only, so the numbers match the audit trail.</p>
+<table>
+<thead><tr><th style="width:36%">Playbook indicator</th><th>plan‑swarm source</th></tr></thead>
+<tbody>
+<tr><td>Elapsed time between artifact commits</td><td>ledger timestamps: intent → spec → plan → first group commit → PR</td></tr>
+<tr><td>First‑pass success of agent‑written changes</td><td>share of groups whose first audit round passed (<code>audit.md</code>)</td></tr>
+<tr><td>Rework cycles per change</td><td>failed audit rounds + validator re‑runs (<code>-r2</code>, <code>-r3</code>)</td></tr>
+<tr><td>Survival rate of intents</td><td>accepted / (accepted + closed) from <code>plans/intents/</code></td></tr>
+<tr><td>Cost and risk accepted</td><td>dispatches, tokens, and declined checks with their tier (<code>usage.md</code>)</td></tr>
+</tbody>
+</table>
+</section>
+
+<!-- ============================================================ adopt -->
+<section id="adopt">
+<h2>Adopting it</h2>
+<ol>
+  <li><code>/plugin marketplace add ddobrin/plan-skills-claude</code> and <code>/plugin install plan@plan-skills</code>. Until 3.0 is published there, load it from a checkout with <code>claude --plugin-dir &lt;checkout&gt;/plugins/plan</code> and disable the installed 2.1 copy.</li>
+  <li>In the repository, type <code>/plan:swarm-init</code>: <code>plans/swarm.md</code>, the three git hooks, and optionally <code>REVIEW.md</code>, <code>.github/workflows/plan-swarm.yml</code>, and an <code>AGENTS.md</code> skeleton (skipped when a <code>CLAUDE.md</code> exists). Nothing is overwritten.</li>
+  <li>Fill in the build and test commands in <code>AGENTS.md</code> (or your <code>CLAUDE.md</code>; with both, <code>CLAUDE.md</code> must import <code>@AGENTS.md</code>), tune the tier rules and policy skills in <code>plans/swarm.md</code>, and commit.</li>
+  <li>For PR review in CI, connect GitHub to Vertex AI with Workload Identity Federation (secrets <code>GCP_WORKLOAD_IDENTITY_PROVIDER</code> and <code>GCP_SERVICE_ACCOUNT</code>; the service account needs <code>roles/aiplatform.user</code>), and protect the default branch (require the <code>ledger</code> and <code>review</code> checks and a code‑owner review).</li>
+  <li>Where plugin hooks are disabled by policy, follow <code>templates/managed-settings.example.md</code>.</li>
+  <li>Start Claude Code as the supervisor, <code>claude --agent plan:supervisor</code> (or say "be the supervisor"). Every role then runs as a subagent with its own context; approval phrases count only when you type them in this main session. For solo or offline work set <code>delivery.mode</code> to <code>local</code>.</li>
+</ol>
+</section>
+
+<!-- ============================================================ trace -->
+<section id="trace">
+<h2>Playbook traceability</h2>
+<table>
+<thead><tr><th style="width:32%">Playbook element</th><th>Implementation</th></tr></thead>
+<tbody>
+<tr><td>Plan: <code>intent.md</code>, reviewed and committed by the PO</td><td><code>roles/product-owner.md</code> (intent mode) · <code>approve intent</code> · supervisor Phase 0</td></tr>
+<tr><td>Design: <code>spec.md</code> under policy skills; concerns resolved before engineering</td><td>Grill Loop · <code>swarm.md policies</code> · <em>Policy Concerns</em> · <code>approve spec</code></td></tr>
+<tr><td>Build: plan mode, approved <code>plan.md</code> committed first</td><td>read‑only <code>architect</code> · <code>approve plan</code> commit before any engineer (gate <code>--dispatch</code>)</td></tr>
+<tr><td>Build: <code>AGENTS.md</code>, skills, hooks</td><td>auditor runs <code>AGENTS.md</code> commands and proposes "Common mistakes" · <code>roles/</code> → skills · <code>hooks/hooks.json</code></td></tr>
+<tr><td>Build: parallel sessions in worktrees; subagents with scoped tools</td><td><code>lib/worktree.py</code> · ≤5 engineers · per‑agent <code>tools</code> allowlists</td></tr>
+<tr><td>Test: self‑verification; continuous evals in CI</td><td>TDD + auditor · <code>evals/</code> L1–L4 + <code>lib/tests</code> L0 · <code>.github/workflows/plugin-ci.yml</code></td></tr>
+<tr><td>Deploy: AI PR review against <code>REVIEW.md</code>, severity‑ranked</td><td><code>templates/REVIEW.md</code> · <code>templates/ci/plan-swarm.yml</code> (review, panel) · implementation‑validator PR mode</td></tr>
+<tr><td>Deploy: hooks as approval gates</td><td><code>lib/approve.py</code> + <code>lib/gate.py</code> + git pre‑commit layer</td></tr>
+<tr><td>Separation of duties</td><td>engineer writes · auditor verifies and commits · reviewers never write · only a person approves</td></tr>
+<tr><td>Evidence: git history, PR history, CI logs</td><td><code>approvals.md</code> · tracked <code>audit.md</code> · <code>usage.md</code> · <code>lib/prbody.py</code> · CI <code>ledger</code> job</td></tr>
+<tr><td>Measuring success</td><td><code>lib/metrics.py</code> · <code>swarm-metrics</code> skill</td></tr>
+<tr><td>Maintain: detection → <code>intent.md</code></td><td>specified in <code>topology.md</code> (node <code>maintain</code>, loop 8); not built (future)</td></tr>
+</tbody>
+</table>
+</section>
+
+<!-- ============================================================ verified -->
+<section id="verified">
+<h2>Verification record</h2>
+<table>
+<thead><tr><th style="width:26%">Check</th><th style="width:46%">Method</th><th>Result</th></tr></thead>
+<tbody>
+<tr><td>Control plane tests</td><td><code>uvx pytest -q plugins/plan/lib/tests</code>, real temporary git repos, including a real bare remote for the pre‑push layer</td><td><span class="pill g">243 passed</span></td></tr>
+<tr><td>End‑to‑end milestone</td><td>A scripted run drove one milestone through all 13 stages with the real hooks, git hooks, and a bare remote (<a href="usage-e2e.html">usage-e2e.html</a>). It found four protocol bugs, all fixed: untracked intents need <code>mv</code>, group commits must include <code>plans/</code>, switch and pull must be separate commands, and the PR approval needs its own ledger commit.</td><td><span class="pill g">70 steps, as expected</span></td></tr>
+<tr><td>Independent security review</td><td>An adversarial reviewer reproduced 6 critical, 8 high and 8 medium bypasses or fail‑open paths in the first gate (e.g. <code>bash -c 'git commit --no-verify'</code>, git aliases, <code>--amen</code>, forging approvals via <code>cd .git</code>, deleting <code>swarm.md</code>, pushing WIP into <code>swarm/{m}</code>). All were fixed; each has a regression test in <code>lib/tests/test_security.py</code> (113 cases).</td><td><span class="pill g">fixed · 113 regressions</span></td></tr>
+<tr><td>Utility tests</td><td><code>uvx pytest -q plugins/plan/skills/wf-trajectory/tests</code></td><td><span class="pill g">22 passed</span></td></tr>
+<tr><td>Generated role files</td><td><code>render_roles.py --check</code>; Phase 0 regeneration reproduced all 27 original files byte for byte before any prompt change</td><td><span class="pill g">28 in sync</span></td></tr>
+<tr><td>Hooks in a live Claude Code session</td><td>headless <code>claude -p --plugin-dir plugins/plan</code> in a scratch repo: commit without approval → <code>approve commit demo g1</code> → commit → reuse; after hardening, with all three git hooks installed: <code>bash -c 'git commit --no-verify'</code> → approval → commit</td><td><span class="pill g">blocked → recorded → committed (ledger row inside) → blocked</span></td></tr>
+<tr><td>Eval harness</td><td><code>claude plugin eval</code> on <code>l2-auditor-needs-approval</code>: case discovered, scaffold run, graders parsed and scored</td><td><span class="pill a">harness ok; agent run needs credentials in the eval sandbox</span></td></tr>
+<tr><td>Manifests</td><td><code>claude plugin validate .</code> and <code>claude plugin validate plugins/plan</code></td><td><span class="pill g">passed</span></td></tr>
+<tr><td>CI workflows</td><td>YAML parse; ledger‑check script extracted from the template and run against a fixture repo (approved commit passes, unapproved commit fails)</td><td><span class="pill g">passed</span></td></tr>
+</tbody>
+</table>
+<p class="ev">Live eval scores (L1–L4) were not produced in the build environment: the sandboxed eval child could not load the machine's Google Cloud credentials. The plugin CI runs them on Vertex AI through Workload Identity Federation.</p>
+</section>
+
+<!-- ============================================================ limits -->
+<section id="limits">
+<h2>Limits and roadmap</h2>
+<ul>
+  <li><b>Local enforcement is a guard, not a sandbox.</b> The <code>PreToolUse</code> gate reads shell command text and refuses what it cannot recognize; the git hooks re‑check commits and pushes by any route. A determined agent could still, with deliberate effort, write the store or ledger with a script the parser does not flag. Branch protection, the CI ledger check, and code‑owner review are the authority.</li>
+  <li><b>No caller identity.</b> Hook input does not say which subagent made a call, so file protections are path‑based, not role‑based.</li>
+  <li><b>Managed‑only hook policies</b> disable plugin hooks; the swarm then refuses gated steps until the gate is adopted as a managed hook.</li>
+  <li><b>Maintain loop (future):</b> the <code>triage</code> agent, <code>bands.md</code> detector, and intent‑PR workflow are specified in <code>topology.md</code> and <code>architecture.html</code> §14 but not built.</li>
+</ul>
+</section>
+
+<!-- ============================================================ files -->
+<section id="files">
+<h2>File index</h2>
+<pre><code>plugins/plan/
+├── roles/                 14 canonical role prompts (edit here)
+├── agents/ · skills/      generated forms (14 agents, 14 role skills) + swarm-init, swarm-metrics, wf-trajectory
+├── hooks/hooks.json       SessionStart · UserPromptSubmit · PreToolUse
+├── lib/                   approve · gate · health · swarmgit · swarmdoc · tier · worktree · usage · prbody
+│                          metrics · swarm_init · render_roles · tally   (+ tests/, incl. test_security.py)
+├── evals/                 9 cases (L1–L4)
+├── templates/             swarm.md · git-hooks/{pre-commit,pre-merge-commit,pre-push} · REVIEW.md · ci/plan-swarm.yml · AGENTS.md
+│                          managed-settings.example.md · skills/policy-example/
+├── topology.md            plan-swarm@3.0 graph
+└── README.md · SUBAGENTS.md
+playbook.html              developer guide        architecture.html · implementation-plan.html · feasible.html   design record</code></pre>
+</section>
+
+<footer>The AI‑Native SDLC with plan‑swarm@3.0 · plugin plan 3.0.0 · 25 Sep 2026 · self‑contained, no external assets.</footer>
+</main>
+</div>
+</body>
+</html>

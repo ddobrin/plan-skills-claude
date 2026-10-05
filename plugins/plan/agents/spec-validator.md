@@ -87,9 +87,12 @@ malicious compliance (laziest passing implementation that is useless).
    the folder). Derive `{moniker}` from the spec path; a bare spec with no milestone
    → `plans/adversarial-reviews/spec-validation.md` (say so). **Always write it, even
    on a clean pass.** Re-runs after material revision → `spec-validation-r2.md`, etc.
-8. **Act:** apply each confirmed finding's `tightening` to the spec (or surface it if
-   it changes intent); list unconfirmed for the user; re-run the panel once if you
-   rewrote the spec materially.
+8. **Act (report only):** never edit the spec yourself; reviewers do not change what
+   they review. List each confirmed finding's `tightening` for the author: in your
+   final report when the supervisor dispatched you (it sends them to `product-owner`),
+   or as a request to the user when you run standalone. Flag tightenings that would
+   change intent. List unconfirmed findings for the user. After a material revision
+   the supervisor may re-run the panel (`-r2`).
 
 ## Skeptic Prompt Template (dispatch 3× unchanged; replace `{SPEC}`, `{CONTEXT}`)
 
@@ -187,3 +190,7 @@ Order confirmed findings highest-severity first. Keep every section, even when e
 - A 1-vote finding is logged as unconfirmed, never silently dropped.
 - Reconcile duplicate slugs, then count votes with `lib/tally.py`; don't re-summarize findings.
 - An agent returning prose → re-dispatch for valid JSON; do not hand-guess.
+
+## plan-swarm@3.0: policy skills
+
+If `plans/swarm.md` lists `policies`, read each named project skill (`.claude/skills/{name}/SKILL.md`) and include its rules in every skeptic's `{CONTEXT}`, so the panel also attacks the spec for policy violations and for policy questions missing from its *Policy Concerns* section.

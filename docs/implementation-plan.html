@@ -1,0 +1,387 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Implementation Plan: plan-swarm@2.1 → @3.0</title>
+<style>
+  :root{
+    --bg:#fbfaf7; --panel:#ffffff; --ink:#1d1d1f; --muted:#5f6368; --line:#e4e1da;
+    --accent:#c2562c; --blue:#2f5bd3; --green:#1f7a4d; --amber:#a86a00; --red:#b3261e; --purple:#7b3fd1;
+    --g-bg:#e8f5ee; --a-bg:#fff4dc; --r-bg:#fde8e6; --b-bg:#e9efff; --p-bg:#f1eafd; --code:#f3f1ec;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#141414; --panel:#1c1c1e; --ink:#ececec; --muted:#a1a1a6; --line:#2e2e30;
+      --accent:#e0794f; --blue:#7c9cff; --green:#5cc98f; --amber:#e7b04a; --red:#ff7b72; --purple:#b38cff;
+      --g-bg:#16301f; --a-bg:#33290f; --r-bg:#3a1a18; --b-bg:#1b2442; --p-bg:#2a1f3d; --code:#242426; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15.5px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Helvetica,Arial,sans-serif}
+  .wrap{display:grid;grid-template-columns:230px minmax(0,1fr);gap:40px;max-width:1300px;margin:0 auto;padding:40px 28px 80px}
+  nav{position:sticky;top:24px;align-self:start;font-size:13.5px}
+  nav b{display:block;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-size:11.5px;margin-bottom:8px}
+  nav a{display:block;color:var(--ink);text-decoration:none;padding:3px 0 3px 10px;border-left:2px solid var(--line)}
+  nav a:hover{border-left-color:var(--accent);color:var(--accent)}
+  @media (max-width:980px){.wrap{grid-template-columns:1fr}nav{display:none}}
+  h1{font-size:34px;line-height:1.15;margin:0 0 6px;letter-spacing:-.01em}
+  h2{font-size:22px;margin:52px 0 12px;padding-top:12px;border-top:1px solid var(--line)}
+  h3{font-size:16.5px;margin:22px 0 6px}
+  p{margin:10px 0}
+  .sub{color:var(--muted);margin:0 0 18px}
+  .meta{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:13px;color:var(--muted);margin-bottom:22px}
+  code{font:13px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--code);padding:1px 5px;border-radius:4px}
+  a{color:var(--blue)}
+  table{width:100%;border-collapse:collapse;background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden;font-size:14px;margin:10px 0}
+  th,td{text-align:left;vertical-align:top;padding:8px 11px;border-bottom:1px solid var(--line)}
+  th{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);background:var(--code)}
+  tr:last-child td{border-bottom:0}
+  td.id{font-family:ui-monospace,Menlo,monospace;font-size:12.5px;white-space:nowrap;color:var(--muted)}
+  .pill{display:inline-block;font-size:11px;font-weight:650;padding:1px 7px;border-radius:999px;white-space:nowrap}
+  .new{background:var(--g-bg);color:var(--green)} .mod{background:var(--b-bg);color:var(--blue)}
+  .gen{background:var(--p-bg);color:var(--purple)} .del{background:var(--r-bg);color:var(--red)}
+  .spk{background:var(--a-bg);color:var(--amber)} .fut{background:var(--code);color:var(--muted)}
+  .callout{background:var(--b-bg);border-radius:10px;padding:14px 18px;margin:14px 0;font-size:14.5px}
+  .timeline{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:14px 0}
+  @media (max-width:900px){.timeline{grid-template-columns:1fr}}
+  .ph{background:var(--panel);border:1px solid var(--line);border-top:4px solid var(--blue);border-radius:10px;padding:12px 14px;font-size:13.5px}
+  .ph .n{font-size:12px;color:var(--muted);font-weight:650;letter-spacing:.05em;text-transform:uppercase}
+  .ph .t{font-weight:700;font-size:15px;margin:2px 0 6px}
+  .ph .v{font-family:ui-monospace,Menlo,monospace;font-size:12px;color:var(--muted)}
+  .ph.p0{border-top-color:var(--purple)} .ph.p1{border-top-color:var(--red)} .ph.p2{border-top-color:var(--blue)} .ph.p3{border-top-color:var(--green)} .ph.p4{border-top-color:var(--muted);border-style:dashed}
+  .grp{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:16px 0 2px}
+  .exit{background:var(--g-bg);border-radius:8px;padding:10px 14px;font-size:14px;margin:10px 0 4px}
+  .ev{font-size:12.5px;color:var(--muted)}
+  footer{margin-top:60px;font-size:12.5px;color:var(--muted);border-top:1px solid var(--line);padding-top:16px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav>
+  <b>Contents</b>
+  <a href="#overview">1 · Overview</a>
+  <a href="#new">2 · New skills &amp; subagents</a>
+  <a href="#stages">3 · Artifacts per stage</a>
+  <a href="#p0">4 · Phase 0: Foundation</a>
+  <a href="#p1">5 · Phase 1: Control plane</a>
+  <a href="#p2">6 · Phase 2: Front &amp; back door</a>
+  <a href="#p3">7 · Phase 3: Scale &amp; learn</a>
+  <a href="#p4">8 · Phase 4: Maintain</a>
+  <a href="#roles">9 · Role change matrix</a>
+  <a href="#files">10 · File inventory</a>
+  <a href="#risks">11 · Spikes &amp; risks</a>
+</nav>
+
+<main>
+<h1>Implementation plan: plan‑swarm@2.1 → @3.0</h1>
+<p class="sub">What changes, in what order, what's new, and what each lifecycle stage builds.</p>
+<div class="meta">
+  <span>Baseline <code>a54fa10</code></span>
+  <span>Target: <code>plugins/plan/topology.md</code> (plan‑swarm@3.0)</span>
+  <span>Design: <a href="architecture.html">architecture.html</a> · Gaps: <a href="feasible.html">feasible.html</a></span>
+  <span>Decisions D1–D13 accepted</span>
+</div>
+
+<div class="callout" style="background:var(--g-bg)"><b>As built (plugin 3.0.0).</b> This design is implemented; <a href="ai-dlc.html">ai-dlc.html</a> describes the system as it now runs. Refinements made while building it:
+<ul style="margin:6px 0 0;padding-left:20px">
+<li>Worktree branches are <code>swarm-wip/{m}/{task}</code>, not <code>swarm/{m}/w/{task}</code>: git cannot create a ref below an existing branch.</li>
+<li>In pr mode <code>swarm/{m}</code> is created when the <b>intent</b> is accepted (not at plan approval), so the intent, spec, and plan commits ship inside the PR.</li>
+<li>Approvals, tickets, and the heartbeat live in <code>.git/plan-swarm/</code> (not <code>${CLAUDE_PLUGIN_DATA}</code>) so the git pre-commit hook, which runs outside Claude Code, can read them; the git hook trusts a short‑lived ticket from the first layer instead of an environment marker.</li>
+<li>Worktrees are created by <code>lib/worktree.py</code> under <code>.swarm/worktrees/</code> from the milestone HEAD (the Agent tool's worktree base is not configurable); engineers in worktrees report steps and the supervisor ticks <code>plan.md</code>, so parallel tasks never conflict on it.</li>
+<li>The cost log is written through <code>lib/usage.py</code> by the supervisor (the <code>SubagentStop</code> payload carries no usage totals); the managed‑settings template is <code>templates/managed-settings.example.md</code>.</li>
+<li>The gate is active only where <code>plans/swarm.md</code> exists (and fails closed if it disappears after activation), follows <code>cd</code> inside a command, and classifies pathspec commits by their paths.</li>
+<li>An independent security review found bypasses in the first gate; the hardened gate refuses unrecognized git forms, adds <code>pre-merge-commit</code> and <code>pre-push</code> hooks that check every pushed commit against the ledger, and the approval hook stages the ledger row into the commit it authorizes. The threat model is explicit: local layers guard against well‑meaning agents; branch protection, CI, and code‑owner review are the authority.</li>
+</ul></div>
+
+
+<!-- ============================================================ 1 -->
+<section id="overview">
+<h2>1 · Overview</h2>
+<div class="timeline">
+  <div class="ph p0"><div class="n">Phase 0</div><div class="t">Foundation</div>One role source, shared libs, unit tests. <b>No behavior change.</b><div class="v">~1 wk · plugin 2.1.1</div></div>
+  <div class="ph p1"><div class="n">Phase 1</div><div class="t">Control plane &amp; evidence</div>Hooks, nonces, ledger, tracked audits, reviewers report‑only.<div class="v">~2 wk · plugin 2.2.0</div></div>
+  <div class="ph p2"><div class="n">Phase 2</div><div class="t">Front &amp; back door</div>Intent inbox, tiers, PR stage, <code>REVIEW.md</code>, CI.<div class="v">~2 wk · plugin 2.3.0</div></div>
+  <div class="ph p3"><div class="n">Phase 3</div><div class="t">Scale &amp; learn</div>Worktrees ≤5, Path‑A cap, policies, metrics, full evals.<div class="v">~2 wk · plugin 3.0.0</div></div>
+  <div class="ph p4"><div class="n">Phase 4 · future</div><div class="t">Maintain loop</div>Triage agent, <code>bands.md</code>, detector workflow.<div class="v">later · 3.1.0</div></div>
+</div>
+<div class="callout"><b>How to read the phase tables.</b> Each phase is split into execution groups, like the swarm's own <code>plan.md</code>. Tasks in a group touch different files and can run in parallel. A group starts only when the previous one is done. Every task edits <code>roles/</code> (the single role source from Phase 0) and regenerates the agent and skill forms, so no task edits <code>agents/</code> or <code>skills/&lt;role&gt;/</code> by hand. Legend: <span class="pill new">new</span> <span class="pill mod">modify</span> <span class="pill gen">generated</span> <span class="pill del">remove</span> <span class="pill spk">spike</span></div>
+<p class="ev">Estimates assume one engineer who knows the repo, and include docs and evals. The version bumps follow <code>topology.md</code>'s rule: plugin 3.0.0 ships when the @3.0 spine is fully in place.</p>
+</section>
+
+<!-- ============================================================ 2 -->
+<section id="new">
+<h2>2 · New skills, subagents &amp; components</h2>
+<table>
+<thead><tr><th style="width:20%">Name</th><th style="width:14%">Type</th><th style="width:8%">Phase</th><th>Purpose</th></tr></thead>
+<tbody>
+<tr><td><code>swarm-init</code></td><td>skill (utility)</td><td>1, 2</td><td>Installs project templates. Phase 1: <code>plans/swarm.md</code> and the git <code>pre-commit</code> hook. Phase 2 adds <code>REVIEW.md</code>, the CI workflow, and a <code>CLAUDE.md</code> skeleton. It never overwrites a file without asking.</td></tr>
+<tr><td><code>swarm-metrics</code></td><td>skill (utility)</td><td>3</td><td>Runs <code>lib/metrics.py</code> and reports lead times, rework, first‑pass audit rate, intent survival, and cost per milestone from <code>git log -- plans/</code>.</td></tr>
+<tr><td><code>simplifier</code></td><td><b>subagent</b> (new form)</td><td>3</td><td>An agent form generated from <code>roles/simplifier.md</code>. The skill already exists. Tools: Read/Write/Edit/Glob/Grep/Bash.</td></tr>
+<tr><td><code>triage</code></td><td><b>subagent + skill</b></td><td>4</td><td>A headless Maintain‑loop agent. Reads the breach evidence and writes <code>plans/intents/*.md</code> only. Tools: Read/Grep/Glob/Write, with the write path enforced by <code>gate.py</code>.</td></tr>
+<tr><td>product‑owner <em>intent mode</em></td><td>mode (not a new role)</td><td>2</td><td>Writes and triages intents. The same agent, with a new protocol section.</td></tr>
+<tr><td>implementation‑validator <em>PR mode</em></td><td>mode</td><td>2</td><td>Reviews a PR against <code>REVIEW.md</code> and the policy skills, and posts findings as Important or Nit.</td></tr>
+<tr><td><code>policy-*</code> skills</td><td>project skills (template)</td><td>3</td><td>Owned by the adopting project and listed in <code>swarm.md policies</code>. The plugin ships one example.</td></tr>
+</tbody>
+</table>
+<table>
+<thead><tr><th style="width:24%">Component</th><th style="width:8%">Phase</th><th>Role</th></tr></thead>
+<tbody>
+<tr><td><code>lib/swarmdoc.py</code></td><td>0</td><td>Tag‑aware fenced‑JSON extractor for <code>swarm.md</code>, <code>topology.md</code>, <code>bands.md</code>. Enforces the exactly‑one‑block rule. Standard library only.</td></tr>
+<tr><td><code>lib/render_roles.py</code></td><td>0</td><td><code>roles/</code> → <code>agents/</code> + <code>skills/&lt;role&gt;/SKILL.md</code>. <code>--check</code> for CI.</td></tr>
+<tr><td><code>lib/health.py</code> · <code>approve.py</code> · <code>gate.py</code></td><td>1</td><td>Control plane: heartbeat, nonce mint + ledger, git policy / guard / dispatch / git‑hook.</td></tr>
+<tr><td><code>lib/tier.py</code></td><td>2</td><td>Deterministic risk classifier (intent, plan, diff).</td></tr>
+<tr><td><code>lib/usage.py</code> · <code>metrics.py</code></td><td>3</td><td>Hook‑written cost log; playbook indicators from git.</td></tr>
+<tr><td><code>lib/bands.py</code></td><td>4</td><td>Detector: reads <code>bands.md</code>, evaluates signals, invokes triage by tier.</td></tr>
+<tr><td><code>hooks/hooks.json</code></td><td>1</td><td>Wires SessionStart, UserPromptSubmit, PreToolUse (Bash, Write|Edit|Bash, Agent), and SubagentStop.</td></tr>
+<tr><td><code>evals/</code></td><td>1–3</td><td><code>claude plugin eval</code> cases: L1 contract, L2 discipline, L3 capability, L4 parity.</td></tr>
+<tr><td><code>templates/</code></td><td>1–4</td><td><code>swarm.md</code>, <code>git-hooks/pre-commit</code>, <code>REVIEW.md</code>, <code>ci/plan-swarm.yml</code>, <code>CLAUDE.md</code>, <code>skills/policy-example/</code>, <code>managed-settings.example.json</code>, <code>bands.md</code>, <code>ci/plan-swarm-maintain.yml</code>.</td></tr>
+</tbody>
+</table>
+</section>
+
+<!-- ============================================================ 3 -->
+<section id="stages">
+<h2>3 · Artifacts each lifecycle stage builds (end state)</h2>
+<table>
+<thead><tr><th style="width:13%">Stage</th><th style="width:28%">Artifact(s)</th><th style="width:17%">Written by</th><th style="width:17%">Committed at</th><th style="width:10%">vs 2.1</th><th>Phase</th></tr></thead>
+<tbody>
+<tr><td>Intent</td><td><code>plans/intents/{date}-{slug}.md</code> → <code>{m}/intent.md</code> · roadmap entry</td><td>originator + PO (intent mode)</td><td><code>approve intent</code></td><td><span class="pill new">new</span></td><td>2</td></tr>
+<tr><td>Research</td><td><code>intent.md § Codebase context</code></td><td>Explore</td><td>with the intent</td><td><span class="pill mod">moved</span> from <code>plans/research/</code></td><td>2</td></tr>
+<tr><td>Spec</td><td><code>spec.md</code> (+ Policy Concerns) · <code>visual-spec.html</code>*</td><td>PO / visual‑PO</td><td><code>approve spec</code></td><td><span class="pill mod">own commit</span></td><td>1 (commit) · 3 (policy)</td></tr>
+<tr><td>Spec gates*</td><td><code>deliberations/spec-deliberation.md</code> · <code>adversarial-reviews/spec-validation.md</code></td><td>spec‑deliberator · spec‑validator</td><td>with the spec</td><td>unchanged</td><td>n/a</td></tr>
+<tr><td>Plan</td><td><code>plan.md</code> (+ proposed tier) · <code>data-model.md</code> · <code>api-contracts.md</code> · <code>visual-plan.html</code>*</td><td>architect / visual‑architect</td><td><code>approve plan</code></td><td><span class="pill mod">tier added</span></td><td>2</td></tr>
+<tr><td>Plan gates*</td><td><code>deliberations/plan-deliberation.md</code> · <code>adversarial-reviews/plan-validation.md</code></td><td>plan‑deliberator · plan‑validator</td><td>with the plan</td><td>unchanged</td><td>n/a</td></tr>
+<tr><td>Review gate</td><td><code>approvals.md</code> row (kind <code>plan</code>, tier) · branch <code>swarm/{m}</code></td><td><code>approve.py</code> · supervisor</td><td>plan commit</td><td><span class="pill new">new</span></td><td>1 (ledger) · 2 (branch)</td></tr>
+<tr><td>Build</td><td>code + tests · <code>plan.md</code> checkboxes · WIP on <code>swarm-wip/{m}/*</code></td><td>engineer ×≤5</td><td>squashed, then group commit</td><td><span class="pill mod">worktrees</span></td><td>3</td></tr>
+<tr><td>Audit</td><td><code>{m}/audit.md</code> (tracked, per‑group sections)</td><td>auditor</td><td>group commit</td><td><span class="pill mod">moved + tracked</span></td><td>1</td></tr>
+<tr><td>Implementation gate*</td><td><code>adversarial-reviews/implementation-validation.md</code> · <code>visual-recap.html</code>*</td><td>impl‑validator · recap</td><td>group commit</td><td>report‑only</td><td>1</td></tr>
+<tr><td>Commit gate</td><td>group commit · <code>approvals.md</code> row (kind <code>commit</code>)</td><td>auditor · <code>approve.py</code></td><td>that commit</td><td><span class="pill mod">nonce‑gated</span></td><td>1</td></tr>
+<tr><td>Every dispatch</td><td><code>usage.md</code> line (+ declined gates with tier)</td><td><code>usage.py</code> / supervisor</td><td>next commit</td><td><span class="pill mod">hook‑written</span></td><td>2 (declines) · 3 (hook)</td></tr>
+<tr><td>PR</td><td>PR (body: intent, groups, gates, audit, approvals, recap) · CI review comments</td><td>supervisor · CI</td><td><code>approve pr</code> → push</td><td><span class="pill new">new</span></td><td>2</td></tr>
+<tr><td>Release</td><td>annotated tag · roadmap "Shipped" · <code>approvals.md</code> row (kind <code>release</code>)</td><td>supervisor · PO</td><td><code>approve release</code></td><td><span class="pill mod">nonce‑gated</span></td><td>1</td></tr>
+<tr><td>Maintain</td><td>triage‑written <code>plans/intents/*.md</code> on <code>intent/*</code> PR</td><td>triage + workflow step</td><td>PO merges intent PR</td><td><span class="pill fut">future</span></td><td>4</td></tr>
+</tbody>
+</table>
+<p class="ev">* optional: an offered gate, add‑on, or swap‑in (see architecture.html Figure 2b). Project‑level: <code>plans/swarm.md</code> (Phase 1), <code>REVIEW.md</code> and the CI workflow (Phase 2), <code>CLAUDE.md</code> "Common mistakes" (Phase 3), <code>bands.md</code> (Phase 4).</p>
+</section>
+
+<!-- ============================================================ P0 -->
+<section id="p0">
+<h2>4 · Phase 0: Foundation <span class="pill gen">no behavior change</span></h2>
+<p>Make every later change a single edit. Fix the dual‑source problem (D6) and build the shared parser before touching behavior.</p>
+<div class="grp">Group 0.1 · parallel</div>
+<table>
+<thead><tr><th style="width:5%">ID</th><th style="width:38%">Change</th><th style="width:30%">Files</th><th>Verify</th></tr></thead>
+<tbody>
+<tr><td class="id">0.A</td><td>Create 14 canonical role files by merging each <code>agents/{r}.md</code> with <code>skills/{r}/SKILL.md</code>: shared body plus <code>&lt;!-- @agent --&gt;</code> / <code>&lt;!-- @skill --&gt;</code> sections, and <code>agent:</code> / <code>skill:</code> front‑matter blocks</td><td><span class="pill new">new</span> <code>roles/*.md</code> (13 lifecycle roles + simplifier)</td><td>review: no content lost per role</td></tr>
+<tr><td class="id">0.B</td><td><code>extract(text, tag)</code>: exactly one <code>```json &lt;tag&gt;</code> block, clear errors. Must pass on <code>topology.md</code></td><td><span class="pill new">new</span> <code>lib/swarmdoc.py</code>, <code>lib/tests/test_swarmdoc.py</code></td><td><code>uvx pytest lib/tests</code></td></tr>
+<tr><td class="id">0.C</td><td>Golden tests for the existing vote counter: finding mode, claim mode, <code>first_domino</code>, <code>--gate 1/3</code>, file+id grouping</td><td><span class="pill new">new</span> <code>lib/tests/test_tally.py</code>, fixtures</td><td>same</td></tr>
+<tr><td class="id">0.S</td><td>Spikes S1–S4 (§11), results recorded in <code>architecture.html §17</code></td><td>notes only</td><td>decision per spike</td></tr>
+</tbody>
+</table>
+<div class="grp">Group 0.2 · after 0.A</div>
+<table>
+<tbody>
+<tr><td class="id" style="width:5%">0.D</td><td style="width:38%">Generator: roles → agents + skills. <code>--check</code> exits non‑zero if outputs are stale</td><td style="width:30%"><span class="pill new">new</span> <code>lib/render_roles.py</code>, tests · <span class="pill gen">gen</span> <code>agents/*.md</code>, <code>skills/{r}/SKILL.md</code></td><td>first run reproduces today's 13 agents + 14 role skills (whitespace‑only diff)</td></tr>
+<tr><td class="id">0.E</td><td>Plugin CI: pytest (lib + wf‑trajectory) and <code>render_roles --check</code></td><td><span class="pill new">new</span> <code>.github/workflows/plugin-ci.yml</code></td><td>green on the PR</td></tr>
+<tr><td class="id">0.F</td><td>Docs: "edit <code>roles/</code>, never generated files"</td><td><span class="pill mod">mod</span> <code>AGENTS.md</code>, <code>README.md</code>, <code>SUBAGENTS.md</code></td><td>review</td></tr>
+</tbody>
+</table>
+<div class="exit"><b>Exit:</b> <code>render_roles --check</code> green · generated files match 2.1 behavior · L0 tests pass · spikes decided.</div>
+</section>
+
+<!-- ============================================================ P1 -->
+<section id="p1">
+<h2>5 · Phase 1: Control plane &amp; evidence</h2>
+<p>Turn the prose rules into mechanisms and put every approval in git. No new stages yet. Closes gaps G1, G2, and G5.</p>
+<div class="grp">Group 1.1 · parallel</div>
+<table>
+<thead><tr><th style="width:5%">ID</th><th style="width:38%">Change</th><th style="width:30%">Files</th><th>Verify</th></tr></thead>
+<tbody>
+<tr><td class="id">1.A</td><td>Heartbeat on session start; "enforcement active" context</td><td><span class="pill new">new</span> <code>lib/health.py</code> + tests</td><td>unit</td></tr>
+<tr><td class="id">1.B</td><td>Approval grammar (exact whole‑prompt match), nonce mint {kind, m, g, HEAD, ttl}, ledger append</td><td><span class="pill new">new</span> <code>lib/approve.py</code> + tests</td><td>unit: grammar, expiry, single use</td></tr>
+<tr><td class="id">1.C</td><td>Git policy table (commit / artifact commit / tag / force / default‑branch push), <code>--guard</code>, <code>--git-hook</code>, <code>--dispatch</code> (if S1). Fails closed on a bad <code>swarm.md</code></td><td><span class="pill new">new</span> <code>lib/gate.py</code> + tests (policy rows as cases)</td><td>unit: every row allow/deny</td></tr>
+<tr><td class="id">1.D</td><td>Project templates, first batch</td><td><span class="pill new">new</span> <code>templates/swarm.md</code>, <code>templates/git-hooks/pre-commit</code>, <code>templates/managed-settings.example.json</code></td><td><code>swarmdoc</code> parses template</td></tr>
+</tbody>
+</table>
+<div class="grp">Group 1.2 · after 1.1</div>
+<table>
+<tbody>
+<tr><td class="id" style="width:5%">1.E</td><td style="width:38%">Wire hooks: SessionStart→health, UserPromptSubmit→approve, PreToolUse Bash(git *)→gate, Write|Edit|Bash→guard, Agent→dispatch</td><td style="width:30%"><span class="pill new">new</span> <code>hooks/hooks.json</code></td><td>manual: blocked commit shows reason</td></tr>
+<tr><td class="id">1.F</td><td>Supervisor: heartbeat check first · prints exact approval phrases · derived‑state orientation · commits artifacts at the intent/spec/plan gates · dispatches the <em>author</em> for validator fixes</td><td><span class="pill mod">mod</span> <code>roles/supervisor.md</code></td><td>L2 evals</td></tr>
+<tr><td class="id">1.G</td><td>Auditor: report moves to <code>{m}/audit.md</code>, tracked (drop the <code>.gitignore</code>), commits only through a consumed nonce</td><td><span class="pill mod">mod</span> <code>roles/auditor.md</code></td><td>L2 eval</td></tr>
+<tr><td class="id">1.H</td><td>Validators report only. Remove "fix/apply" from step 8</td><td><span class="pill mod">mod</span> <code>roles/{spec,plan,implementation}-validator.md</code></td><td>L2 eval: no Edit on source</td></tr>
+<tr><td class="id">1.I</td><td>PO: explicit spec acceptance (<code>approve spec</code>, D11); applies spec tightenings</td><td><span class="pill mod">mod</span> <code>roles/product-owner.md</code>, <code>roles/visual-product-owner.md</code></td><td>review</td></tr>
+<tr><td class="id">1.J</td><td><b>New skill</b> <code>swarm-init</code>: installs <code>swarm.md</code> + git hook</td><td><span class="pill new">new</span> <code>skills/swarm-init/SKILL.md</code></td><td>run on a scratch repo</td></tr>
+</tbody>
+</table>
+<div class="grp">Group 1.3 · after 1.2</div>
+<table>
+<tbody>
+<tr><td class="id" style="width:5%">1.K</td><td style="width:38%">Evals L1 (validator JSON contract) + L2 (engineer‑no‑commit, supervisor‑stops, validator‑no‑edit, auditor‑needs‑nonce), run on both forms</td><td style="width:30%"><span class="pill new">new</span> <code>evals/l1-*</code>, <code>evals/l2-*</code></td><td><code>claude plugin eval</code> = 1.0</td></tr>
+<tr><td class="id">1.L</td><td>Docs: artifact map (<code>approvals.md</code>, <code>audit.md</code>), approval phrases, enforcement</td><td><span class="pill mod">mod</span> <code>README.md</code>, <code>SUBAGENTS.md</code>, <code>AGENTS.md</code>; <code>topology.md</code> annotate "implemented: gates, ledger"</td><td>review</td></tr>
+</tbody>
+</table>
+<div class="exit"><b>Exit:</b> an engineer's <code>git commit</code> is blocked (hook and git layer) · a sample milestone shows <code>approvals.md</code> and <code>audit.md</code> in history · L0–L2 green on agent and skill forms.</div>
+</section>
+
+<!-- ============================================================ P2 -->
+<section id="p2">
+<h2>6 · Phase 2: Front door &amp; back door</h2>
+<p>Add intent at the start and a PR at the end, so the swarm spans the playbook's Plan → Deploy. Closes gaps G4, G7, and G9.</p>
+<div class="grp">Group 2.1 · parallel</div>
+<table>
+<thead><tr><th style="width:5%">ID</th><th style="width:38%">Change</th><th style="width:30%">Files</th><th>Verify</th></tr></thead>
+<tbody>
+<tr><td class="id">2.A</td><td>PO <em>intent mode</em>: intent template, inbox triage, <code>git mv</code> on accept; research appends to <code>intent.md</code></td><td><span class="pill mod">mod</span> <code>roles/product-owner.md</code>, <code>roles/visual-product-owner.md</code></td><td>scenario eval</td></tr>
+<tr><td class="id">2.B</td><td>Risk classifier over intent text, plan paths, diff; only rises automatically</td><td><span class="pill new">new</span> <code>lib/tier.py</code> + tests</td><td>unit: rule table</td></tr>
+<tr><td class="id">2.C</td><td>Templates: review policy, CI (review · swarm‑evals · ledger‑check · metrics), <code>CLAUDE.md</code></td><td><span class="pill new">new</span> <code>templates/REVIEW.md</code>, <code>templates/ci/plan-swarm.yml</code>, <code>templates/CLAUDE.md</code></td><td>workflow lint</td></tr>
+<tr><td class="id">2.D</td><td>Git policy: <code>pr</code> / <code>release</code> push rules, open‑PR update rule</td><td><span class="pill mod">mod</span> <code>lib/gate.py</code> + tests</td><td>unit</td></tr>
+</tbody>
+</table>
+<div class="grp">Group 2.2 · after 2.1</div>
+<table>
+<tbody>
+<tr><td class="id" style="width:5%">2.E</td><td style="width:38%">Supervisor: intent inbox as Phase 0 · runs <code>tier.py</code> at intent, plan, and PR · tier‑based recommendations · declined gates → <code>usage.md</code> · branch <code>swarm/{m}</code> at <code>approve plan</code> · PR stage (<code>approve pr</code>, <code>gh pr create</code> with body) · local mode</td><td style="width:30%"><span class="pill mod">mod</span> <code>roles/supervisor.md</code></td><td>end‑to‑end run</td></tr>
+<tr><td class="id">2.F</td><td>Implementation‑validator <em>PR mode</em>: reads <code>REVIEW.md</code>; critical/high → Important, medium/low → Nit</td><td><span class="pill mod">mod</span> <code>roles/implementation-validator.md</code></td><td>L3 case</td></tr>
+<tr><td class="id">2.G</td><td>Recap emits a PR‑body section</td><td><span class="pill mod">mod</span> <code>roles/visual-implementation-recap.md</code></td><td>review</td></tr>
+<tr><td class="id">2.H</td><td>Architect lists irreversible steps explicitly (tier input)</td><td><span class="pill mod">mod</span> <code>roles/architect.md</code>, <code>roles/visual-architect.md</code></td><td>review</td></tr>
+<tr><td class="id">2.I</td><td><code>swarm-init</code> installs <code>REVIEW.md</code>, CI, <code>CLAUDE.md</code></td><td><span class="pill mod">mod</span> <code>skills/swarm-init/SKILL.md</code></td><td>scratch repo</td></tr>
+</tbody>
+</table>
+<div class="grp">Group 2.3 · after 2.2</div>
+<table>
+<tbody>
+<tr><td class="id" style="width:5%">2.J</td><td style="width:38%">Evals: <code>l2-pr-needs-nonce</code>, <code>l2-intent-before-spec</code></td><td style="width:30%"><span class="pill new">new</span> <code>evals/l2-*</code></td><td>= 1.0</td></tr>
+<tr><td class="id">2.K</td><td>Docs + marketplace description refresh; <code>topology.md</code> annotate</td><td><span class="pill mod">mod</span> READMEs, <code>.claude-plugin/marketplace.json</code>, <code>topology.md</code></td><td>review</td></tr>
+</tbody>
+</table>
+<div class="exit"><b>Exit:</b> one real milestone runs intent → merged PR with every artifact committed · CI review posts <code>REVIEW.md</code> findings · tier shown at plan and confirmed in the ledger.</div>
+</section>
+
+<!-- ============================================================ P3 -->
+<section id="p3">
+<h2>7 · Phase 3: Scale &amp; learn <span class="pill new">ships 3.0.0</span></h2>
+<p>Parallel worktrees, policy skills, the learning loops, and the full eval gate. Closes gaps G3, G6, G8, G10, G11, and G12.</p>
+<div class="grp">Group 3.1 · parallel</div>
+<table>
+<thead><tr><th style="width:5%">ID</th><th style="width:38%">Change</th><th style="width:30%">Files</th><th>Verify</th></tr></thead>
+<tbody>
+<tr><td class="id">3.A</td><td>Supervisor: worktree dispatch ≤ <code>engineers.max_concurrent</code> (5) · <code>merge --squash --no-commit</code> · conflict → Path B · Path A cap 3 → escalate</td><td><span class="pill mod">mod</span> <code>roles/supervisor.md</code></td><td>5‑task group run</td></tr>
+<tr><td class="id">3.B</td><td>Engineer: worktree‑aware; WIP commits on <code>swarm-wip/*</code> only</td><td><span class="pill mod">mod</span> <code>roles/engineer.md</code></td><td>L2 eval</td></tr>
+<tr><td class="id">3.C</td><td>Git policy: allow WIP commits on <code>swarm-wip/{m}/*</code>, deny pushing them</td><td><span class="pill mod">mod</span> <code>lib/gate.py</code> + tests</td><td>unit</td></tr>
+<tr><td class="id">3.D</td><td>Hook‑written cost log (fallback: supervisor lines if S4 fails)</td><td><span class="pill new">new</span> <code>lib/usage.py</code> · <span class="pill mod">mod</span> <code>hooks/hooks.json</code></td><td>unit</td></tr>
+<tr><td class="id">3.E</td><td>Metrics from <code>git log -- plans/</code> + <b>new skill</b> <code>swarm-metrics</code></td><td><span class="pill new">new</span> <code>lib/metrics.py</code> + tests, <code>skills/swarm-metrics/SKILL.md</code></td><td>fixture repo</td></tr>
+<tr><td class="id">3.F</td><td>Example policy skill + <code>swarm.md policies</code> documented</td><td><span class="pill new">new</span> <code>templates/skills/policy-example/SKILL.md</code></td><td>review</td></tr>
+</tbody>
+</table>
+<div class="grp">Group 3.2 · after 3.1</div>
+<table>
+<tbody>
+<tr><td class="id" style="width:5%">3.G</td><td style="width:38%">Policy slot: load <code>swarm.md policies</code>; <em>Policy Concerns</em> section in <code>spec.md</code></td><td style="width:30%"><span class="pill mod">mod</span> <code>roles/{product-owner,visual-product-owner,spec-validator,implementation-validator}.md</code></td><td>L3 case</td></tr>
+<tr><td class="id">3.H</td><td>Auditor: propose <code>CLAUDE.md</code> "Common mistakes" on convention FAILs; optional UI screenshots</td><td><span class="pill mod">mod</span> <code>roles/auditor.md</code></td><td>review</td></tr>
+<tr><td class="id">3.I</td><td><b>New subagent</b> form for simplifier (agent front matter: tools, color)</td><td><span class="pill mod">mod</span> <code>roles/simplifier.md</code> · <span class="pill gen">gen</span> <code>agents/simplifier.md</code></td><td><code>--check</code></td></tr>
+</tbody>
+</table>
+<div class="grp">Group 3.3 · after 3.2</div>
+<table>
+<tbody>
+<tr><td class="id" style="width:5%">3.J</td><td style="width:38%">Evals L3 (seeded: ambiguous spec, false plan assumption / <code>first_domino</code>, race → calibrated high) and L4 (agent vs skill parity); plugin CI blocks on L0–L2, reports L3–L4</td><td style="width:30%"><span class="pill new">new</span> <code>evals/l3-*</code>, <code>evals/l4-*</code> · <span class="pill mod">mod</span> <code>plugin-ci.yml</code></td><td>baseline recorded</td></tr>
+<tr><td class="id">3.K</td><td>Release: plugin <code>3.0.0</code>, <code>topology.md</code> status → <code>implemented</code>, docs final</td><td><span class="pill mod">mod</span> <code>plugin.json</code>, <code>topology.md</code>, READMEs, <code>AGENTS.md</code></td><td>review</td></tr>
+</tbody>
+</table>
+<div class="exit"><b>Exit:</b> a 5‑engineer group runs in worktrees and lands one audited commit · metrics baseline from <code>swarm-metrics</code> · prompt PRs gated on evals · plugin 3.0.0.</div>
+</section>
+
+<!-- ============================================================ P4 -->
+<section id="p4">
+<h2>8 · Phase 4: Maintain loop <span class="pill fut">future</span></h2>
+<table>
+<thead><tr><th style="width:5%">ID</th><th style="width:38%">Change</th><th style="width:30%">Files</th><th>Verify</th></tr></thead>
+<tbody>
+<tr><td class="id">4.A</td><td><b>New subagent + skill</b> <code>triage</code>: writes evidence‑backed intents only</td><td><span class="pill new">new</span> <code>roles/triage.md</code> · <span class="pill gen">gen</span> <code>agents/triage.md</code>, <code>skills/triage/SKILL.md</code></td><td>L2: writes only <code>plans/intents/</code></td></tr>
+<tr><td class="id">4.B</td><td>Detector over <code>bands.md</code> with source adapters</td><td><span class="pill new">new</span> <code>lib/bands.py</code> + tests</td><td>unit: σ tiers</td></tr>
+<tr><td class="id">4.C</td><td>Git policy: <code>intent/*</code> push when paths ⊆ <code>plans/intents/</code>; write‑path guard for triage</td><td><span class="pill mod">mod</span> <code>lib/gate.py</code></td><td>unit</td></tr>
+<tr><td class="id">4.D</td><td>Templates: <code>bands.md</code>, maintain workflow (cron → detector → <code>claude -p --agent plan:triage</code> → commit + intent PR)</td><td><span class="pill new">new</span> <code>templates/bands.md</code>, <code>templates/ci/plan-swarm-maintain.yml</code></td><td>synthetic breach</td></tr>
+<tr><td class="id">4.E</td><td>Incident → eval procedure and case template</td><td><span class="pill new">new</span> <code>evals/_template-incident/</code> · <span class="pill mod">mod</span> READMEs</td><td>review</td></tr>
+</tbody>
+</table>
+<div class="exit"><b>Exit:</b> a synthetic 3σ breach opens an intent PR · the PO merges it · it flows through the normal gates.</div>
+</section>
+
+<!-- ============================================================ roles -->
+<section id="roles">
+<h2>9 · Role change matrix</h2>
+<table>
+<thead><tr><th style="width:17%">Role</th><th>P0</th><th>P1</th><th>P2</th><th>P3</th><th>P4</th></tr></thead>
+<tbody>
+<tr><td><code>supervisor</code></td><td>→ roles/</td><td>heartbeat · phrases · derived state · artifact commits · author fixes</td><td>intent inbox · tiers · declines · branch · PR · local mode</td><td>worktrees ≤5 · squash · Path A cap</td><td>·</td></tr>
+<tr><td><code>product-owner</code> (+ visual)</td><td>→ roles/</td><td><code>approve spec</code> · applies tightenings</td><td>intent mode</td><td>policy skills · Policy Concerns</td><td>triages intent PRs</td></tr>
+<tr><td><code>architect</code> (+ visual)</td><td>→ roles/</td><td>applies plan fixes</td><td>irreversible steps listed</td><td>·</td><td>·</td></tr>
+<tr><td><code>engineer</code></td><td>→ roles/</td><td>(gated by hooks)</td><td>·</td><td>worktree · WIP on <code>swarm-wip/*</code></td><td>·</td></tr>
+<tr><td><code>auditor</code></td><td>→ roles/</td><td>tracked <code>audit.md</code> · nonce commits</td><td>·</td><td>Common mistakes · screenshots</td><td>·</td></tr>
+<tr><td><code>spec-</code> / <code>plan-validator</code></td><td>→ roles/</td><td>report only</td><td>·</td><td>spec‑validator: policies</td><td>·</td></tr>
+<tr><td><code>implementation-validator</code></td><td>→ roles/</td><td>report only</td><td>PR mode · <code>REVIEW.md</code></td><td>policies</td><td>·</td></tr>
+<tr><td>deliberators</td><td>→ roles/</td><td>·</td><td>·</td><td>·</td><td>·</td></tr>
+<tr><td><code>visual-implementation-recap</code></td><td>→ roles/</td><td>·</td><td>PR‑body section</td><td>·</td><td>·</td></tr>
+<tr><td><code>simplifier</code></td><td>→ roles/</td><td>·</td><td>·</td><td><b>agent form</b></td><td>·</td></tr>
+<tr><td><code>triage</code></td><td>·</td><td>·</td><td>·</td><td>·</td><td><b>new</b></td></tr>
+</tbody>
+</table>
+</section>
+
+<!-- ============================================================ files -->
+<section id="files">
+<h2>10 · File inventory (plugin)</h2>
+<table>
+<thead><tr><th style="width:36%">Path</th><th style="width:12%">Action</th><th style="width:10%">Phase</th><th>Note</th></tr></thead>
+<tbody>
+<tr><td><code>plugins/plan/roles/*.md</code> (14 → 15)</td><td><span class="pill new">new</span></td><td>0 · 4</td><td>canonical source; <code>triage</code> added in P4</td></tr>
+<tr><td><code>plugins/plan/agents/*.md</code></td><td><span class="pill gen">generated</span></td><td>0+</td><td>13 → 14 (simplifier) → 15 (triage)</td></tr>
+<tr><td><code>plugins/plan/skills/{role}/SKILL.md</code></td><td><span class="pill gen">generated</span></td><td>0+</td><td>14 → 15 (triage)</td></tr>
+<tr><td><code>plugins/plan/skills/{swarm-init,swarm-metrics}/</code></td><td><span class="pill new">new</span></td><td>1 · 3</td><td>hand‑written utilities</td></tr>
+<tr><td><code>plugins/plan/skills/{wf-trajectory,visual-*/assets}</code></td><td>unchanged</td><td>·</td><td>hand‑written</td></tr>
+<tr><td><code>plugins/plan/lib/{swarmdoc,render_roles}.py</code></td><td><span class="pill new">new</span></td><td>0</td><td>standard library only</td></tr>
+<tr><td><code>plugins/plan/lib/{health,approve,gate}.py</code></td><td><span class="pill new">new</span></td><td>1</td><td><code>gate.py</code> grows in P2–P4</td></tr>
+<tr><td><code>plugins/plan/lib/{tier,usage,metrics,bands}.py</code></td><td><span class="pill new">new</span></td><td>2 · 3 · 3 · 4</td><td></td></tr>
+<tr><td><code>plugins/plan/lib/tally.py</code></td><td>unchanged</td><td>·</td><td>gains tests in P0</td></tr>
+<tr><td><code>plugins/plan/lib/tests/</code></td><td><span class="pill new">new</span></td><td>0+</td><td>L0</td></tr>
+<tr><td><code>plugins/plan/hooks/hooks.json</code></td><td><span class="pill new">new</span></td><td>1 · 3</td><td></td></tr>
+<tr><td><code>plugins/plan/evals/</code></td><td><span class="pill new">new</span></td><td>1–4</td><td>L1–L4</td></tr>
+<tr><td><code>plugins/plan/templates/</code></td><td><span class="pill new">new</span></td><td>1–4</td><td>9 templates</td></tr>
+<tr><td><code>plugins/plan/topology.md</code></td><td><span class="pill mod">mod</span></td><td>1–3</td><td>annotated per phase; <code>implemented</code> at 3.0.0</td></tr>
+<tr><td><code>plugins/plan/.claude-plugin/plugin.json</code></td><td><span class="pill mod">mod</span></td><td>0–3</td><td>version 2.1.1 → 3.0.0</td></tr>
+<tr><td><code>.github/workflows/plugin-ci.yml</code></td><td><span class="pill new">new</span></td><td>0 · 3</td><td>repo CI</td></tr>
+<tr><td><code>README.md</code>, <code>SUBAGENTS.md</code>, <code>AGENTS.md</code>, <code>marketplace.json</code></td><td><span class="pill mod">mod</span></td><td>each</td><td>docs follow prompts</td></tr>
+<tr><td><code>plans/audit/.gitignore</code> (in projects)</td><td><span class="pill del">stop creating</span></td><td>1</td><td>audits become tracked</td></tr>
+</tbody>
+</table>
+</section>
+
+<!-- ============================================================ risks -->
+<section id="risks">
+<h2>11 · Spikes &amp; risks</h2>
+<table>
+<thead><tr><th style="width:6%">ID</th><th style="width:34%">Spike (Phase 0)</th><th style="width:30%">If it fails</th><th>Affects</th></tr></thead>
+<tbody>
+<tr><td class="id">S1</td><td><code>PreToolUse</code> matches <code>Agent</code> and sees <code>subagent_type</code></td><td>Review gate stays prompt‑enforced for dispatch; commits are still gated</td><td>1.C, 1.E</td></tr>
+<tr><td class="id">S2</td><td>Worktree base can be <code>swarm/{m}</code> HEAD</td><td>Supervisor runs <code>git worktree add</code> itself and dispatches into the path</td><td>3.A</td></tr>
+<tr><td class="id">S3</td><td>Claude Code shells expose an env marker the git hook can read</td><td>Supervisor writes a session marker file</td><td>1.C (<code>--git-hook</code>)</td></tr>
+<tr><td class="id">S4</td><td><code>SubagentStop</code> payload carries token and duration totals</td><td>Supervisor keeps writing <code>usage.md</code></td><td>3.D</td></tr>
+</tbody>
+</table>
+<table>
+<thead><tr><th style="width:34%">Risk</th><th>Mitigation</th></tr></thead>
+<tbody>
+<tr><td>Admin sets <code>allowManagedHooksOnly</code></td><td>Heartbeat detection (1.A). The <code>managed-settings.example.json</code> template shows adopting <code>gate.py</code> as a managed hook.</td></tr>
+<tr><td>Phase 0 merge loses nuance between agent and skill text</td><td>Per‑role review in 0.A. <code>--check</code> plus L4 parity evals from Phase 3.</td></tr>
+<tr><td>Approval ceremony feels heavy (6 phrases per milestone)</td><td>The supervisor prints the exact phrase. Measure time spent in gates with <code>swarm-metrics</code> and revisit after the first 3 milestones.</td></tr>
+<tr><td>Eval cost</td><td>L0–L2 block (cheap, deterministic graders). L3–L4 only report, and run on prompt changes only.</td></tr>
+</tbody>
+</table>
+</section>
+
+<footer>Implementation plan · 24 Sep 2026 · baseline <code>a54fa10</code> · target plan‑swarm@3.0 (<code>plugins/plan/topology.md</code>) · no code was changed to produce this document.</footer>
+</main>
+</div>
+</body>
+</html>

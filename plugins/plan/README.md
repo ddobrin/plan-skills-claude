@@ -1,231 +1,138 @@
-# `plan` Plugin Skills
+# `plan` plugin: plan-swarm@3.0
 
-A swarm of role-based agents and adversarial validation gates that drive a feature, bug fix, or refactor through a disciplined **spec → plan → execute → audit → commit** lifecycle.
+An AI-native software development lifecycle for Claude Code. A swarm of role agents takes a feature, bug fix, or refactor from **intent → spec → plan → parallel build → audit → commit → pull request → release**. Optional validator and deliberator panels attack or improve each artifact at its phase boundary, and a hook-enforced **control plane** makes sure nothing is committed, pushed, or tagged without the user's exact approval phrase.
 
-These skills are designed to be used together. A single orchestrator (`supervisor`) dispatches the role agents in sequence, stops for human approval at defined gates, and treats files in `plans/` — not chat messages — as the single source of truth. Three independent *validator* skills slot in at the boundary between each phase to attack the artifact (spec, plan, or diff) before the next phase consumes it.
-
-> **Skills or subagents?** This document describes the **skills** form (invoked with the `Skill` tool). The same swarm is also packaged as **subagents** under [`agents/`](agents/) — dispatched with the `Agent` tool (`subagent_type`), auto-delegated from each agent's `description`, or launched with `claude --agent <name>`. The two families are kept in sync; the agents add per-role `model`, `color`, and `tools`. See [`SUBAGENTS.md`](SUBAGENTS.md) for the agent-specific details.
+The swarm ships in two forms with identical behavior: **skills** (invoked with the `Skill` tool, e.g. `plan:supervisor`) and **subagents** (dispatched with the `Agent` tool as `plan:{name}`, auto-delegated, or launched with `claude --agent {name}`). Both are generated from one source per role in [`roles/`](roles/). This document describes the skills form and the shared machinery; [`SUBAGENTS.md`](SUBAGENTS.md) covers the agent specifics. The developer guide is [`docs/playbook.html`](../../docs/playbook.html); the as-built description is [`docs/ai-dlc.html`](../../docs/ai-dlc.html).
 
 ---
 
-## The Two Families
+## Quick start
 
-| Family | Skills | Purpose |
-|---|---|---|
-| **Swarm roles** | `supervisor`, `product-owner` (or `visual-product-owner`), `architect` (or `visual-architect`), `engineer`, `simplifier`, `auditor`, `visual-implementation-recap` | Perform the lifecycle — discover, spec, plan, build, refine, verify, and recap the result. |
-| **Adversarial validators** | `spec-validator`, `plan-validator`, `implementation-validator` | Attack each artifact at its phase boundary with an independent 3-skeptic panel; keep only findings confirmed by a 2-of-3 majority. |
-| **Deliberative panels** | `spec-deliberator`, `plan-deliberator` | Improve a drafted artifact via delegates holding deliberately disjoint context (stakeholder bundles for specs, codebase/intent/delivery territories for plans) who deliberate to consensus — the generative counterpart to the validators. |
-
----
-
-## The Lifecycle
-
-```
- IDEA
-  │
-  ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│  supervisor (THE SUPERVISOR) — orchestrates everything below            │
-└─────────────────────────────────────────────────────────────────────┘
-  │
-  ▼  Phase 0  Strategic Research ─────────────► plans/research/*.md
-  │
-  ▼  Phase 1  product-owner   ── "Grill Loop" ─► spec.md + 00-ROADMAP.md
-  │                                                  │
-  │                              ┌───────────────────▼───────────────────┐
-  │                              │ spec-deliberator (optional — enrich   │
-  │                              │ spec with siloed stakeholder context) │
-  │                              └───────────────────┬───────────────────┘
-  │                                    ╔═════════════▼═════════════╗
-  │                                    ║   spec-validator (gate)   ║
-  │                                    ╚═══════════════════════════╝
-  ▼  Phase 2  architect        ── plan ────────► plan.md (+ data-model.md)
-  │                                                  │
-  │                              ┌───────────────────▼───────────────────┐
-  │                              │ plan-deliberator (optional — reshape  │
-  │                              │ plan, decide trade-offs by territory) │
-  │                              └───────────────────┬───────────────────┘
-  │                                    ╔═════════════▼═════════════╗
-  │                                    ║   plan-validator (gate)   ║
-  │                                    ╚═══════════════════════════╝
-  ▼  Phase 3  🛑 HUMAN REVIEW GATE — user must "approve"
-  │
-  ▼  Phase 4  CONSTRUCTION LOOP, per execution group:
-  │             engineer (×N parallel, TDD) ⇄ auditor (verify)
-  │                  │                            │
-  │             simplifier (optional refine)      │
-  │                                    ╔══════════▼══════════════════════╗
-  │                                    ║ implementation-validator (gate) ║
-  │                                    ╚═════════════════════════════════╝
-  │             🛑 git commit — only on green audit + explicit user "yes"
-  │
-  ▼  Phase 5  RELEASE & TAG — product-owner marks release "Shipped"
-COMMIT / TAG
+```text
+/plugin marketplace add ddobrin/plan-skills-claude
+/plugin install plan@plan-skills
 ```
 
-The supervisor offers each validator gate and deliberator panel at its phase boundary and runs it only when the user accepts; the two 🛑 gates always stop for the human.
+Until 3.0 is published to the marketplace, the installed plugin is the older 2.1 (no `swarm-init`). Load the 3.0 plugin from a checkout instead, with `claude --plugin-dir <checkout>/plugins/plan`, and disable the installed `plan@plan-skills` in the `/plugin` menu.
+
+In the target repository, type **`/plan:swarm-init`** once. It installs `plans/swarm.md` (settings), three git hooks (`pre-commit`, `pre-merge-commit`, `pre-push`), and optionally `REVIEW.md`, the CI workflow, and an `AGENTS.md` skeleton (not added when the repository already has a `CLAUDE.md`; the roles read either file). Then start the supervisor as the main session, **`claude --agent plan:supervisor`** (or say "be the supervisor"); it dispatches each role as a subagent. See [SUBAGENTS.md](SUBAGENTS.md#invoking-an-agent). The plugin's hooks are active only in repositories that have `plans/swarm.md`.
 
 ---
 
-## Skill Reference
+## The lifecycle
 
-### Swarm Roles
+```
+ request ─► 1 INTENT ─► 🔒 approve intent ─► 2 research ─► 3 SPEC ─► [spec gates] ─► 🔒 approve spec
+        ─► 4 PLAN ─► [plan gates] ─► 🔒 approve plan (tier confirmed)
+        ─► 5 per execution group: engineers ×≤5 in worktrees ─► squash ─► [simplifier] ─► auditor
+                                  ─► [implementation gate · recap] ─► 🔒 approve commit {m} g{n}
+        ─► 6 🔒 approve pr ─► CI review ─► code owner merges ─► 7 🔒 approve release ─► tag
+```
 
-#### 1. `supervisor` — The Supervisor
-The Project Manager and Guardian of the Protocol. **Does no work itself**; it runs the state machine, dispatching the other agents in the correct order and enforcing the lifecycle above.
-
-- **Owns:** protocol enforcement, artifact management, human gating, the git protocol.
-- **Key rules:** never codes directly (delegates to `engineer`); passes *file paths*, not oral instructions; **must stop for user approval** after planning and before execution; never runs `git commit` itself — it shows the drafted commit message, gets explicit user approval, and dispatches the `auditor` (the only role that commits).
-- **Triggers:** "be the supervisor", "orchestrate this end to end", "run the swarm", "drive this from idea to commit", or resuming a milestone in `plans/active_milestones/`.
-
-#### 2. `product-owner` — The Product Owner
-Translates raw, ambiguous human ideas into rigorous, testable specifications, and owns the master roadmap.
-
-- **Produces:** `plans/active_milestones/{moniker}/spec.md` (with Gherkin `Given/When/Then` acceptance criteria) and updates `plans/00-ROADMAP.md`.
-- **Signature move — the "Grill Loop":** interrogates the user (≤3 Socratic questions at a time) about edge cases, limits, error states, and UX until ambiguity is resolved. No clear acceptance criteria → not a spec.
-- **Constraints:** writes no code and no architecture — defines *what* and *why*, never *how*; never guesses an unspecified edge case.
-
-#### 2·alt. `visual-product-owner` — The Visual Product Owner (Spec author + Renderer)
-A **drop-in alternative to `product-owner`** for specs that deserve a human-optimized review surface. Runs the identical Grill Loop and writes the same `spec.md`, then renders that spec as a self-contained, browsable HTML document.
-
-- **Produces:** the same `plans/active_milestones/{moniker}/spec.md` (structure-identical, so `spec-validator`/`architect` consume it unchanged) and the same `plans/00-ROADMAP.md` update **plus** `plans/active_milestones/{moniker}/visual-spec.html`.
-- **The visual file:** a single, zero-build HTML page (opens via `file://`) with eight spec-native surfaces — overview, user-story cards, color-coded Given/When/Then acceptance criteria, user-flow diagrams, edge-cases/constraints, wireframes/prototype, open questions, and author comments. Diagrams use Mermaid + a raw-source fallback; both via pinned CDN with SRI.
-- **Use it instead of `product-owner`** at the Phase-1 spec step when the spec review benefits from visuals (UX-heavy or acceptance-criteria-dense work). The HTML is a **derived view** of `spec.md` — if they disagree, `spec.md` wins.
-- **Constraints:** same as `product-owner` (no code, no architecture, no guessing) plus: must always still emit `spec.md`; self-contained single file; the visual shows *what & why* only (no file maps, code, or system internals — those are the Architect's); comments are static author callouts, not a live system.
-
-#### 3. `architect` — The Chief Software Architect (Planner)
-Reads the spec, investigates the actual codebase, and produces a detailed, micro-stepped implementation plan. **Read-only on source code.**
-
-- **Produces:** `plans/active_milestones/{moniker}/plan.md` (optionally `data-model.md` / `api-contracts.md`).
-- **Plan shape:** tasks grouped into **parallel execution groups** (tasks in a group must touch independent files); every task includes a test/"characterize behavior" step before any refactor — *"if there is no test, there is no refactoring."*
-- **Constraints:** never edits source; never commits; verification steps must name exact commands, not "ensure it works".
-
-#### 3·alt. `visual-architect` — The Visual Architect (Planner + Renderer)
-A **drop-in alternative to `architect`** for plans that deserve a human-optimized review surface. Does the identical planning work, then renders the plan as a self-contained, browsable HTML document.
-
-- **Produces:** the same `plans/active_milestones/{moniker}/plan.md` (structure-identical, so `plan-validator`/`engineer`/`auditor` consume it unchanged) **plus** `plans/active_milestones/{moniker}/visual-plan.html`.
-- **The visual file:** a single, zero-build HTML page (opens via `file://`) with nine surfaces — overview, architecture diagrams, file map, annotated code, OpenAPI-style API cards, schema map, wireframes/prototype, open questions, and author comments. Diagrams use Mermaid + a raw-source fallback; code uses highlight.js; both via pinned CDN with SRI.
-- **Use it instead of `architect`** at the Phase-2 planning step when the human review gate benefits from visuals (architecture-heavy or ambiguous work). The HTML is a **derived view** of `plan.md` — if they disagree, `plan.md` wins.
-- **Constraints:** same as `architect` (read-only source, never commits) plus: must always still emit `plan.md`; self-contained single file; comments are static author callouts, not a live system.
-
-#### 4. `engineer` — The Expert Builder
-Implements the plan exactly, one atomic step at a time, under strict Test-Driven Development.
-
-- **Doctrine:** no untested changes; Red → Green → Refactor; characterization tests + seams for legacy code (Feathers); small increments that keep the build green; the simplest code that fits existing patterns; fail fast; no tidying outside the task.
-- **Tracks progress** by checking off todos directly in `plan.md`; uses `git mv` to preserve history.
-- **Constraints:** strict scope — no unrequested refactors or features; no plan → no code; never hands off a broken build; never commits.
-
-#### 5. `simplifier` — The Refiner
-Improves clarity, consistency, and maintainability of existing code **with zero behavioral change**.
-
-- **Focus:** reduce nesting and cognitive load, explicit naming, early returns, no nested ternaries; clarity over brevity; match the project's existing style.
-- **Constraints:** zero-regression — never alters business logic, fixes unrelated bugs, or adds features. Use when asked to "simplify", "refactor for clarity", or "clean up this file".
-
-#### 6. `auditor` — The Quality Gatekeeper (Verifier)
-Skeptically verifies the engineer's work against the plan, with evidence, and is the gate before any commit.
-
-- **Verifies:** evidence-based static checks (cite `file:lines`), dynamic build + test runs, and **anti-shortcut detection** (hunts for `TODO`/`FIXME`/placeholders, deferred-work comments, skipped or gutted tests, fake/hardcoded implementations).
-- **Produces:** a formal report at `plans/audit/AUDIT_[Plan_Name].md`.
-- **Constraints:** never fixes code (reports only, hands fixes back to the engineer); no new capability without tests = automatic FAIL; commits/merges only on a **passing audit AND explicit user approval**.
-
-#### 7. `visual-implementation-recap` — The Implementation Recap (Renderer)
-An **additive** renderer — **not** a drop-in replacement for any role, and never a substitute for the audit. After the engineer implements `plan.md` and the auditor returns a green audit, it renders everything the milestone changed into a self-contained, browsable HTML document for the human commit gate.
-
-- **Produces:** `plans/active_milestones/{moniker}/visual-recap.html` (purely additive — nothing else in the swarm changes).
-- **The visual file:** a single, zero-build HTML page (opens via `file://`) with nine recap surfaces — overview + metrics, tasks completed, a changed-files tree with diffstat, annotated diffs (the centerpiece), architecture, API & schema changes, before/after UI, the audit verdict with evidence, and author notes. Diffs render with pure CSS; diagrams use Mermaid + a raw-source fallback; both libraries load via pinned CDN with SRI.
-- **Grounded & read-only:** every diff line, file, and stat is taken verbatim from the real `git diff` + `plan.md` + the audit report (`AUDIT_[Plan_Name].md`) — true by construction, never invented; secrets are redacted; clipped diffs say so. Read-only on source; **never commits** (that stays the auditor's job after approval).
-- **Use it** at the commit gate, after a green audit, when the reviewer benefits from seeing the whole change at altitude rather than prose plus a raw diff.
-
-### Deliberative Panel
-
-#### `spec-deliberator` — Deliberate the Spec
-Runs **after a spec is drafted, before `spec-validator`**, when the spec depends on knowledge siloed across stakeholders, docs, or repos. The structural inverse of the validators: delegates get *disjoint* context bundles (validators get identical full context), communication is the mechanism (validators forbid it), and the output is consensus on one revised spec (not a majority vote on findings).
-
-- **Machinery:** 3 delegates (product · engineering · ops/security by default), each seeded with a private context bundle passing the **asymmetry test** (name a fact only that delegate knows that could change the spec — or fall back to centralized revision, which beats a clone panel). Sequential turns relayed **verbatim** by the orchestrator, same agents continued across rounds, hard cap 4 rounds. Acceptance must be *earned* — each accepting delegate states what it verified or what changed its mind, the guard against round-1 sycophancy.
-- **Output:** the revised `spec.md` plus a deliberation record at `deliberations/spec-deliberation.md` (bundles, disclosures, edits with rationale, disputes, round log). Hard-constraint disputes escalate to the user; the revised spec still goes through `spec-validator`.
-- **Hybrid:** a 2-delegate mini-panel over a validator run's *unconfirmed 1-vote findings* adjudicates exactly where independent judgment ran out.
-
-#### `plan-deliberator` — Deliberate the Plan
-Runs **after a plan is drafted, before `plan-validator`**, when the plan spans more territory — spec intent, multiple subsystems, the delivery pipeline — than one agent can deep-read at once, or leaves a trade-off open. Where the validator predicts failure of a fixed plan, the deliberator **reshapes** it and **decides trade-offs** (migration strategy, group boundaries, scope) with each territory's constraints on the record — the one thing a vote structurally cannot produce.
-
-- **Machinery:** 3 delegates (intent · codebase · delivery by default; split codebase by subsystem rather than adding role types), asymmetry engineered by **assigned investigation** — each delegate deep-reads only its territory and is the panel's sole authority on it. Every claim must cite its territory (`file:line`, spec clause, or CI command); sequential verbatim-relayed turns, same agents continued via SendMessage, hard cap 4 rounds, acceptance requires a stated basis.
-- **Output:** the revised `plan.md` (structure preserved: parallel groups, test-first steps) plus a deliberation record at `deliberations/plan-deliberation.md` — territories, cited disclosures, trade-offs decided, edits with rationale, disputes, round log. Hard-evidence disputes escalate to the user; the revised plan still faces `plan-validator`.
-- **Hybrid:** a 2-delegate mini-panel over a `plan-validator` run's unconfirmed tail → `deliberations/plan-deliberation-tail.md`.
-
-### Adversarial Validators
-
-All three share the same machinery: dispatch **3 independent skeptic agents in parallel** (no shared scratchpad), each framed to *break* the artifact with a **default-to-reject** posture, then keep only findings confirmed by a **2-of-3 majority** (1-vote findings are surfaced as "Unconfirmed (FYI)", never silently dropped). Each skeptic returns a single fenced JSON block; the orchestrator saves the verdicts and counts votes by stable kebab-case `id` with `lib/tally.py` instead of tallying by hand. The gate is tunable: drop to **any-one** for high-stakes work, raise to **unanimous** when re-work is costly. Every panel then writes a **human-readable Markdown report** to `plans/active_milestones/{moniker}/adversarial-reviews/{stage}-validation.md` — written on every run (even a clean pass), with re-runs preserved as `-r2`/`-r3` — so the verdict is browsable without opening an agent transcript.
-
-#### 8. `spec-validator` — Attack the Spec
-Runs **after a spec is drafted, before a plan is written** — defects are cheapest to fix here.
-
-- **Attack surface:** ambiguity, missing requirements (errors, empty/huge inputs, concurrency, auth, limits, units, time), contradictions, untestable acceptance criteria, and *malicious compliance* (the laziest implementation that passes every criterion yet is useless).
-- **Output:** confirmed findings each carry a `tightening` — a concrete reworded/added requirement to fold back into the spec.
-
-#### 9. `plan-validator` — Attack the Plan
-Runs **after a plan is written, before execution**. Unlike spec skeptics, these **read the codebase** to check the plan's assumptions against reality.
-
-- **Attack surface:** ordering/dependency bugs ("step 4 edits what step 2 forgot to create"), false assumptions about existing code (a named function/field/signature that doesn't exist — *open the file and check*), unverifiable "verify" steps, missing rollback, missing migration/compat, hidden coupling.
-- **Output:** each finding cites `file:line` evidence and a `fix`; the panel names the **`first_domino`** — the earliest failure that invalidates later steps.
-
-#### 10. `implementation-validator` — Attack the Diff
-Runs **after code is written, before merge**. Reasons about the code (it does *not* launch the app).
-
-- **Two modes:** *finding-hunt* (default — hunt the diff for defects, default `isReal=false`) and *claim-refutation* (try to refute explicit acceptance claims, default `refuted=true`).
-- **Attack surface:** claim vs. reality, broken/swallowed failure paths, edge cases, concurrency races, resource/correctness, regressions.
-- **Signature output — severity calibration:** the panel's most valuable product isn't deletion but *corrected severity* (e.g. three reviewers call a singleton race "Critical"; it's confirmed real but downgraded to "High" because impact is gated on concurrent requests). Always surface the calibration delta.
-
-### Utility
-
-#### `wf-trajectory` — Visualize a Workflow Run
-An out-of-band **utility** skill (not part of the lifecycle) that renders a completed Claude Code Workflow run (`wf_<runId>.json`) as a self-contained, offline HTML page: summary metrics, a run → phase → agent tree with prompt/result previews, and a parallelism timeline.
-
-- **Produces:** `wf-trajectory/<runId>.html` in the current project.
-- **Triggers:** "visualize the workflow run", "render wf trajectory", "trace a workflow".
+- 🔒 = a human approval phrase. The `UserPromptSubmit` hook turns it into a single-use approval bound to the current HEAD (15 minutes by default) and appends a row to the milestone's `approvals.md`. The `PreToolUse` gate consumes it before the matching git operation.
+- `[…]` = offered: validators, deliberators, simplifier, and recap run only when the user says yes. The milestone's **risk tier** (routine · elevated · critical, from rules in `plans/swarm.md`) sets how strongly the supervisor recommends them; declines are logged with the tier.
+- In **pr mode** (default) the milestone lives on branch `swarm/{m}`, created when the intent is accepted, and ends in a PR. In **local mode** commits land on the current branch and there is no PR.
+- Feedback loops: validator findings go back to the author (product owner or architect); audit failures go back to an engineer (**Path A**, at most 3 rounds per task, then the user decides); impossible plans go back to the architect (**Path B**, re-approved); PR review findings become a fix group.
 
 ---
 
-## Artifact Map
+## Skills
 
-The swarm communicates through files under `plans/`. Knowing this layout is the fastest way to understand any in-flight milestone.
+### Lifecycle roles
 
-| Path | Written by | Contents |
+| Skill | Role |
+|---|---|
+| `supervisor` | Orchestrator. Checks enforcement (`lib/health.py --status`), derives each milestone's state from its files, dispatches roles, offers gates by tier, prints the exact approval phrase at every gate, runs worktrees and squashes, opens the PR. Never codes, never commits. |
+| `product-owner` | Writes intents (intent mode) and Gherkin specs through the **Grill Loop** (≤3 questions at a time), loads the project's policy skills, records *Policy Concerns*, owns `00-ROADMAP.md`, applies spec-validator tightenings. No code, no Bash. |
+| `visual-product-owner` | Drop-in for `product-owner`; also renders `visual-spec.html`. |
+| `architect` | Reads the code (read-only, no Bash) and writes `plan.md`: micro-steps, test first, parallel groups with disjoint files, *Irreversible Steps*. Applies plan-validator fixes and Path B revisions. |
+| `visual-architect` | Drop-in for `architect`; also renders `visual-plan.html`. |
+| `engineer` | Implements one task under strict TDD. In **worktree mode** it works only in its own worktree and may make WIP commits on `swarm-wip/{m}/{task}`; otherwise it never commits. |
+| `simplifier` | Optional clarity-only refactor of the staged group diff, zero behavioral change. |
+| `auditor` | Verifies each group with `file:line` evidence, build and tests, and an anti-shortcut scan; appends `### Group g · Round r · PASS/FAIL` to the tracked `audit.md`. **The only role that commits**, and only with an approval. |
+| `visual-implementation-recap` | Renders `visual-recap.html` for the commit gate and the PR; additive, never a substitute for the audit. |
+
+### Offered panels
+
+| Skill | Panel |
+|---|---|
+| `spec-deliberator` | 3 delegates with **disjoint** context bundles (product · engineering · ops/security) converge on one revised spec, ≤4 rounds. Always followed by `spec-validator`. |
+| `spec-validator` | 3 independent skeptics attack the spec (ambiguity, gaps, untestable criteria, malicious compliance, policy). 2-of-3 quorum via `lib/tally.py`. **Report only**: tightenings go to the product owner. |
+| `plan-deliberator` | 3 delegates with **assigned territories** (intent · codebase · delivery) reshape the plan and decide trade-offs. Always followed by `plan-validator`. |
+| `plan-validator` | 3 skeptics read the codebase to find the **first domino**. Report only: fixes go to the architect. |
+| `implementation-validator` | 3 skeptics attack the diff; its key output is **calibrated severity**. Report only: defects go to an engineer. **PR mode** reads `REVIEW.md` and maps severity to Important/Nit. |
+
+All panels write a Markdown report under the milestone (`adversarial-reviews/` or `deliberations/`) on every run, re-runs as `-r2`, `-r3`.
+
+### Utilities
+
+| Skill | Purpose |
+|---|---|
+| `swarm-init` | Installs the project templates (never overwrites). |
+| `swarm-metrics` | Reports lead times, first-pass audit rate, rework, cost, declined gates, and intent survival from committed files (`lib/metrics.py`). |
+| `wf-trajectory` | Renders a Claude Code Workflow run as an offline HTML page. |
+
+---
+
+## Control plane (`hooks/hooks.json` → `lib/`)
+
+| Hook | Script | Does |
 |---|---|---|
-| `plans/research/*.md` | Phase 0 investigator | Context report: affected domain, existing patterns, constraints. |
-| `plans/00-ROADMAP.md` | `product-owner` | Master roadmap — releases, milestones, and their status. |
-| `plans/active_milestones/{moniker}/context.md` | `product-owner` | The context report, copied in once the milestone is opened. |
-| `plans/active_milestones/{moniker}/spec.md` | `product-owner` | The specification (Gherkin acceptance criteria). |
-| `plans/active_milestones/{moniker}/visual-spec.html` | `visual-product-owner` | Self-contained, browsable companion to `spec.md` for spec review (zero build; opens in any browser). |
-| `plans/active_milestones/{moniker}/deliberations/{spec,plan}-deliberation.md` | `spec-deliberator` · `plan-deliberator` | Deliberation record — panel & private bundles/territories, key disclosures (cited), trade-offs decided, applied edits with rationale and acceptance bases, disputes (converged/arbitrated/escalated), round log. Written every run, even on "no changes"; re-runs append `-r2`; the hybrid tail-panel writes `-tail`. |
-| `plans/active_milestones/{moniker}/plan.md` | `architect` | Micro-stepped plan with parallel execution groups; engineer checks off todos here. |
-| `plans/active_milestones/{moniker}/data-model.md` · `api-contracts.md` | `architect` | Optional supporting design artifacts. |
-| `plans/active_milestones/{moniker}/visual-plan.html` | `visual-architect` | Self-contained, browsable companion to `plan.md` for the human review gate (zero build; opens in any browser). |
-| `plans/active_milestones/{moniker}/adversarial-reviews/{spec,plan,implementation}-validation.md` | `spec-validator` · `plan-validator` · `implementation-validator` | Human-readable Markdown report from each skeptic panel — verdict, confirmed findings (with `file:line` evidence and fixes), unconfirmed tail, and (for implementation) the severity-calibration table. Written every run, even on a clean pass; re-runs append `-r2`, `-r3`. |
-| `plans/audit/AUDIT_[Plan_Name].md` | `auditor` | Evidence-based audit report (the `plans/audit/` dir is git-ignored). |
-| `plans/active_milestones/{moniker}/usage.md` | `supervisor` | Cost log: one line per agent dispatch with the phase, the agent, and the token, tool-use, and duration totals its result reported. |
-| `plans/active_milestones/{moniker}/visual-recap.html` | `visual-implementation-recap` | Self-contained, browsable recap of everything the milestone changed — diffstat, annotated diffs, task/audit status — for the human commit gate (zero build; opens in any browser). |
+| `SessionStart` | `health.py` | Heartbeat, refreshes the git hook's copy of the gate, reports enforcement status. |
+| `UserPromptSubmit` | `approve.py` | Parses the six approval phrases (whole message, case-insensitive), mints the approval, writes the ledger row. |
+| `PreToolUse` (Bash, Write, Edit, Agent) | `gate.py` | Git policy: commits need a matching approval (WIP only on `swarm-wip/*`), first push of `swarm/{m}` needs `approve pr`, tags need `approve release`; no default-branch or force pushes, no history rewrites on swarm branches, no hook bypasses. Blocks agent writes to `approvals.md`, `plans/swarm.md`, `.git/plan-swarm/`, `.git/hooks/`. Blocks engineer dispatch before `approve plan`. |
+| git `pre-commit`, `pre-merge-commit` | `gate.py --git-hook` | Second layer for commits by any route: allowed only with the one-time ticket the first layer issued; a plans-only approval cannot carry code; WIP only inside the swarm's linked worktrees. |
+| git `pre-push` | `gate.py --pre-push` | Second layer for pushes: `swarm/{m}` fast-forwards whose every new commit's parent matches an intent/spec/plan/commit ledger row (a `pr` row authorizes only the ledger-only commit that records it; the first push needs that row). Other branches and tags are refused only while a swarm session is active. |
+
+Approval phrases:
+
+```text
+approve intent  <slug> as <milestone>
+approve spec    <milestone>
+approve plan    <milestone> [tier=routine|elevated|critical]
+approve commit  <milestone> g<n>
+approve pr      <milestone>
+approve release <version>
+```
+
+Approvals and tickets live in `.git/plan-swarm/` (outside the working tree, shared by worktrees). The approval hook stages each new ledger row, so it ships inside the commit it authorizes. The gate fails closed: an invalid `plans/swarm.md`, a missing one after `swarm-init` marked the repository (`.git/plan-swarm/active`), or any internal error refuses gated operations.
+
+**Threat model.** The local layers guard against well-meaning agents that try to unblock themselves; they are not a sandbox against a determined adversary with shell access. Branch protection, the CI ledger check, and code-owner review are the authoritative controls. `lib/tests/test_security.py` holds a regression test for every finding of the security review. If an organization disables plugin hooks, the heartbeat goes stale and the supervisor reports **enforcement off**; `templates/managed-settings.example.md` shows how to run the gate as a managed hook.
+
+### Helper scripts (called by the supervisor)
+
+`tier.py` (risk tier, only rises) · `worktree.py` (create / squash / cleanup per-task worktrees; refuses overlapping files) · `usage.py` (cost and declined-gate log) · `prbody.py` (PR title and body from committed artifacts) · `metrics.py` · `swarmdoc.py` (reads the fenced JSON block of `swarm.md`, `topology.md`) · `tally.py` (validator votes) · `render_roles.py` (roles → agents + skills) · `swarm_init.py`.
 
 ---
 
-## How They Work Together
+## Artifact map
 
-A typical end-to-end run:
-
-1. **`supervisor`** receives the request and dispatches a codebase investigation → `plans/research/`.
-2. **`product-owner`** reads the context report, runs the Grill Loop, and writes `spec.md` + roadmap entry.
-   - *(optional)* **`spec-deliberator`** convenes a delegate panel with disjoint context bundles to enrich the spec with siloed constraints before it faces the gate.
-3. *(offered)* **`spec-validator`** attacks the spec; confirmed `tightening`s are folded back in.
-4. **`architect`** investigates the code and writes `plan.md` with parallel groups.
-   - *(optional)* **`plan-deliberator`** convenes a territory panel (intent · codebase · delivery) to reshape the plan and decide open trade-offs with cited evidence before it faces the gate.
-5. *(offered)* **`plan-validator`** attacks the plan against the real codebase; the `first_domino` and confirmed fixes are applied (reorder steps, add prerequisites, correct assumptions).
-6. **🛑 Human review gate** — the user reviews `spec.md` + `plan.md` and types "approve".
-7. **`engineer`** (one per independent task, in parallel) implements each group under TDD; **`simplifier`** optionally refines; **`auditor`** verifies each group and writes an audit report.
-8. *(offered)* **`implementation-validator`** attacks the diff before merge; confirmed defects (at calibrated severity) are fixed.
-9. **🛑 Commit gate** — `visual-implementation-recap` renders `visual-recap.html` so the human can review every change at altitude; commit only on a green audit **and** explicit user approval.
-10. **`product-owner`** marks the release "Shipped" and activates the next.
+| Path | Written by | Committed at |
+|---|---|---|
+| `plans/swarm.md` | people (`swarm-init` template) | by the user |
+| `plans/intents/{date}-{slug}.md` | product-owner (intent mode) | moved into the milestone on acceptance; rejected ones go to `plans/intents/closed/` |
+| `plans/00-ROADMAP.md` | product-owner | with the intent; COMPLETED ships in the PR |
+| `plans/active_milestones/{m}/intent.md` | product-owner + Explore (*Codebase context*) | `approve intent` / `approve spec` |
+| `…/spec.md` (+ `visual-spec.html`) | product-owner | `approve spec` |
+| `…/plan.md` (+ `data-model.md`, `api-contracts.md`, `visual-plan.html`) | architect; `tier.py` adds the tier line | `approve plan` |
+| `…/approvals.md` | `approve.py` only | with the commit it authorizes |
+| `…/audit.md` | auditor | with the group commit |
+| `…/usage.md` | supervisor via `usage.py` | with the next commit |
+| `…/adversarial-reviews/*.md`, `…/deliberations/*.md` | panels | with the next artifact or group commit |
+| `…/visual-recap.html` | recap | with the group commit |
+| `plans/approvals.md` | `approve.py` (release rows) | with the next roadmap commit |
 
 ---
 
-## Invoking a Skill
+## Configuration: `plans/swarm.md`
 
-These are Claude Code skills. Invoke one with the **`Skill`** tool (e.g. `plan:supervisor`), or let it activate from the triggers in each skill's `description`. The natural entry point for an end-to-end run is **`supervisor`** ("be the supervisor", "run the swarm"); the role and validator skills can also be invoked standalone for a single phase (e.g. "validate this spec" → `spec-validator`, "simplify this file" → `simplifier`).
+Markdown for people plus exactly one fenced `json swarm-config` block for the scripts (stdlib `json`, no YAML dependency). Keys: `delivery.mode` (`pr` | `local`), `delivery.host` (`github`), `engineers.max_concurrent` (default 5), `audit.max_path_a_rounds` (default 3), `approvals.nonce_ttl_minutes` (default 15), `policies` (project skill names), `tiers.{elevated,critical}.{paths,keywords,diff_lines_over}`. See `templates/swarm.md`.
+
+---
+
+## Developing the plugin
+
+- Edit roles only in `roles/{name}.md`, then run `python3 lib/render_roles.py`. `--check` fails CI when generated files are stale.
+- Tests: `uvx pytest -q lib/tests` and `uvx pytest -q skills/wf-trajectory/tests`.
+- Evals: `claude plugin eval . --tag blocking --scaffold --trust-plugin --allow-tools Bash Write Edit --ablation none --no-publish` (use `--tag report` for L3–L4). Layers, case format, and graders: [`evals/README.md`](evals/README.md).
+- The topology is `topology.md` (Markdown + fenced JSON, checked by the tests).

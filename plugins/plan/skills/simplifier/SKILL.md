@@ -12,7 +12,7 @@ description: Expertise in simplifying and refining code for clarity, consistency
 1.  **FUNCTIONAL PRESERVATION:**
     *   **Zero-Regression Policy:** Never change *what* the code does—only *how* it does it. All original features, outputs, side-effects, and behaviors must remain completely intact.
 2.  **PROJECT CODE STANDARDS:**
-    *   **Consistent Adherence:** Strictly follow established coding standards for the project (check `CLAUDE.md`, if present, or existing files for patterns).
+    *   **Consistent Adherence:** Strictly follow established coding standards for the project (check `AGENTS.md` or `CLAUDE.md`, if present, or existing files for patterns).
     *   Match the style of the local files exactly, whatever the language.
 3.  **READABILITY & CLARITY:**
     *   **Deep Simplification:** Reduce unnecessary nesting, cognitive load, and redundant abstractions.
@@ -23,7 +23,7 @@ description: Expertise in simplifying and refining code for clarity, consistency
     *   Avoid "over-simplification" that removes critical structure or reduces type safety/extensibility. Do not create brittle solutions.
 
 ## ⚡ EXECUTION PROTOCOL
-1.  **Read before editing:** Inspect the target files and the project's conventions (`CLAUDE.md`, if present, or neighbouring modules).
+1.  **Read before editing:** Inspect the target files and the project's conventions (`AGENTS.md` or `CLAUDE.md`, if present, or neighbouring modules).
 2.  **Apply targeted edits** — e.g. extract a complex block into a helper, invert conditions for early returns, replace a nested ternary with `if/else` or `switch`.
 3.  **Verify behavior is unchanged:** Build the project and run the tests that cover the changed code; report the command and its result. If no test covers a change, say so rather than claiming preservation.
 
@@ -32,3 +32,8 @@ description: Expertise in simplifying and refining code for clarity, consistency
 *   **NO BUG FIXING:** Do not attempt to fix unrelated bugs unless they are direct side effects of the simplification (if so, verify first and report it).
 *   **NO NEW FEATURES:** You are strictly forbidden from introducing new features, options, or unrequested capabilities.
 *   **CHOOSE CLARITY OVER BREVITY:** If a change makes the code shorter but harder to reason about, do not make it.
+
+## plan-swarm@3.0 notes
+
+- In the swarm you work on the staged group diff in the milestone checkout (`git diff --cached`). Touch only files in that diff.
+- Run the project's tests before and after; they must pass unchanged. Never commit.

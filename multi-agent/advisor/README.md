@@ -14,7 +14,7 @@ Source: [ClaudeDevs on X](https://x.com/ClaudeDevs/status/2074606058128224365)
 ```
 advisor/
 ├── claude-code/
-│   ├── CLAUDE.md              executor instructions + escalation rules
+│   ├── AGENTS.md              executor instructions + escalation rules
 │   └── agents/
 │       └── advisor.md         Fable/Opus read-only advisor subagent
 ├── antigravity/
@@ -31,19 +31,22 @@ advisor/
 cd your-project
 mkdir -p .claude/agents
 cp path/to/advisor/claude-code/agents/advisor.md .claude/agents/
-cat path/to/advisor/claude-code/CLAUDE.md >> CLAUDE.md
+cat path/to/advisor/claude-code/AGENTS.md >> AGENTS.md
 ```
+
+- Claude Code reads a project's `AGENTS.md` only when the project has no `CLAUDE.md`. If yours has one, add the line `@AGENTS.md` to it.
+- Antigravity reads the same root `AGENTS.md`, and its version of this pattern (`antigravity/AGENTS.md`) is a different file. A project that uses both tools has one root `AGENTS.md`, so merge the two by hand.
 
 ### All projects (user-level)
 
 ```bash
 mkdir -p ~/.claude/agents
 cp path/to/advisor/claude-code/agents/advisor.md ~/.claude/agents/
-cat path/to/advisor/claude-code/CLAUDE.md >> ~/.claude/CLAUDE.md
+cat path/to/advisor/claude-code/AGENTS.md >> ~/.claude/CLAUDE.md   # user-level instructions file
 ```
 
 To share with teammates, commit the per-project `.claude/agents/` and
-`CLAUDE.md` to the repo — everyone who clones it gets the pattern.
+`AGENTS.md` to the repo — everyone who clones it gets the pattern.
 
 ### Run
 

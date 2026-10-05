@@ -90,11 +90,11 @@ assumptions verified" is the evidence the gate produced. A re-run after a materi
 goes to `plan-validation-r2.md`, `-r3.md`, … so every round is preserved. Fill the **The
 Review Document** template below verbatim.
 
-### 8. Act
-- For each **confirmed** finding, apply its `fix` to the plan (reorder steps, add a missing prerequisite step, add a rollback/verify step, correct an assumption).
+### 8. Act (report only)
+- Never edit the plan yourself; reviewers do not change what they review.
+- For each **confirmed** finding, list its `fix` for the author (`architect`), `first_domino` first. The supervisor hands them over; when you run standalone, ask the user to have the architect apply them.
 - List **unconfirmed** findings for the user.
-- If you reordered or added steps materially, re-run the panel once.
-- Tick the **Actions Taken** checklist in the review file as you apply each fix.
+- The author ticks the **Actions Taken** checklist as it applies each fix; after material reordering the panel may be re-run (`-r2`).
 
 ## Skeptic Prompt Template
 

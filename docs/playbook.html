@@ -1,0 +1,551 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Plan Swarm Playbook: a developer's guide (plan-swarm@3.0)</title>
+<style>
+  :root{
+    --bg:#fbfaf7; --panel:#ffffff; --ink:#1d1d1f; --muted:#5f6368; --line:#e4e1da;
+    --accent:#c2562c; --blue:#2f5bd3; --green:#1f7a4d; --amber:#a86a00; --red:#b3261e; --purple:#7b3fd1; --gray:#8a8f98;
+    --g-bg:#e8f5ee; --a-bg:#fff4dc; --r-bg:#fde8e6; --b-bg:#e9efff; --p-bg:#f1eafd; --code:#f3f1ec; --term:#1e1e20; --termink:#e8e6e1;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#141414; --panel:#1c1c1e; --ink:#ececec; --muted:#a1a1a6; --line:#2e2e30;
+      --accent:#e0794f; --blue:#7c9cff; --green:#5cc98f; --amber:#e7b04a; --red:#ff7b72; --purple:#b38cff; --gray:#8d8d93;
+      --g-bg:#16301f; --a-bg:#33290f; --r-bg:#3a1a18; --b-bg:#1b2442; --p-bg:#2a1f3d; --code:#242426; --term:#0c0c0d; --termink:#e8e6e1; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Helvetica,Arial,sans-serif}
+  .wrap{display:grid;grid-template-columns:230px minmax(0,1fr);gap:44px;max-width:1240px;margin:0 auto;padding:40px 28px 90px}
+  nav{position:sticky;top:24px;align-self:start;font-size:13.5px;max-height:calc(100vh - 48px);overflow:auto}
+  nav b{display:block;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-size:11.5px;margin:14px 0 6px}
+  nav b:first-child{margin-top:0}
+  nav a{display:block;color:var(--ink);text-decoration:none;padding:2px 0 2px 10px;border-left:2px solid var(--line)}
+  nav a:hover{border-left-color:var(--accent);color:var(--accent)}
+  @media (max-width:980px){.wrap{grid-template-columns:1fr}nav{display:none}}
+  h1{font-size:36px;line-height:1.12;margin:0 0 8px;letter-spacing:-.015em}
+  h2{font-size:23px;margin:58px 0 12px;padding-top:12px;border-top:1px solid var(--line)}
+  h3{font-size:17px;margin:22px 0 6px}
+  p{margin:10px 0}
+  .sub{color:var(--muted);font-size:17px;margin:0 0 20px}
+  .meta{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:13px;color:var(--muted);margin-bottom:22px}
+  code{font:13.5px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--code);padding:1px 5px;border-radius:4px}
+  a{color:var(--blue)}
+  table{width:100%;border-collapse:collapse;background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden;font-size:14.5px;margin:12px 0}
+  th,td{text-align:left;vertical-align:top;padding:9px 12px;border-bottom:1px solid var(--line)}
+  th{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);background:var(--code)}
+  tr:last-child td{border-bottom:0}
+  .pill{display:inline-block;font-size:11.5px;font-weight:650;padding:2px 8px;border-radius:999px;white-space:nowrap;vertical-align:1px}
+  .you{background:var(--a-bg);color:var(--amber)} .swarm{background:var(--b-bg);color:var(--blue)} .opt{background:var(--p-bg);color:var(--purple)}
+  .ci{background:var(--g-bg);color:var(--green)} .fut{background:var(--code);color:var(--muted)}
+  .callout{background:var(--b-bg);border-radius:10px;padding:14px 18px;margin:14px 0;font-size:15px}
+  .note{background:var(--a-bg)}
+  .big3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:14px 0}
+  @media (max-width:860px){.big3{grid-template-columns:1fr}}
+  .b3{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;font-size:14.5px}
+  .b3 b{display:block;font-size:15.5px;margin-bottom:4px}
+  /* journey strip */
+  .journey{display:flex;flex-wrap:wrap;gap:6px;align-items:stretch;margin:16px 0}
+  .j{flex:1 1 104px;background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:8px 9px;font-size:12.5px;text-align:center;border-top:4px solid var(--blue)}
+  .j b{display:block;font-size:13px}
+  .j.h{border-top-color:var(--amber);background:var(--a-bg)} .j.c{border-top-color:var(--green)} .j.f{border-top-color:var(--gray);border-style:dashed}
+  .j a{color:inherit;text-decoration:none}
+  /* stage cards */
+  .stage{background:var(--panel);border:1px solid var(--line);border-left:5px solid var(--blue);border-radius:12px;padding:18px 22px 14px;margin:18px 0}
+  .stage.h{border-left-color:var(--amber)} .stage.c{border-left-color:var(--green)} .stage.f{border-left-color:var(--gray);border-left-style:dashed}
+  .stage h3{margin:0 0 2px;font-size:19px}
+  .stage .goal{color:var(--muted);margin:0 0 10px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px 22px}
+  @media (max-width:860px){.grid2{grid-template-columns:1fr}}
+  .lbl{font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin:10px 0 2px}
+  .stage ul{margin:4px 0 6px;padding-left:20px}
+  .stage li{margin:2px 0}
+  .done{background:var(--g-bg);border-radius:8px;padding:8px 12px;font-size:14.5px;margin:10px 0 4px}
+  .trouble{font-size:14px;color:var(--muted);margin-top:6px}
+  pre.term{background:var(--term);color:var(--termink);border-radius:10px;padding:14px 16px;overflow:auto;font:13px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace;margin:10px 0}
+  pre.term .me{color:#f5c26b} pre.term .sw{color:#8fb4ff} pre.term .dim{color:#9a9a9f} pre.term .ok{color:#7fd6a4} pre.term .bad{color:#ff8f86}
+  pre.file{background:var(--code);border:1px solid var(--line);border-radius:10px;padding:12px 14px;overflow:auto;font:12.5px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;margin:10px 0}
+  kbd{font:12.5px ui-monospace,Menlo,monospace;background:var(--panel);border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:1px 6px}
+  footer{margin-top:64px;font-size:12.5px;color:var(--muted);border-top:1px solid var(--line);padding-top:16px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav>
+  <b>Start here</b>
+  <a href="#what">What the swarm is</a>
+  <a href="#setup">One‑time setup</a>
+  <a href="#journey">The journey at a glance</a>
+  <a href="#subagents">Running with subagents</a>
+  <b>Stages</b>
+  <a href="#s1">1 · Raise an intent</a>
+  <a href="#s2">2 · Accept the intent</a>
+  <a href="#s3">3 · Research</a>
+  <a href="#s4">4 · Write the spec</a>
+  <a href="#s5">5 · Check the spec</a>
+  <a href="#s6">6 · Write the plan</a>
+  <a href="#s7">7 · Check the plan</a>
+  <a href="#s8">8 · Approve the plan</a>
+  <a href="#s9">9 · Build</a>
+  <a href="#s10">10 · Audit</a>
+  <a href="#s11">11 · Check the code</a>
+  <a href="#s12">12 · Commit the group</a>
+  <a href="#s13">13 · Pull request</a>
+  <a href="#s14">14 · Release</a>
+  <a href="#s15">15 · Maintain (future)</a>
+  <b>Reference</b>
+  <a href="#phrases">Approval phrases</a>
+  <a href="#options">Choosing the options</a>
+  <a href="#tiers">Risk tiers</a>
+  <a href="#trouble">When things go wrong</a>
+  <a href="#files">Where things live</a>
+  <a href="#promises">What the swarm guarantees</a>
+  <a href="#glossary">Glossary</a>
+</nav>
+
+<main>
+<h1>The Plan Swarm Playbook</h1>
+<p class="sub">How to take a feature, fix, or refactor from idea to merged PR with the plan swarm, one stage at a time.</p>
+<div class="meta">
+  <span>Describes <b>plan‑swarm@3.0</b> (<code>plugins/plan/topology.md</code>)</span>
+  <span>Design: <a href="architecture.html">architecture.html</a> · Build order: <a href="implementation-plan.html">implementation-plan.html</a></span>
+</div>
+
+<div class="callout note"><b>Status.</b> This playbook describes plugin 3.0.0 (plan‑swarm@3.0), which implements everything below except stage 15 (Maintain), still future. The as‑built system is described in <a href="ai-dlc.html">ai-dlc.html</a>.</div>
+
+<!-- ============================================================ what -->
+<section id="what">
+<h2>What the swarm is</h2>
+<p>The plan swarm is a team of Claude agents, each with one job: product owner, architect, engineers, auditor, and reviewers. A <b>supervisor</b> runs the team and walks your change through a fixed sequence of stages. Every stage writes a file under <code>plans/</code>, and the next stage reads that file. Nothing important lives only in the chat.</p>
+<div class="big3">
+  <div class="b3"><b>You decide</b>Six times per change you type a short approval phrase: accept the intent, the spec, the plan, each commit, the PR, the release. Nothing moves past those points without you.</div>
+  <div class="b3"><b>The swarm does the work</b>It asks the questions, writes the spec and plan, writes the code test‑first, audits it, and prepares every commit and the PR.</div>
+  <div class="b3"><b>Git keeps the record</b>Every stage's file is committed, and every approval is logged by a script, not by an agent. The history shows who asked, what was agreed, who approved, and what shipped.</div>
+</div>
+<p><b>Running example.</b> Throughout this guide we'll add <em>rate limiting to the login endpoint</em>, milestone name <code>login-rate-limit</code>.</p>
+</section>
+
+<!-- ============================================================ setup -->
+<section id="setup">
+<h2>One‑time setup</h2>
+<ol>
+  <li><b>Install the plugin</b> (once per machine):
+<pre class="term"><span class="me">/plugin marketplace add ddobrin/plan-skills-claude</span>
+<span class="me">/plugin install plan@plan-skills</span></pre>
+  <p class="trouble"><b>Until 3.0 is published to the marketplace</b>, the installed plugin is the older 2.1 and has no <code>swarm-init</code>. Load the 3.0 plugin from your checkout for each session instead, and disable the installed <code>plan@plan-skills</code> in the <code>/plugin</code> menu so only one <code>plan</code> plugin is loaded:</p>
+<pre class="term"><span class="me">claude --plugin-dir ~/path/to/plan-skills-claude/plugins/plan</span></pre></li>
+  <li><b>Prepare the repository</b> (once per repo). In Claude Code, type <code>/plan:swarm-init</code> (or say <em>set up the plan swarm</em>). It is a skill, not a subagent, because it is a short interactive setup. It previews what it would install, asks which pieces you want, never overwrites a file, and then adds:
+    <ul>
+      <li><code>plans/swarm.md</code>: your settings (delivery mode, engineer limit, risk rules, policy skills). Read it. The explanations sit next to the values.</li>
+      <li>Three git hooks, <code>pre-commit</code>, <code>pre-merge-commit</code>, and <code>pre-push</code>: a second layer that re‑checks commits and pushes, whatever started them.</li>
+      <li><code>REVIEW.md</code>, <code>.github/workflows/plan-swarm.yml</code>, and an <code>AGENTS.md</code> skeleton (skipped if you already have a <code>CLAUDE.md</code>), for PR review in CI. Optional but recommended.</li>
+    </ul>
+    <p class="trouble">You can also run the installer yourself: <code>python3 &lt;plugin&gt;/lib/swarm_init.py --dry-run</code>, then <code>--only swarm,hook,review,ci</code>.</p></li>
+  <li><b>Fill in <code>AGENTS.md</code></b> (or your existing <code>CLAUDE.md</code>) with your build and test commands. The auditor runs exactly what's written there. If you keep both files, start <code>CLAUDE.md</code> with the line <code>@AGENTS.md</code>; otherwise Claude Code never loads <code>AGENTS.md</code>.</li>
+  <li><b>Commit the setup</b> yourself, like any other change.</li>
+</ol>
+<div class="callout">Each session, the supervisor first checks that the plugin's safety hooks are running. If it says <b>"enforcement off"</b>, your organization's settings are blocking plugin hooks. See <a href="#trouble">When things go wrong</a>.</div>
+</section>
+
+<!-- ============================================================ journey -->
+<section id="journey">
+<h2>The journey at a glance</h2>
+<div class="journey">
+  <div class="j"><a href="#s1"><b>1 Intent</b>you describe it</a></div>
+  <div class="j h"><a href="#s2"><b>2 Accept</b>approve intent</a></div>
+  <div class="j"><a href="#s3"><b>3 Research</b>automatic</a></div>
+  <div class="j h"><a href="#s4"><b>4 Spec</b>Q&amp;A → approve spec</a></div>
+  <div class="j"><a href="#s5"><b>5 Spec check</b>optional</a></div>
+  <div class="j"><a href="#s6"><b>6 Plan</b>automatic</a></div>
+  <div class="j"><a href="#s7"><b>7 Plan check</b>optional</a></div>
+  <div class="j h"><a href="#s8"><b>8 Approve</b>approve plan</a></div>
+  <div class="j"><a href="#s9"><b>9 Build</b>≤5 engineers</a></div>
+  <div class="j"><a href="#s10"><b>10 Audit</b>automatic</a></div>
+  <div class="j"><a href="#s11"><b>11 Code check</b>optional</a></div>
+  <div class="j h"><a href="#s12"><b>12 Commit</b>approve commit</a></div>
+  <div class="j c"><a href="#s13"><b>13 PR</b>approve pr · merge</a></div>
+  <div class="j c"><a href="#s14"><b>14 Release</b>approve release</a></div>
+  <div class="j f"><a href="#s15"><b>15 Maintain</b>future</a></div>
+</div>
+<p>Amber = you type an approval phrase. Stages 9–12 repeat once per <em>execution group</em> in the plan. Most changes take 2–4 groups.</p>
+<p><b>To start or resume:</b> open Claude Code in the repo as the supervisor, <code>claude --agent plan:supervisor</code> (recommended, see <a href="#subagents">Running with subagents</a>), or in any session say <code>be the supervisor</code>. The supervisor reads <code>plans/</code>, tells you where every milestone stands and the one next step, and waits for you. You can close the session at any point. The next one picks up from the files.</p>
+</section>
+
+<!-- ============================================================ subagents -->
+<section id="subagents">
+<h2>Running with subagents</h2>
+<p>For clean context separation, run the <b>supervisor as your main session</b> and let it dispatch every role as a subagent. Each role then works in its own context and sees only the files the supervisor hands it.</p>
+<pre class="term"><span class="me">cd your-repo</span>
+<span class="me">claude --agent plan:supervisor</span>          <span class="dim"># add --plugin-dir …/plugins/plan until 3.0 is published</span></pre>
+<p>To make this the default in a repository, add <code>"agent": "plan:supervisor"</code> to that repository's <code>.claude/settings.json</code>. (<code>--agent supervisor</code> works too.)</p>
+<table>
+<thead><tr><th style="width:30%">Why this layout</th><th>What it means for you</th></tr></thead>
+<tbody>
+<tr><td><b>Approvals only count from you</b></td><td>Type every approval phrase in this main session. A phrase inside a prompt that an agent writes for a subagent records nothing; this was tested.</td></tr>
+<tr><td><b>Each role has its own context</b></td><td>The product owner, architect, engineers (up to 5 in parallel, one worktree each), auditor, and any checks you accept run as <code>plan:&lt;role&gt;</code> subagents.</td></tr>
+<tr><td><b>Panels still fan out</b></td><td>A validator or deliberator dispatched as a subagent starts its own skeptics or delegates; nested dispatch was tested.</td></tr>
+</tbody>
+</table>
+<h3>Calling one role yourself</h3>
+<table>
+<thead><tr><th style="width:30%">How</th><th>Example</th></tr></thead>
+<tbody>
+<tr><td>@‑mention (always invokes it)</td><td><code>@"plan:architect (agent)" plan plans/active_milestones/login-rate-limit/spec.md</code></td></tr>
+<tr><td>Plain request (Claude decides)</td><td><em>use the plan:architect agent to plan …</em></td></tr>
+<tr><td>As the whole session</td><td><code>claude --agent plan:architect</code></td></tr>
+</tbody>
+</table>
+<h3>Things to know</h3>
+<ul>
+  <li><b>Agents, not role skills, when you want separation.</b> A skill such as <code>/plan:architect</code> loads into your current context; an agent gets its own. The utility skills (<code>/plan:swarm-init</code>, <code>/plan:swarm-metrics</code>) are fine to run from the supervisor session.</li>
+  <li><b>The Grill Loop as a subagent.</b> The product owner is written to return its open questions in its report, and the supervisor relays them to you. If you'd rather be questioned live, run that stage as <code>claude --agent plan:product-owner</code>.</li>
+  <li><b>Not every role can dispatch.</b> The architect and product owner deliberately have no Agent tool; the supervisor, validators, and deliberators do.</li>
+</ul>
+</section>
+
+<!-- ============================================================ stages -->
+<section id="stages">
+<h2>Stages</h2>
+
+<!-- 1 -->
+<div class="stage" id="s1">
+  <h3>1 · Raise an intent <span class="pill you">you</span> <span class="pill swarm">product owner</span></h3>
+  <p class="goal">Say what's wrong and what "done" looks like. Don't design the solution yet.</p>
+  <div class="grid2">
+    <div><div class="lbl">You do</div><ul><li>Tell the supervisor what you want, in plain words. Or copy the template into <code>plans/intents/</code> yourself.</li><li>Answer a few quick questions about the problem, who's affected, and constraints.</li></ul></div>
+    <div><div class="lbl">Swarm does</div><ul><li>The product owner (intent mode) drafts the intent with you.</li><li>A deterministic script proposes a <a href="#tiers">risk tier</a> from the wording.</li></ul></div>
+  </div>
+<pre class="term"><span class="me">› Login gets brute-forced. Limit failed attempts per account and per IP.</span>
+<span class="sw">supervisor ▸ Drafting an intent with the product owner…</span>
+<span class="sw">           ▸ Wrote plans/intents/2026-09-24-login-rate-limit.md</span>
+<span class="sw">           ▸ Proposed tier: routine (no keyword matched yet; re-checked once the plan names files)</span></pre>
+  <div class="lbl">Files you'll see</div>
+<pre class="file">plans/intents/2026-09-24-login-rate-limit.md
+  ## Problem · ## Outcome · ## Users &amp; systems · ## Constraints · ## Open questions</pre>
+  <div class="done"><b>Done when</b> the intent file exists in the inbox. Nothing is committed yet.</div>
+</div>
+
+<!-- 2 -->
+<div class="stage h" id="s2">
+  <h3>2 · Accept the intent <span class="pill you">you approve</span></h3>
+  <p class="goal">Decide whether this becomes work, and give it a milestone name.</p>
+  <div class="grid2">
+    <div><div class="lbl">You type</div><pre class="term"><span class="me">approve intent login-rate-limit as login-rate-limit</span></pre><p>To reject it instead, tell the supervisor to close it. The file stays in history.</p></div>
+    <div><div class="lbl">Swarm does</div><ul><li>Creates the branch <code>swarm/login-rate-limit</code> (PR mode). Everything for this milestone, from here on, is committed there.</li><li>Moves the intent into <code>plans/active_milestones/login-rate-limit/intent.md</code>.</li><li>Adds a roadmap entry and commits both.</li><li>Logs your approval in <code>approvals.md</code>.</li></ul></div>
+  </div>
+  <div class="done"><b>Done when</b> the commit exists and the milestone folder appears.</div>
+  <p class="trouble">Typing just "yes" or "ok" doesn't count. Approvals need the exact phrase, and the supervisor always shows it to you.</p>
+</div>
+
+<!-- 3 -->
+<div class="stage" id="s3">
+  <h3>3 · Research <span class="pill swarm">automatic</span></h3>
+  <p class="goal">Learn how the codebase handles this area today.</p>
+  <p>An explorer agent reads the relevant code and appends a <em>Codebase context</em> section to <code>intent.md</code>: affected modules, existing patterns, constraints. You don't need to do anything. Read the section if you want to check it found the right code.</p>
+  <div class="done"><b>Done when</b> <code>intent.md</code> has a Codebase context section. It's committed with the spec later.</div>
+</div>
+
+<!-- 4 -->
+<div class="stage h" id="s4">
+  <h3>4 · Write the spec <span class="pill you">you answer + approve</span> <span class="pill swarm">product owner</span></h3>
+  <p class="goal">Turn the intent into testable requirements. <em>What</em> and <em>why</em>, never <em>how</em>.</p>
+  <div class="grid2">
+    <div><div class="lbl">You do</div><ul><li>Answer the <b>Grill Loop</b>: at most 3 questions at a time, about edge cases, limits, errors, and UX.</li><li>Read <code>spec.md</code>, then approve it.</li></ul></div>
+    <div><div class="lbl">Swarm does</div><ul><li>Writes <code>spec.md</code> with Given/When/Then acceptance criteria.</li><li>Loads your policy skills (for example security) and lists any <em>Policy Concerns</em> it can't resolve alone.</li></ul></div>
+  </div>
+<pre class="term"><span class="sw">product-owner ▸ 1. After how many failed attempts should an account lock? For how long?</span>
+<span class="sw">              ▸ 2. Should the lockout message reveal that the account exists?</span>
+<span class="sw">              ▸ 3. Do trusted internal IPs bypass the per-IP limit?</span>
+<span class="me">› 5 in 15 min, lock 15 min. No, generic message. No bypass.</span>
+<span class="dim">…</span>
+<span class="sw">supervisor ▸ spec.md is ready. To accept it, type: approve spec login-rate-limit</span>
+<span class="me">approve spec login-rate-limit</span></pre>
+  <div class="lbl">Optional here</div>
+  <p><span class="pill opt">swap‑in</span> Ask for the <b>visual product owner</b> to also get <code>visual-spec.html</code>: user‑story cards, flows, color‑coded criteria. Same <code>spec.md</code> underneath.</p>
+  <div class="done"><b>Done when</b> <code>spec.md</code> (and <code>intent.md</code>'s research) is committed and your approval is logged.</div>
+  <p class="trouble">If you don't know an answer, say so. The product owner won't guess an edge case. It records the open question instead.</p>
+</div>
+
+<!-- 5 -->
+<div class="stage" id="s5">
+  <h3>5 · Check the spec <span class="pill opt">optional · offered</span></h3>
+  <p class="goal">Find holes in the spec while they're cheapest to fix.</p>
+  <p>The supervisor offers two checks, with a one‑line reason, and recommends them for elevated and critical tiers. (Our example is still <em>routine</em> here. Its tier rises at planning.)</p>
+  <table>
+  <thead><tr><th style="width:24%">Option</th><th style="width:38%">What it does</th><th>Accept when</th></tr></thead>
+  <tbody>
+    <tr><td><b>spec‑deliberator</b> <span class="pill opt">add‑on</span></td><td>Three delegates, each holding different knowledge (product, engineering, ops/security), discuss and agree on one revised spec.</td><td>The requirements depend on things different teams know: security policy, infra limits, product research.</td></tr>
+    <tr><td><b>spec‑validator</b> <span class="pill opt">offered gate</span></td><td>Three independent skeptics attack the spec for ambiguity, gaps, and untestable criteria. Only issues found by 2 of 3 count.</td><td>Auth, payments, personal data, public APIs, or any spec you'd hate to re‑plan.</td></tr>
+  </tbody></table>
+  <p>If the validator finds issues, the <b>product owner</b> fixes the spec. Reviewers never edit what they review. Reports land in <code>adversarial-reviews/</code> and <code>deliberations/</code>.</p>
+  <div class="done"><b>Done when</b> you've accepted or declined each offer. Declines are logged with the tier, so skipped checks stay visible.</div>
+</div>
+
+<!-- 6 -->
+<div class="stage" id="s6">
+  <h3>6 · Write the plan <span class="pill swarm">architect</span></h3>
+  <p class="goal">Turn the spec into small, test‑first steps grounded in the real code.</p>
+  <p>The architect reads the code (it can't change it) and writes <code>plan.md</code>. Tasks are grouped into <b>execution groups</b>. Tasks inside a group touch different files, so they can be built in parallel. Every task starts with a test step. The plan also lists irreversible steps (migrations, deletions) and the <b>proposed risk tier</b>, re‑checked now that the affected files are known.</p>
+<pre class="file">## Task Execution (Parallel Groups)
+### Group 1  (parallel)
+- [ ] Task 1.A: attempt counter store      → src/auth/attempts.ts
+- [ ] Task 1.B: lockout response + message → src/auth/responses.ts
+### Group 2  (after Group 1)
+- [ ] Task 2.A: wire limiter into /login   → src/routes/login.ts</pre>
+  <div class="lbl">Optional here</div>
+  <p><span class="pill opt">swap‑in</span> The <b>visual architect</b> also renders <code>visual-plan.html</code>: diagrams, a file map, annotated code. Same <code>plan.md</code> underneath.</p>
+  <div class="done"><b>Done when</b> <code>plan.md</code> exists. You'll review it at stage 8.</div>
+</div>
+
+<!-- 7 -->
+<div class="stage" id="s7">
+  <h3>7 · Check the plan <span class="pill opt">optional · offered</span></h3>
+  <p class="goal">Catch plan steps that can't work before any code is written.</p>
+  <table>
+  <thead><tr><th style="width:24%">Option</th><th style="width:38%">What it does</th><th>Accept when</th></tr></thead>
+  <tbody>
+    <tr><td><b>plan‑deliberator</b> <span class="pill opt">add‑on</span></td><td>Delegates each own a territory (the spec's intent, parts of the codebase, the delivery pipeline) and agree on one revised plan, deciding open trade‑offs.</td><td>The plan spans several subsystems, or leaves a choice open (online vs offline migration, group boundaries).</td></tr>
+    <tr><td><b>plan‑validator</b> <span class="pill opt">offered gate</span></td><td>Three skeptics open the files the plan relies on and look for the <b>first domino</b>: the earliest step whose failure breaks the rest.</td><td>Irreversible steps, code the architect didn't open, or several subsystems.</td></tr>
+  </tbody></table>
+  <p>Confirmed fixes go back to the <b>architect</b>, who updates the plan.</p>
+</div>
+
+<!-- 8 -->
+<div class="stage h" id="s8">
+  <h3>8 · Approve the plan <span class="pill you">you approve</span> 🛑</h3>
+  <p class="goal">The big go/no‑go. After this, code gets written.</p>
+  <div class="grid2">
+    <div><div class="lbl">You do</div><ul><li>Read <code>spec.md</code> and <code>plan.md</code> (or the visual HTML), plus the one‑line verdict from every check that ran.</li><li>Confirm or change the risk tier.</li></ul></div>
+    <div><div class="lbl">Swarm does</div><ul><li>Commits the plan and any check reports.</li><li>Logs the approval and the confirmed tier.</li></ul></div>
+  </div>
+<pre class="term"><span class="sw">supervisor ▸ Spec and plan are ready. plan-validator: 0 confirmed · first_domino: none.</span>
+<span class="sw">           ▸ Tier raised routine → critical at planning (path **/auth/** matched).</span>
+<span class="sw">           ▸ To approve, type: approve plan login-rate-limit</span>
+<span class="sw">           ▸ (to change the tier: approve plan login-rate-limit tier=elevated)</span>
+<span class="me">approve plan login-rate-limit</span></pre>
+  <div class="done"><b>Done when</b> the plan is committed on <code>swarm/login-rate-limit</code>. Engineers can't start before this. A hook blocks them.</div>
+  <p class="trouble">Lowering a tier is allowed, but only by writing <code>tier=…</code> in this phrase, so the choice is on the record. The swarm can raise the tier later on its own, never lower it.</p>
+</div>
+
+<!-- 9 -->
+<div class="stage" id="s9">
+  <h3>9 · Build <span class="pill swarm">engineer × up to 5</span> <span class="dim"></span></h3>
+  <p class="goal">Implement one execution group, test‑first.</p>
+  <ul>
+    <li>The supervisor starts <b>one engineer per task</b> in the current group, up to 5 at once. Each works in its <b>own git worktree</b> (a separate checkout), so builds and test runs never collide.</li>
+    <li>Engineers follow strict TDD: failing test → make it pass → tidy. They tick the task's boxes in <code>plan.md</code>.</li>
+    <li>Engineers may save work‑in‑progress commits on their own worktree branch (<code>swarm-wip/login-rate-limit/1.A</code>). These never get pushed.</li>
+    <li>When the group is done, the supervisor squashes all worktrees into the milestone branch <em>without committing</em>, so the audit sees one clean diff.</li>
+  </ul>
+  <div class="lbl">Optional here</div>
+  <p><span class="pill opt">add‑on</span> <b>simplifier</b>: a clarity‑only tidy of the group's code (no behavior change) before the audit.</p>
+  <div class="done"><b>Done when</b> every task in the group is ticked and the squash applied cleanly.</div>
+  <p class="trouble">An engineer that hits a wrong plan step stops with <b>blocked</b> and a proposed fix. The supervisor shows it to you, and on your OK the architect updates the plan, which you re‑approve. A squash conflict means two tasks touched the same file. That's a plan problem, handled the same way.</p>
+</div>
+
+<!-- 10 -->
+<div class="stage" id="s10">
+  <h3>10 · Audit <span class="pill swarm">auditor</span></h3>
+  <p class="goal">Prove the group does what the plan says, with evidence.</p>
+  <ul>
+    <li>Checks every step against the plan and cites <code>file:line</code>.</li>
+    <li>Runs your build and tests (from <code>AGENTS.md</code> or <code>CLAUDE.md</code>).</li>
+    <li>Hunts shortcuts: <code>TODO</code>s, placeholders, skipped or gutted tests, hard‑coded answers. Any new behavior without tests is an automatic FAIL.</li>
+    <li>Writes <code>audit.md</code> (tracked in git) with PASS or FAIL.</li>
+  </ul>
+  <div class="done"><b>Done when</b> the audit says PASS. On FAIL, the failing task goes back to an engineer automatically.</div>
+  <p class="trouble">After <b>3 failed rounds</b> on the same task, the swarm stops and asks you: re‑plan, drop the task, or take over.</p>
+</div>
+
+<!-- 11 -->
+<div class="stage" id="s11">
+  <h3>11 · Check the code <span class="pill opt">optional · offered</span></h3>
+  <p class="goal">A skeptical second look at the diff before you commit it.</p>
+  <table>
+  <thead><tr><th style="width:26%">Option</th><th style="width:40%">What it does</th><th>Accept when</th></tr></thead>
+  <tbody>
+    <tr><td><b>implementation‑validator</b> <span class="pill opt">offered gate</span></td><td>Three skeptics try to break the diff. Its most useful output is <b>corrected severity</b>: it tells you which alarms are really critical and which only matter under rare conditions.</td><td>Concurrency, shared state, changed error handling, security‑sensitive code.</td></tr>
+    <tr><td><b>visual recap</b> <span class="pill opt">add‑on</span></td><td>Renders <code>visual-recap.html</code>: every changed file, annotated diffs, the audit verdict. On by default for elevated and critical tiers.</td><td>You want to review the change at a glance rather than read a raw diff.</td></tr>
+  </tbody></table>
+  <p>Confirmed defects go back to an engineer, highest severity first, and are re‑audited.</p>
+</div>
+
+<!-- 12 -->
+<div class="stage h" id="s12">
+  <h3>12 · Commit the group <span class="pill you">you approve</span> 🛑</h3>
+  <p class="goal">Turn the audited group into one commit.</p>
+<pre class="term"><span class="sw">supervisor ▸ Group 1 is verified (audit PASS).</span>
+<span class="dim"> src/auth/attempts.ts      | 64 ++++++</span>
+<span class="dim"> src/auth/responses.ts     | 22 ++</span>
+<span class="dim"> test/auth/attempts.test.ts| 88 ++++++++</span>
+<span class="sw">           ▸ Message: feat(auth): per-account and per-IP attempt counters with lockout</span>
+<span class="sw">           ▸ To commit, type: approve commit login-rate-limit g1</span>
+<span class="me">approve commit login-rate-limit g1</span>
+<span class="ok">auditor ▸ committed 4e1b0c2 on swarm/login-rate-limit</span></pre>
+  <p>Only the auditor commits, and only with your fresh approval. The approval expires after 15 minutes and is tied to the current branch state. Then the swarm goes back to stage 9 for the next group.</p>
+  <div class="done"><b>Done when</b> the group commit exists. After the last group, move on to the PR.</div>
+</div>
+
+<!-- 13 -->
+<div class="stage c" id="s13">
+  <h3>13 · Pull request <span class="pill you">you approve</span> <span class="pill ci">CI</span> <span class="pill you">code owner merges</span></h3>
+  <p class="goal">Put the change in front of your normal review process.</p>
+  <div class="grid2">
+    <div><div class="lbl">You type</div><pre class="term"><span class="me">approve pr login-rate-limit</span></pre></div>
+    <div><div class="lbl">Swarm and CI do</div><ul><li>Record your PR approval in a small ledger‑only commit, then push <code>swarm/login-rate-limit</code> and open a PR. Its body links the intent and shows each group, every check's verdict, any skipped checks, the audit, the approvals, and the recap.</li><li>CI checks that every commit has an approval row, reviews the PR against <code>REVIEW.md</code>, and at <code>elevated</code> or <code>critical</code> tier runs the implementation validator on the PR.</li></ul></div>
+  </div>
+  <p>A <b>code owner merges on GitHub</b>. The swarm never merges or pushes to your main branch. If review finds problems, the swarm runs a fix group (build → audit → <code>approve commit</code>) and updates the same PR. No new PR approval is needed.</p>
+  <div class="lbl">Optional here</div>
+  <p><span class="pill opt">swap‑in</span> <b>Local mode</b> (<code>delivery.mode: local</code> in <code>swarm.md</code>) skips the PR. Commits land on your current branch, and the approval log marks it.</p>
+  <div class="done"><b>Done when</b> the PR is merged. The supervisor sees it next time and marks the milestone complete.</div>
+</div>
+
+<!-- 14 -->
+<div class="stage c" id="s14">
+  <h3>14 · Release <span class="pill you">you approve</span></h3>
+  <p class="goal">Tag a version once every milestone in it is done.</p>
+<pre class="term"><span class="sw">supervisor ▸ All milestones for v1.4.0 are complete. To tag, type: approve release v1.4.0</span>
+<span class="me">approve release v1.4.0</span></pre>
+  <p>Before asking, the supervisor switches to the default branch and updates it with <code>git pull --ff-only</code> (two separate commands). It then creates an annotated tag, asks before pushing it, and the product owner marks the release <b>Shipped</b> in the roadmap and activates the next one.</p>
+</div>
+
+<!-- 15 -->
+<div class="stage f" id="s15">
+  <h3>15 · Maintain <span class="pill fut">future</span></h3>
+  <p class="goal">Let production problems start the loop on their own. A human still decides.</p>
+  <p>A scheduled CI job watches the signals listed in <code>bands.md</code>. When one drifts far enough, a triage agent writes an evidence‑backed intent and the workflow opens it as a small PR. <b>Merging that PR is accepting the intent</b>, and it then enters stage 2 like any other. The triage agent can only write intents. It can't plan, code, or commit.</p>
+</div>
+</section>
+
+<!-- ============================================================ phrases -->
+<section id="phrases">
+<h2>Approval phrases (cheat sheet)</h2>
+<table>
+<thead><tr><th style="width:40%">Type exactly</th><th style="width:16%">Stage</th><th>What it unlocks</th></tr></thead>
+<tbody>
+<tr><td><code>approve intent &lt;slug&gt; as &lt;milestone&gt;</code></td><td>2</td><td>Milestone and branch <code>swarm/&lt;milestone&gt;</code> created (PR mode), intent committed</td></tr>
+<tr><td><code>approve spec &lt;milestone&gt;</code></td><td>4</td><td>Spec committed. Planning can start</td></tr>
+<tr><td><code>approve plan &lt;milestone&gt; [tier=…]</code></td><td>8</td><td>Plan committed, tier confirmed, engineers allowed</td></tr>
+<tr><td><code>approve commit &lt;milestone&gt; g&lt;n&gt;</code></td><td>12</td><td>One group commit</td></tr>
+<tr><td><code>approve pr &lt;milestone&gt;</code></td><td>13</td><td>Record the approval, push, and open the PR</td></tr>
+<tr><td><code>approve release &lt;version&gt;</code></td><td>14</td><td>Tag the release</td></tr>
+</tbody>
+</table>
+<p>The phrase must be the <b>whole message</b>. "Looks good, approve plan login-rate-limit" doesn't count, so a stray "yes" never approves anything. Each phrase works once and expires after 15 minutes.</p>
+</section>
+
+<!-- ============================================================ options -->
+<section id="options">
+<h2>Choosing the options</h2>
+<table>
+<thead><tr><th style="width:30%">If your change…</th><th>Say yes to</th></tr></thead>
+<tbody>
+<tr><td>is small and easy to undo</td><td>Nothing extra. Decline the checks and keep moving.</td></tr>
+<tr><td>touches auth, payments, personal data, or a public API</td><td>spec‑validator, plan‑validator, implementation‑validator (the supervisor will recommend them)</td></tr>
+<tr><td>depends on rules owned by several teams</td><td>spec‑deliberator, then spec‑validator</td></tr>
+<tr><td>spans several subsystems or has a migration</td><td>plan‑deliberator, then plan‑validator</td></tr>
+<tr><td>adds concurrency or changes error handling</td><td>implementation‑validator</td></tr>
+<tr><td>needs stakeholders to review it visually</td><td>visual product owner / visual architect / visual recap</td></tr>
+<tr><td>is a solo or offline spike</td><td>local mode in <code>swarm.md</code></td></tr>
+</tbody>
+</table>
+<p>Each check costs a small panel of agents, and <code>usage.md</code> shows the cost. Declining is fine, and it's recorded with the risk tier.</p>
+</section>
+
+<!-- ============================================================ tiers -->
+<section id="tiers">
+<h2>Risk tiers: what they mean for you</h2>
+<table>
+<thead><tr><th style="width:14%">Tier</th><th style="width:36%">Typical trigger (from <code>swarm.md</code>)</th><th>What changes</th></tr></thead>
+<tbody>
+<tr><td><b>routine</b></td><td>everything else</td><td>Checks are offered, not pushed.</td></tr>
+<tr><td><b>elevated</b></td><td>public API, cache, schema, large diffs</td><td>The supervisor recommends the validators. Recap on by default.</td></tr>
+<tr><td><b>critical</b></td><td>auth, payments, migrations, PII, deletions</td><td>Recommends deliberator → validator and a stricter vote (any single skeptic can flag).</td></tr>
+</tbody>
+</table>
+<p>A script proposes the tier at stage 1, re‑checks it at stage 6 and before the PR, and can only raise it. You confirm it at stage 8. <b>Tiers never force a check.</b> You always choose.</p>
+</section>
+
+<!-- ============================================================ trouble -->
+<section id="trouble">
+<h2>When things go wrong</h2>
+<table>
+<thead><tr><th style="width:32%">You see</th><th style="width:30%">Why</th><th>Do this</th></tr></thead>
+<tbody>
+<tr><td>"enforcement off"</td><td>Organization settings block plugin hooks</td><td>Ask your platform team to add the swarm's gate as a managed hook (template provided). The supervisor won't run gated steps until then.</td></tr>
+<tr><td>"no approval for commit/…/g2"</td><td>Phrase missing, mistyped, expired, or already used</td><td>Type the phrase the supervisor just showed, exactly.</td></tr>
+<tr><td>"approval is stale: HEAD moved"</td><td>Something was committed after you approved</td><td>The supervisor re‑shows the diff. Approve again.</td></tr>
+<tr><td>engineer reports <b>blocked</b></td><td>A plan step doesn't match the code</td><td>Review the proposed fix. The architect updates the plan, and you re‑approve it.</td></tr>
+<tr><td>"escalating: 3 failed audit rounds"</td><td>The task keeps failing</td><td>Choose: re‑plan the task, drop it, or finish it yourself.</td></tr>
+<tr><td>squash conflict</td><td>Two tasks in a group touched the same file</td><td>Same as blocked: the architect fixes the group boundaries.</td></tr>
+<tr><td>tier raised before PR</td><td>The real diff touched riskier paths than planned</td><td>Re‑confirm with <code>approve plan … tier=…</code>.</td></tr>
+<tr><td>"swarm.md: no valid swarm-config block"</td><td>The JSON block in <code>plans/swarm.md</code> is missing or broken</td><td>Fix the block. Gated steps are refused until it parses.</td></tr>
+<tr><td>"plans/swarm.md is missing in a plan-swarm repository"</td><td>The settings file was deleted after setup</td><td>Restore it from git. To stop using the swarm in this repo on purpose, delete <code>.git/plan-swarm/active</code> yourself.</td></tr>
+<tr><td>"name the remote and the ref explicitly" · "run git commands directly"</td><td>The gate only accepts forms it can check</td><td>The supervisor pushes with <code>git push origin swarm/&lt;milestone&gt;</code> and never wraps git in other commands; if you see this, it tried a shortcut.</td></tr>
+<tr><td>push refused: "has no matching approval in approvals.md"</td><td>A commit on the branch was made without an approval (the pre‑push hook checked every commit)</td><td>Find the commit in <code>git log</code>; redo it through the swarm, or remove it yourself.</td></tr>
+<tr><td>You closed the session mid‑way</td><td>n/a</td><td>Say <code>be the supervisor</code>. It rebuilds where you are from <code>plans/</code>.</td></tr>
+</tbody>
+</table>
+</section>
+
+<!-- ============================================================ files -->
+<section id="files">
+<h2>Where things live</h2>
+<pre class="file">plans/
+├── swarm.md                         your settings (read this first)
+├── 00-ROADMAP.md                    releases and milestones
+├── intents/                         inbox of ideas not yet accepted
+└── active_milestones/login-rate-limit/
+    ├── intent.md                    why (stages 1–3)
+    ├── spec.md                      what (stage 4)
+    ├── plan.md                      how, with checkboxes (stages 6, 9)
+    ├── approvals.md                 every approval, written by a script
+    ├── audit.md                     audit results per group
+    ├── usage.md                     cost per agent run + declined checks
+    ├── adversarial-reviews/         validator reports
+    ├── deliberations/               deliberation records
+    └── visual-*.html                optional visual views</pre>
+<p>Open <code>approvals.md</code> to see who approved what and when. Open <code>audit.md</code> to see why a group passed.</p>
+</section>
+
+<!-- ============================================================ promises -->
+<section id="promises">
+<h2>What the swarm guarantees</h2>
+<ul>
+  <li><b>No code before you approve the plan.</b> Engineers can't be started until <code>approve plan</code>.</li>
+  <li><b>No commit, push, or tag without your phrase.</b> Enforced by Claude Code hooks and three git hooks, not by agents promising to behave. These local checks stop agents from taking shortcuts; your host's branch protection and code‑owner review remain the final authority.</li>
+  <li><b>Reviewers never edit what they review.</b> Validators and the auditor report. Engineers fix.</li>
+  <li><b>No untested code passes the audit.</b></li>
+  <li><b>Nothing lands on your main branch directly.</b> Merges happen in your PR tool, by a code owner.</li>
+  <li><b>Everything is in git.</b> Intent, spec, plan, audit, approvals, and cost are all committed.</li>
+  <li><b>You can always resume.</b> The state is the files, not the chat.</li>
+</ul>
+</section>
+
+<!-- ============================================================ glossary -->
+<section id="glossary">
+<h2>Glossary</h2>
+<table>
+<tbody>
+<tr><td style="width:24%"><b>Milestone</b></td><td>One change (feature, fix, refactor) with its own folder under <code>plans/active_milestones/</code>.</td></tr>
+<tr><td><b>Intent</b></td><td>A short statement of the problem and desired outcome. The start of every milestone.</td></tr>
+<tr><td><b>Grill Loop</b></td><td>The product owner's short rounds of questions that turn vague requests into precise requirements.</td></tr>
+<tr><td><b>Execution group</b></td><td>A set of plan tasks that touch different files and can be built in parallel. One commit per group.</td></tr>
+<tr><td><b>Worktree</b></td><td>A separate checkout of the repo, one per engineer, so parallel work doesn't collide.</td></tr>
+<tr><td><b>Validator</b></td><td>A panel of 3 independent skeptics that attacks a spec, plan, or diff. An issue counts when 2 of the 3 find it.</td></tr>
+<tr><td><b>Deliberator</b></td><td>A panel of delegates with different knowledge who agree on one improved spec or plan.</td></tr>
+<tr><td><b>First domino</b></td><td>The earliest plan step whose failure would break every step after it.</td></tr>
+<tr><td><b>Severity calibration</b></td><td>The implementation validator's corrected rating of how bad each confirmed defect really is.</td></tr>
+<tr><td><b>Risk tier</b></td><td>routine · elevated · critical. Decides how strongly checks are recommended.</td></tr>
+<tr><td><b>Approval phrase</b></td><td>The exact text you type to unlock a gated step. Single use, expires in 15 minutes.</td></tr>
+<tr><td><b>Local mode</b></td><td>A delivery setting that commits to your current branch without opening a PR.</td></tr>
+</tbody>
+</table>
+</section>
+
+<footer>The Plan Swarm Playbook · plan‑swarm@3.0 (plugin 3.0.0) · 5 Oct 2026 · companion to <a href="architecture.html">architecture.html</a>, <a href="implementation-plan.html">implementation-plan.html</a>, and <a href="feasible.html">feasible.html</a>.</footer>
+</main>
+</div>
+</body>
+</html>

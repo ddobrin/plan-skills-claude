@@ -24,3 +24,10 @@ hs_err_pid*
 replay_pid*
 
 .agents/
+# Python (plan-swarm control plane and tests)
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# claude plugin eval output
+plugins/plan/evals/results/

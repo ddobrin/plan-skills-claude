@@ -1,0 +1,126 @@
+# plan-swarm CI (installed by the swarm-init skill). Claude runs on Google Vertex AI.
+#
+# Setup (keyless, Workload Identity Federation):
+#   secrets    GCP_WORKLOAD_IDENTITY_PROVIDER  projects/NUM/locations/global/workloadIdentityPools/POOL/providers/PROVIDER
+#              GCP_SERVICE_ACCOUNT             a service account with roles/aiplatform.user in the Vertex project
+#   variables  CLOUD_ML_REGION                 optional; default global
+#
+#   ledger   PRs from swarm/*: every commit must have an intent/spec/plan/commit row in
+#            approvals.md whose HEAD is the commit's parent (each approval is bound to the
+#            HEAD it was typed at, and the approval hook stages the row into that commit).
+#            Also reports the milestone's confirmed risk tier.
+#   review   every PR: a single-pass review against REVIEW.md.
+#   panel    swarm PRs at tier elevated or critical: implementation-validator in PR mode
+#            (3 independent skeptics, calibrated severity).
+name: plan-swarm
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+  id-token: write   # google-github-actions/auth exchanges the GitHub OIDC token
+
+env:
+  CLOUD_ML_REGION: ${{ vars.CLOUD_ML_REGION || 'global' }}
+
+jobs:
+  ledger:
+    runs-on: ubuntu-latest
+    if: startsWith(github.head_ref, 'swarm/')
+    outputs:
+      tier: ${{ steps.check.outputs.tier }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: check
+        name: Every commit has an approval
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          MILESTONE: ${{ github.head_ref }}
+        run: |
+          python3 - <<'PY'
+          import os, re, subprocess, sys
+          m = os.environ["MILESTONE"].removeprefix("swarm/")
+          ledger = f"plans/active_milestones/{m}/approvals.md"
+          rows = []
+          if os.path.exists(ledger):
+              for line in open(ledger, encoding="utf-8"):
+                  cells = [c.strip() for c in line.strip().strip("|").split("|")]
+                  if len(cells) == 9 and re.match(r"\d{4}-\d\d-\d\dT", cells[0]):
+                      rows.append(cells)
+          # intent/spec/plan/commit rows authorize a commit; a pr row authorizes only the
+          # ledger-only commit that records it (release rows authorize no commit)
+          heads = [r[7] for r in rows if r[7] and r[2] in ("intent", "spec", "plan", "commit")]
+          pr_heads = [r[7] for r in rows if r[7] and r[2] == "pr"]
+          commits = subprocess.run(["git", "rev-list", "--reverse", f"{os.environ['BASE']}..HEAD"],
+                                   capture_output=True, text=True, check=True).stdout.split()
+          missing = []
+          for c in commits:
+              parent = subprocess.run(["git", "rev-parse", f"{c}^"], capture_output=True, text=True).stdout.strip()
+              changed = subprocess.run(["git", "diff-tree", "--no-commit-id", "--name-only", "-r", c],
+                                       capture_output=True, text=True).stdout.split()
+              ledger_only = changed == [ledger]
+              if not (any(parent.startswith(h) for h in heads) or
+                      (ledger_only and any(parent.startswith(h) for h in pr_heads))):
+                  subject = subprocess.run(["git", "log", "-1", "--format=%h %s", c], capture_output=True, text=True).stdout.strip()
+                  missing.append(subject)
+          tier = next((r[5] for r in reversed(rows) if r[2] == "plan" and r[5]), "routine")
+          with open(os.environ["GITHUB_OUTPUT"], "a") as fh:
+              fh.write(f"tier={tier}\n")
+          print(f"milestone {m}: {len(commits)} commits, {len(rows)} approvals, tier {tier}")
+          if missing:
+              print("commits without a matching approval:\n  " + "\n  ".join(missing))
+              sys.exit(1)
+          PY
+
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: auth
+        uses: google-github-actions/auth@c200f3691d83b41bf9bbd8638997a462592937ed  # v2.1.13
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+      - uses: anthropics/claude-code-action@cab360f6565aa35a51d6ce9e43f1f4287c0a32ea  # v1.0.241
+        env:
+          ANTHROPIC_VERTEX_PROJECT_ID: ${{ steps.auth.outputs.project_id }}
+        with:
+          use_vertex: "true"
+          prompt: |
+            Review pull request #${{ github.event.pull_request.number }} against REVIEW.md at the
+            repository root. Report findings as Important, Nit, or Pre-existing, following its rules,
+            in one PR comment. Do not approve, merge, or push.
+
+  panel:
+    runs-on: ubuntu-latest
+    needs: ledger
+    if: needs.ledger.outputs.tier == 'elevated' || needs.ledger.outputs.tier == 'critical'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: auth
+        uses: google-github-actions/auth@c200f3691d83b41bf9bbd8638997a462592937ed  # v2.1.13
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+      - uses: anthropics/claude-code-action@cab360f6565aa35a51d6ce9e43f1f4287c0a32ea  # v1.0.241
+        env:
+          ANTHROPIC_VERTEX_PROJECT_ID: ${{ steps.auth.outputs.project_id }}
+        with:
+          use_vertex: "true"
+          plugin_marketplaces: https://github.com/ddobrin/plan-skills-claude.git
+          plugins: plan@plan-skills
+          prompt: |
+            Use the plan:implementation-validator agent in PR mode on pull request
+            #${{ github.event.pull_request.number }} (base ${{ github.event.pull_request.base.sha }},
+            head ${{ github.event.pull_request.head.sha }}). Milestone tier:
+            ${{ needs.ledger.outputs.tier }}; use claim-refutation mode at critical.
+            Post the Important/Nit summary as one PR comment. Do not push commits.

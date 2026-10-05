@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Walkthrough: the plan-swarm@3.0 changes</title>
+<style>
+  :root{
+    --bg:#fbfaf7; --panel:#ffffff; --ink:#1d1d1f; --muted:#5f6368; --line:#e4e1da;
+    --accent:#c2562c; --blue:#2f5bd3; --green:#1f7a4d; --amber:#a86a00; --red:#b3261e; --purple:#7b3fd1;
+    --g-bg:#e8f5ee; --a-bg:#fff4dc; --r-bg:#fde8e6; --b-bg:#e9efff; --p-bg:#f1eafd; --code:#f3f1ec;
+    --add:#e6f4ea; --del:#fdecea;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#141414; --panel:#1c1c1e; --ink:#ececec; --muted:#a1a1a6; --line:#2e2e30;
+      --accent:#e0794f; --blue:#7c9cff; --green:#5cc98f; --amber:#e7b04a; --red:#ff7b72; --purple:#b38cff;
+      --g-bg:#16301f; --a-bg:#33290f; --r-bg:#3a1a18; --b-bg:#1b2442; --p-bg:#2a1f3d; --code:#242426;
+      --add:#12301c; --del:#3a1a18; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15.5px/1.62 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Helvetica,Arial,sans-serif}
+  .wrap{display:grid;grid-template-columns:230px minmax(0,1fr);gap:44px;max-width:1300px;margin:0 auto;padding:40px 28px 90px}
+  nav{position:sticky;top:24px;align-self:start;font-size:13.5px;max-height:calc(100vh - 48px);overflow:auto}
+  nav b{display:block;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-size:11.5px;margin:14px 0 6px}
+  nav b:first-child{margin-top:0}
+  nav a{display:block;color:var(--ink);text-decoration:none;padding:2px 0 2px 10px;border-left:2px solid var(--line)}
+  nav a:hover{border-left-color:var(--accent);color:var(--accent)}
+  @media (max-width:980px){.wrap{grid-template-columns:1fr}nav{display:none}}
+  h1{font-size:34px;line-height:1.12;margin:0 0 8px;letter-spacing:-.015em}
+  h2{font-size:22px;margin:54px 0 12px;padding-top:12px;border-top:1px solid var(--line)}
+  h3{font-size:16.5px;margin:22px 0 6px}
+  p{margin:10px 0}
+  .sub{color:var(--muted);font-size:17px;margin:0 0 18px}
+  .meta{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:13px;color:var(--muted);margin-bottom:22px}
+  code{font:13px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--code);padding:1px 5px;border-radius:4px}
+  pre{background:var(--code);border:1px solid var(--line);border-radius:10px;padding:12px 14px;overflow:auto;font:12.6px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace;margin:10px 0}
+  pre code{background:none;padding:0}
+  pre.diff{padding:0;background:var(--panel)}
+  pre.diff span{display:block;padding:0 14px}
+  pre.diff .a{background:var(--add)} pre.diff .d{background:var(--del)} pre.diff .h{color:var(--muted);background:var(--code);padding:4px 14px}
+  a{color:var(--blue)}
+  table{width:100%;border-collapse:collapse;background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden;font-size:14.2px;margin:12px 0}
+  th,td{text-align:left;vertical-align:top;padding:8px 12px;border-bottom:1px solid var(--line)}
+  th{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);background:var(--code)}
+  tr:last-child td{border-bottom:0}
+  .pill{display:inline-block;font-size:11.5px;font-weight:650;padding:2px 8px;border-radius:999px;white-space:nowrap}
+  .g{background:var(--g-bg);color:var(--green)} .a{background:var(--a-bg);color:var(--amber)} .r{background:var(--r-bg);color:var(--red)}
+  .b{background:var(--b-bg);color:var(--blue)} .p{background:var(--p-bg);color:var(--purple)} .x{background:var(--code);color:var(--muted)}
+  .callout{background:var(--b-bg);border-radius:10px;padding:14px 18px;margin:14px 0;font-size:15px}
+  .warn{background:var(--a-bg)}
+  .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin:16px 0}
+  @media (max-width:900px){.kpis{grid-template-columns:repeat(2,1fr)}}
+  .kpi{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+  .kpi .n{font-size:25px;font-weight:750;line-height:1.1} .kpi .l{font-size:12.5px;color:var(--muted)}
+  .bar{display:inline-block;height:10px;background:var(--blue);border-radius:3px;vertical-align:middle;margin-right:6px}
+  .bar.gen{background:var(--purple)} .bar.doc{background:var(--muted)} .bar.test{background:var(--green)}
+  .order{counter-reset:o;list-style:none;padding:0;margin:10px 0}
+  .order li{counter-increment:o;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 14px 10px 50px;margin:8px 0;position:relative;font-size:14.5px}
+  .order li::before{content:counter(o);position:absolute;left:14px;top:9px;width:24px;height:24px;border-radius:50%;background:var(--accent);color:#fff;font-weight:700;font-size:13px;text-align:center;line-height:24px}
+  .ev{font-size:12.8px;color:var(--muted)}
+  footer{margin-top:60px;font-size:12.5px;color:var(--muted);border-top:1px solid var(--line);padding-top:16px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav>
+  <b>Overview</b>
+  <a href="#summary">Summary</a>
+  <a href="#shape">Shape of the change</a>
+  <a href="#order">Suggested review order</a>
+  <b>Part A · The commit</b>
+  <a href="#a1">A1 · One source per role</a>
+  <a href="#a2">A2 · The control plane</a>
+  <a href="#a3">A3 · Lifecycle helpers</a>
+  <a href="#a4">A4 · Role prompt changes</a>
+  <a href="#a5">A5 · Skills and templates</a>
+  <a href="#a6">A6 · Tests and evals</a>
+  <a href="#a7">A7 · CI, manifests, docs</a>
+  <b>Part B · Hardening</b>
+  <a href="#b">B · Security review fixes</a>
+  <b>Part C · After the commit</b>
+  <a href="#c">C · Fixes from the end‑to‑end run</a>
+  <b>Checking it</b>
+  <a href="#verify">Verify locally</a>
+  <a href="#notin">Not in this change</a>
+</nav>
+
+<main>
+<h1>Walkthrough: the plan‑swarm@3.0 changes</h1>
+<p class="sub">A reviewer's guide to what changed between plan‑swarm@2.1 and 3.0, why each part exists, and where to look first.</p>
+<div class="meta">
+  <span>Baseline <code>a54fa10</code></span>
+  <span>Commit <code>470eaba</code> (feat(plan): plan‑swarm@3.0…)</span>
+  <span>+ follow‑up fixes in the working tree (Part C)</span>
+  <span>Plugin 2.1 → <b>3.0.0</b></span>
+</div>
+
+<!-- ============================================================ summary -->
+<section id="summary">
+<div class="callout">In 2.1 the swarm's rules lived in prompts: "only the auditor commits", "stop for approval". In 3.0 they are <b>enforced</b>. A small standard‑library control plane turns six exact approval phrases into single‑use approvals, refuses every commit, push, or tag without one, and records each approval in a ledger that is committed with the change it authorizes. Around it the lifecycle gained an intent inbox, risk tiers, parallel worktrees, a PR stage, report‑only validators, metrics, and an eval suite. Each role's prompt now has one source file, and the agent and skill forms are generated from it.</div>
+<div class="kpis">
+  <div class="kpi"><div class="n">134</div><div class="l">files in the commit (104 added, 30 modified)</div></div>
+  <div class="kpi"><div class="n">2,601</div><div class="l">lines of control‑plane code (13 stdlib modules)</div></div>
+  <div class="kpi"><div class="n">243</div><div class="l">control‑plane tests (113 security regressions)</div></div>
+  <div class="kpi"><div class="n">9</div><div class="l">eval cases (<code>claude plugin eval</code>)</div></div>
+  <div class="kpi"><div class="n">15</div><div class="l">files changed after the commit, by the end‑to‑end run</div></div>
+</div>
+</section>
+
+<!-- ============================================================ shape -->
+<section id="shape">
+<h2>Shape of the change</h2>
+<p>Line counts by area in commit <code>470eaba</code> (<code>git diff --numstat a54fa10 470eaba</code>). Most added lines are new role sources and documentation; the reviewable logic is the control plane and its tests.</p>
+<table>
+<thead><tr><th style="width:26%">Area</th><th style="width:8%">Files</th><th style="width:14%">+ / −</th><th>Size</th></tr></thead>
+<tbody>
+<tr><td><code>plugins/plan/roles/</code> <span class="pill p">new source</span></td><td>14</td><td>+4,726</td><td><span class="bar gen" style="width:236px"></span>canonical prompts; replace hand‑kept pairs</td></tr>
+<tr><td>HTML docs</td><td>5</td><td>+2,954</td><td><span class="bar doc" style="width:148px"></span>design record, playbook, AI‑DLC</td></tr>
+<tr><td><code>plugins/plan/lib/*.py</code> <span class="pill b">review</span></td><td>12</td><td>+2,601</td><td><span class="bar" style="width:130px"></span>control plane and helpers</td></tr>
+<tr><td><code>plugins/plan/lib/tests/</code></td><td>9</td><td>+1,343</td><td><span class="bar test" style="width:67px"></span>pytest on real git repos</td></tr>
+<tr><td><code>plugins/plan/evals/</code></td><td>48</td><td>+721</td><td><span class="bar test" style="width:36px"></span>9 cases (prompt, graders, scaffold)</td></tr>
+<tr><td>Markdown docs</td><td>5</td><td>+444 / −451</td><td><span class="bar doc" style="width:22px"></span>READMEs, SUBAGENTS, AGENTS, topology</td></tr>
+<tr><td><code>agents/</code> <span class="pill x">generated</span></td><td>12</td><td>+404 / −249</td><td><span class="bar gen" style="width:20px"></span>rendered from roles</td></tr>
+<tr><td><code>skills/&lt;role&gt;/</code> <span class="pill x">generated</span></td><td>10</td><td>+320 / −165</td><td><span class="bar gen" style="width:16px"></span>rendered from roles</td></tr>
+<tr><td><code>templates/</code></td><td>9</td><td>+295</td><td><span class="bar" style="width:15px"></span>installed into target repos</td></tr>
+<tr><td>CI, manifests, <code>.gitignore</code></td><td>4</td><td>+69 / −5</td><td><span class="bar" style="width:4px"></span></td></tr>
+<tr><td>new utility skills, <code>hooks/hooks.json</code>, recap assets</td><td>6</td><td>+79 / −3</td><td><span class="bar" style="width:4px"></span></td></tr>
+</tbody>
+</table>
+</section>
+
+<!-- ============================================================ order -->
+<section id="order">
+<h2>Suggested review order</h2>
+<ol class="order">
+  <li><b>The contract:</b> <code>plugins/plan/topology.md</code> (the 3.0 graph) and the approval phrases in <code>lib/approve.py</code>'s docstring. Everything else implements these.</li>
+  <li><b>The authority:</b> <code>lib/gate.py</code>, read top‑down: module docstring (threat model) → <code>check_bash</code> → <code>check_git</code> → <code>check_commit</code> / <code>check_push</code> / <code>check_tag</code> → <code>git_hook</code> / <code>pre_push</code>. Then <code>lib/swarmgit.py</code> (store, nonces, ledger).</li>
+  <li><b>The proof:</b> <code>lib/tests/test_security.py</code> reads as a list of attacks that must stay refused, and <code>test_gate.py</code> as the policy table.</li>
+  <li><b>The orchestration:</b> <code>roles/supervisor.md</code> (the 3.0 state machine), then the role deltas in A4.</li>
+  <li><b>The mechanics:</b> <code>lib/render_roles.py</code> + one role file, then the helpers (<code>worktree.py</code>, <code>tier.py</code>, <code>prbody.py</code>).</li>
+  <li><b>Behavior end to end:</b> <a href="usage-e2e.html">usage-e2e.html</a>, a real run of every stage.</li>
+</ol>
+<p class="ev">Skip the generated <code>agents/</code> and <code>skills/&lt;role&gt;/SKILL.md</code> diffs: review the role source instead. CI's <code>render_roles.py --check</code> guarantees the generated files match it.</p>
+</section>
+
+<!-- ============================================================ A1 -->
+<section id="a1">
+<h2>A1 · One source per role</h2>
+<p><b>Why.</b> In 2.1 every role existed twice (<code>agents/X.md</code> and <code>skills/X/SKILL.md</code>) and had to be kept in sync by hand. Every 3.0 prompt change would have doubled the work and risked drift.</p>
+<p><b>What.</b> <code>roles/{name}.md</code> holds both front‑matter blocks verbatim plus one body. Shared text renders into both forms; <code>@agent</code> / <code>@skill</code> blocks render into one. <code>lib/render_roles.py</code> writes the forms; <code>--check</code> fails CI if they are stale.</p>
+<pre><code>&lt;!-- @agent:frontmatter --&gt;          ← agent front matter, copied as-is (name, description, model, color, tools)
+&lt;!-- @skill:frontmatter --&gt;          ← skill front matter, copied as-is
+&lt;!-- @body --&gt;
+shared text                          → both forms
+&lt;!-- @agent --&gt; … &lt;!-- @end --&gt;      → agent only
+&lt;!-- @skill --&gt; … &lt;!-- @end --&gt;      → skill only</code></pre>
+<p><b>How it was proven safe.</b> The migration was done first with no behavior change: the first render reproduced all 27 existing files byte for byte. Only then were prompts changed. The supervisor and auditor were merged into a single shared body; the other roles keep their form‑specific blocks and gained shared 3.0 sections. <code>simplifier</code> gained an agent form (14 agents, up from 13).</p>
+</section>
+
+<!-- ============================================================ A2 -->
+<section id="a2">
+<h2>A2 · The control plane</h2>
+<p><b>Why.</b> The feasibility review's top finding: governance was prompt‑only. Nothing stopped an engineer with Bash from committing, and approvals were words in chat.</p>
+<table>
+<thead><tr><th style="width:24%">Piece</th><th>What to look for</th></tr></thead>
+<tbody>
+<tr><td><code>hooks/hooks.json</code></td><td>SessionStart → <code>health.py</code>, UserPromptSubmit → <code>approve.py</code>, PreToolUse (Bash, Write, Edit, MultiEdit, NotebookEdit, Agent, Task) → <code>gate.py</code>.</td></tr>
+<tr><td><code>lib/approve.py</code></td><td>Exact whole‑prompt grammar for six phrases. Writes the ledger row <em>first</em>, stages it (<code>git add</code>), then mints a single‑use nonce bound to the full HEAD SHA with a TTL. Ignores events that are not UserPromptSubmit; never mints on error.</td></tr>
+<tr><td><code>lib/gate.py</code></td><td>Layer 1 (PreToolUse): shell parsing with quote‑aware splitting and <code>cd</code> tracking; allowlisted git subcommands; unique‑prefix option matching; default deny for git hidden in other commands; real‑path file guards; commit / push / tag rules. Layer 2: <code>--git-hook</code> (pre‑commit, pre‑merge‑commit, needs a 60‑second ticket) and <code>--pre-push</code> (every pushed commit's parent must match an authorizing ledger row). Any exception fails closed.</td></tr>
+<tr><td><code>lib/swarmgit.py</code></td><td>Store in <code>.git/plan-swarm/</code> (readable by git hooks, shared by worktrees, not committed); atomic writes; tolerant readers; race‑free nonce consume; tickets; per‑version tag allowances; activation marker; ledger read/write.</td></tr>
+<tr><td><code>lib/health.py</code></td><td>Heartbeat plus <code>--status</code>. Running it through Bash fires the gate first, so a fresh heartbeat proves the hooks are live; stale means "enforcement off".</td></tr>
+<tr><td><code>lib/swarmdoc.py</code></td><td>Finds the fenced JSON block of <code>plans/swarm.md</code> by its tag, validates every key, and matches path globs. No YAML dependency, because hooks run on the user's plain <code>python3</code>.</td></tr>
+<tr><td><code>templates/git-hooks/*</code></td><td>Thin shell wrappers that run the store's copy of <code>gate.py</code> (refreshed each session). <code>PLAN_SWARM_STORE</code> is honored only under <code>PLAN_SWARM_TEST=1</code>.</td></tr>
+</tbody>
+</table>
+<p>The central rule, as enforced in <code>check_commit</code>: a plans‑only change may use an intent/spec/plan approval for its milestone; anything else needs <code>approve commit</code>; in pr mode only on <code>swarm/{m}</code>; WIP only inside a linked worktree under <code>.swarm/worktrees/</code>.</p>
+</section>
+
+<!-- ============================================================ A3 -->
+<section id="a3">
+<h2>A3 · Lifecycle helpers</h2>
+<table>
+<thead><tr><th style="width:18%">Script</th><th style="width:34%">Called by</th><th>Does</th></tr></thead>
+<tbody>
+<tr><td><code>tier.py</code></td><td>supervisor at intent, plan, and before the PR</td><td>routine / elevated / critical from <code>swarm.md</code> rules (keywords, plan paths, diff paths and size). Never lowers; writes a <code>Risk tier (proposed)</code> line.</td></tr>
+<tr><td><code>worktree.py</code></td><td>supervisor per execution group</td><td><code>create</code> a worktree + <code>swarm-wip/{m}/{task}</code> branch; <code>squash</code> auto‑commits leftover WIP, refuses overlapping files or <code>plans/</code> edits, then <code>merge --squash</code> without committing; <code>cleanup</code>.</td></tr>
+<tr><td><code>usage.py</code></td><td>supervisor after every dispatch and decline</td><td>Cost and declined‑gate log, <code>usage.md</code>.</td></tr>
+<tr><td><code>prbody.py</code></td><td>supervisor at the PR</td><td>PR title and body from committed artifacts only.</td></tr>
+<tr><td><code>metrics.py</code></td><td><code>swarm-metrics</code> skill</td><td>Lead times, first‑pass audit rate, rework, cost, intent survival.</td></tr>
+<tr><td><code>swarm_init.py</code></td><td><code>swarm-init</code> skill</td><td>Installs templates and the three git hooks, never overwrites, marks the repo active.</td></tr>
+</tbody>
+</table>
+</section>
+
+<!-- ============================================================ A4 -->
+<section id="a4">
+<h2>A4 · Role prompt changes</h2>
+<table>
+<thead><tr><th style="width:18%">Role</th><th style="width:48%">Change</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td><code>supervisor</code></td><td>Rewritten: enforcement check first; state derived from artifacts; tier‑based offers; exact approval phrases; worktree build; Path A cap; PR stage; local mode.</td><td>Orchestrate 3.0; never approve on the user's behalf.</td></tr>
+<tr><td><code>product-owner</code> (+ visual)</td><td>Intent mode; spec starts from <code>intent.md</code>; policy skills and a <em>Policy Concerns</em> section; applies validator tightenings; roadmap COMPLETED/Shipped duties.</td><td>Playbook Plan and Design stages; policies as code.</td></tr>
+<tr><td><code>architect</code> (+ visual)</td><td><em>Irreversible Steps</em> field; plans built for parallel worktrees; applies plan‑validator fixes; Path B revisions.</td><td>Tier input; safe parallelism.</td></tr>
+<tr><td><code>engineer</code></td><td>Worktree mode: work only in its path, WIP commits there, no <code>plans/</code> edits.</td><td>Isolation without plan conflicts.</td></tr>
+<tr><td><code>auditor</code></td><td>Tracked <code>audit.md</code> with <code>### Group g · Round r · PASS|FAIL</code>; commit kinds and rules; "Common mistakes" proposals.</td><td>Evidence in git; rework metrics.</td></tr>
+<tr><td>spec / plan / implementation validators</td><td>Step 8 is now <b>report only</b>; policy skills; implementation validator PR mode (<code>REVIEW.md</code>, Important/Nit).</td><td>Reviewers never write; Deploy stage.</td></tr>
+</tbody>
+</table>
+<p>Representative diff (<code>agents/spec-validator.md</code>, rendered from <code>roles/spec-validator.md</code>):</p>
+<pre class="diff"><span class="d">-8. **Act:** apply each confirmed finding's `tightening` to the spec (or surface it if</span><span class="d">-   it changes intent); list unconfirmed for the user; re-run the panel once if you</span><span class="d">-   rewrote the spec materially.</span><span class="a">+8. **Act (report only):** never edit the spec yourself; reviewers do not change what</span><span class="a">+   they review. List each confirmed finding's `tightening` for the author: in your</span><span class="a">+   final report when the supervisor dispatched you (it sends them to `product-owner`),</span><span class="a">+   or as a request to the user when you run standalone. Flag tightenings that would</span><span class="a">+   change intent. List unconfirmed findings for the user.</span></pre>
+<pre class="diff"><span class="h">agents/auditor.md</span><span class="d">-Write a formal report to `plans/audit/AUDIT_[Plan_Name].md`. Ensure `plans/audit`</span><span class="d">-contains a `.gitignore` with `*` so reports are not tracked. Use this structure:</span><span class="a">+### Phase 3: Record the round in `audit.md`</span></pre>
+</section>
+
+<!-- ============================================================ A5 -->
+<section id="a5">
+<h2>A5 · Skills and templates</h2>
+<ul>
+  <li><b>New skills:</b> <code>swarm-init</code> (preview, ask, install) and <code>swarm-metrics</code>.</li>
+  <li><b>Templates</b> (<code>plugins/plan/templates/</code>): <code>swarm.md</code> (settings, Markdown + one JSON block), <code>git-hooks/{pre-commit,pre-merge-commit,pre-push}</code>, <code>REVIEW.md</code>, <code>ci/plan-swarm.yml</code> (ledger job, single‑pass review, 3‑skeptic panel at elevated+), <code>AGENTS.md</code>, <code>skills/policy-example/</code>, <code>managed-settings.example.md</code>.</li>
+  <li><b>Recap assets:</b> three path references updated from the untracked <code>plans/audit/</code> to the tracked <code>audit.md</code>.</li>
+</ul>
+</section>
+
+<!-- ============================================================ A6 -->
+<section id="a6">
+<h2>A6 · Tests and evals</h2>
+<table>
+<thead><tr><th style="width:26%">File</th><th style="width:10%">Tests</th><th>Covers</th></tr></thead>
+<tbody>
+<tr><td><code>test_security.py</code></td><td>113</td><td>One regression per security‑review finding, plus a real bare remote for the pre‑push layer.</td></tr>
+<tr><td><code>test_gate.py</code></td><td>51</td><td>The git policy table, file guards, dispatch, <code>cd</code> into worktrees, pathspec commits, the git hook.</td></tr>
+<tr><td><code>test_swarmdoc.py</code></td><td>27</td><td>Tagged extraction, config validation, globs, <code>topology.md</code> consistency.</td></tr>
+<tr><td><code>test_approve.py</code></td><td>22</td><td>Grammar (accept and reject), ledger, tiers, release rows.</td></tr>
+<tr><td><code>test_health_init.py</code></td><td>7</td><td>Status, SessionStart, installer, the CI ledger script (extracted and run).</td></tr>
+<tr><td><code>test_helpers.py</code></td><td>9</td><td>usage, tier, worktree lifecycle, PR body, metrics.</td></tr>
+<tr><td><code>test_render_roles.py</code> · <code>test_tally.py</code></td><td>7 · 7</td><td>Role rendering and the repo's roles in sync; golden tests for the existing vote counter.</td></tr>
+</tbody>
+</table>
+<p><b>Evals</b> (<code>plugins/plan/evals/</code>, <code>claude plugin eval</code>): L1 validator report contract; L2 discipline (engineer never commits, supervisor stops at review and PR, request becomes intent, auditor reports a blocked commit); L3 first‑domino capability; L4 agent/skill parity. Tags <code>blocking</code> and <code>report</code> drive the plugin CI.</p>
+</section>
+
+<!-- ============================================================ A7 -->
+<section id="a7">
+<h2>A7 · CI, manifests, docs</h2>
+<ul>
+  <li><code>.github/workflows/plugin-ci.yml</code>: <code>render_roles.py --check</code>, pytest (lib and wf‑trajectory), blocking evals, report evals.</li>
+  <li><code>plugin.json</code> version 3.0.0 with description and author; <code>marketplace.json</code> descriptions; <code>.gitignore</code> for Python caches and eval results.</li>
+  <li>Docs: <code>ai-dlc.html</code> (as built), <code>playbook.html</code>, design record (<code>feasible.html</code>, <code>architecture.html</code>, <code>implementation-plan.html</code>, now with "As built" banners), <code>AGENTS.md</code>, rewritten <code>plugins/plan/README.md</code> and <code>SUBAGENTS.md</code>, <code>topology.md</code> marked implemented. The root <code>README.md</code> dropped the non‑existent <code>orchestrator</code> plugin.</li>
+</ul>
+</section>
+
+<!-- ============================================================ B -->
+<section id="b">
+<h2>B · Hardening from the security review</h2>
+<p>An independent adversarial review of the first gate reproduced bypasses and fail‑open paths. All are fixed in the commit; each has a test in <code>test_security.py</code>.</p>
+<table>
+<thead><tr><th style="width:5%">ID</th><th style="width:38%">Finding</th><th>Fix</th></tr></thead>
+<tbody>
+<tr><td>C1</td><td>An agent could run <code>approve.py</code> itself and mint an approval.</td><td>Commands mentioning control‑plane internals are refused; <code>approve.py</code> acts only on UserPromptSubmit.</td></tr>
+<tr><td>C2</td><td>Approvals forged via <code>cd .git</code>, variables, symlinks, <code>.GIT</code>.</td><td>Real‑path resolution (case‑insensitive on macOS); no access to the git directory; variable targets refused.</td></tr>
+<tr><td>C3</td><td>Deleting <code>plans/swarm.md</code> switched the gate off.</td><td>Activation marker; missing config fails closed; <code>swarm.md</code> and its folders protected.</td></tr>
+<tr><td>C4</td><td><code>bash -c</code>, <code>eval</code>, <code>xargs</code>, aliases, <code>GIT_CONFIG_*</code> hid git.</td><td>Subcommand allowlist; config and env tricks refused; default deny for git inside other commands.</td></tr>
+<tr><td>C5–C6</td><td>WIP pushed into <code>swarm/{m}</code>; <code>-c remote.origin.push</code> pushed main.</td><td>WIP only in linked worktrees; explicit same‑name pushes; <code>-B</code>/<code>-C</code>/fetch‑into‑refs refused; pre‑push hook checks every commit.</td></tr>
+<tr><td>H1–H3</td><td>Crashes allowed the call; invalid config enforced little; merges and pulls bypassed pre‑commit.</td><td>Fail closed (exit 2); full checks with defaults; merge only <code>--squash</code>, pull only <code>--ff-only</code>, <code>pre-merge-commit</code> hook.</td></tr>
+<tr><td>H4–H8</td><td>Abbreviations (<code>--amen</code>, <code>--del</code>, <code>-uf</code>); plans approvals committing code; <code>gh pr merge</code>; plugin and settings writable.</td><td>Prefix‑aware options and clusters; ticket bound to kind and paths; <code>gh</code> gated; plugin and settings protected.</td></tr>
+<tr><td>M1–M8</td><td>Dispatch evasion; burnt nonces; races; empty HEAD; tag targets; multi‑use tag pushes; the hook suggesting <code>--no-verify</code>.</td><td>Robust dispatch match; atomic consume; strict full‑SHA binding; tags on HEAD only; per‑version allowances; no bypass hints.</td></tr>
+</tbody>
+</table>
+<div class="callout warn"><b>Threat model, stated in code and docs:</b> the local layers guard against well‑meaning agents that try to unblock themselves. They are not a sandbox against a determined adversary with shell access. Branch protection, the CI ledger job, and code‑owner review are the authority.</div>
+</section>
+
+<!-- ============================================================ C -->
+<section id="c">
+<h2>C · Fixes found by the end‑to‑end run (after the commit)</h2>
+<p>Running one milestone through every stage for <a href="usage-e2e.html">usage-e2e.html</a> found problems no unit test had. They are fixed in the working tree (not yet committed), with tests.</p>
+<table>
+<thead><tr><th style="width:32%">Problem</th><th style="width:36%">Fix</th><th>Files</th></tr></thead>
+<tbody>
+<tr><td>The pre‑push hook refused <b>people</b> pushing <code>main</code>.</td><td>swarm refs always checked; other branches and tags only while a swarm session is active.</td><td><code>gate.py</code>, test</td></tr>
+<tr><td>The supervisor's <code>git mv</code> fails on an untracked inbox intent.</td><td>Use <code>mv</code> (<code>git mv</code> only if tracked).</td><td><code>roles/supervisor.md</code></td></tr>
+<tr><td>"Commit the staged group" left out <code>audit.md</code>, plan ticks, <code>usage.md</code>, roadmap.</td><td>Group commit is <code>git add plans/ &amp;&amp; git commit …</code> (never <code>git add -A</code>).</td><td><code>roles/auditor.md</code>, <code>roles/supervisor.md</code></td></tr>
+<tr><td><code>git switch main &amp;&amp; git pull</code> is judged on the swarm branch.</td><td>Run as two commands.</td><td><code>roles/supervisor.md</code></td></tr>
+<tr><td>The <code>approve pr</code> row was never committed, and it blocked switching branches.</td><td>A <code>pr</code> row authorizes one ledger‑only "record PR approval" commit (and still no code); gate, pre‑push, and the CI job agree.</td><td><code>gate.py</code>, <code>templates/ci/plan-swarm.yml</code>, <code>roles/*</code>, tests</td></tr>
+<tr><td>Stale "next step" text after <code>approve plan</code> and <code>approve intent</code>.</td><td>Updated messages.</td><td><code>approve.py</code></td></tr>
+</tbody>
+</table>
+<p>Also new and uncommitted: <code>examples/e2e_demo.py</code> (the reproducible run), <code>usage-e2e.html</code>, this walkthrough, and doc updates to <code>ai-dlc.html</code>, <code>playbook.html</code>, <code>plugins/plan/README.md</code>, and <code>AGENTS.md</code>.</p>
+</section>
+
+<!-- ============================================================ verify -->
+<section id="verify">
+<h2>Verify locally</h2>
+<pre><code># generated files match their role sources
+python3 plugins/plan/lib/render_roles.py --check
+
+# control plane (243) and utility (22) tests
+uvx pytest -q plugins/plan/lib/tests
+uvx pytest -q plugins/plan/skills/wf-trajectory/tests
+
+# manifests
+claude plugin validate . &amp;&amp; claude plugin validate plugins/plan
+
+# one milestone end to end with the real hooks (no model calls)
+python3 examples/e2e_demo.py /tmp/swarm-e2e
+
+# evals (real Claude sessions; cost money)
+claude plugin eval plugins/plan --tag blocking --scaffold --trust-plugin \
+  --allow-tools Bash Write Edit --ablation none --no-publish</code></pre>
+</section>
+
+<!-- ============================================================ notin -->
+<section id="notin">
+<h2>Not in this change</h2>
+<ul>
+  <li><b>Maintain loop</b> (triage agent, <code>bands.md</code> detector): specified in <code>topology.md</code>, not built.</li>
+  <li><b>Live eval scores:</b> the harness was validated, but agent runs need Google Cloud credentials the local eval sandbox could not load; plugin CI runs them on Vertex AI through Workload Identity Federation.</li>
+  <li><b>Server‑side enforcement</b> (branch protection, required checks) is configured on the host by the adopting team; the templates and docs explain it.</li>
+</ul>
+</section>
+
+<footer>Walkthrough of plan‑swarm@3.0 · commit <code>470eaba</code> plus working‑tree fixes · self‑contained, no external assets.</footer>
+</main>
+</div>
+</body>
+</html>

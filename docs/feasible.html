@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Feasibility: Plan Swarm → AI-Native SDLC</title>
+<style>
+  :root{
+    --bg:#fbfaf7; --panel:#ffffff; --ink:#1d1d1f; --muted:#5f6368; --line:#e4e1da;
+    --accent:#c2562c; --blue:#2f5bd3; --green:#1f7a4d; --amber:#a86a00; --red:#b3261e;
+    --g-bg:#e8f5ee; --a-bg:#fff4dc; --r-bg:#fde8e6; --b-bg:#e9efff; --code:#f3f1ec;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#141414; --panel:#1c1c1e; --ink:#ececec; --muted:#a1a1a6; --line:#2e2e30;
+      --accent:#e0794f; --blue:#7c9cff; --green:#5cc98f; --amber:#e7b04a; --red:#ff7b72;
+      --g-bg:#16301f; --a-bg:#33290f; --r-bg:#3a1a18; --b-bg:#1b2442; --code:#242426; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15.5px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Helvetica,Arial,sans-serif}
+  .wrap{display:grid;grid-template-columns:230px minmax(0,1fr);gap:40px;max-width:1240px;margin:0 auto;padding:40px 28px 80px}
+  nav{position:sticky;top:24px;align-self:start;font-size:13.5px}
+  nav b{display:block;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-size:11.5px;margin-bottom:8px}
+  nav a{display:block;color:var(--ink);text-decoration:none;padding:4px 0 4px 10px;border-left:2px solid var(--line)}
+  nav a:hover{border-left-color:var(--accent);color:var(--accent)}
+  @media (max-width:900px){.wrap{grid-template-columns:1fr}nav{display:none}}
+  h1{font-size:34px;line-height:1.15;margin:0 0 6px;letter-spacing:-.01em}
+  h2{font-size:22px;margin:56px 0 12px;padding-top:12px;border-top:1px solid var(--line)}
+  h3{font-size:17px;margin:28px 0 8px}
+  p{margin:10px 0}
+  .sub{color:var(--muted);margin:0 0 22px}
+  .meta{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:13px;color:var(--muted);margin-bottom:26px}
+  code{font:13px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--code);padding:1px 5px;border-radius:4px}
+  a{color:var(--blue)}
+  .verdict{background:var(--panel);border:1px solid var(--line);border-left:5px solid var(--green);border-radius:10px;padding:20px 24px;margin:8px 0 18px}
+  .verdict .big{font-size:21px;font-weight:650;margin:0 0 6px}
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:18px 0}
+  @media (max-width:700px){.kpis{grid-template-columns:repeat(2,1fr)}}
+  .kpi{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+  .kpi .n{font-size:26px;font-weight:700;line-height:1.1}
+  .kpi .l{font-size:12.5px;color:var(--muted)}
+  table{width:100%;border-collapse:collapse;background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden;font-size:14px;margin:12px 0}
+  th,td{text-align:left;vertical-align:top;padding:9px 12px;border-bottom:1px solid var(--line)}
+  th{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);background:var(--code)}
+  tr:last-child td{border-bottom:0}
+  .pill{display:inline-block;font-size:11.5px;font-weight:650;padding:2px 8px;border-radius:999px;white-space:nowrap}
+  .strong{background:var(--g-bg);color:var(--green)} .partial{background:var(--a-bg);color:var(--amber)}
+  .gap{background:var(--r-bg);color:var(--red)} .info{background:var(--b-bg);color:var(--blue)}
+  .sev-c{background:var(--r-bg);color:var(--red)} .sev-h{background:var(--a-bg);color:var(--amber)} .sev-m{background:var(--b-bg);color:var(--blue)}
+  .cards{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+  @media (max-width:800px){.cards{grid-template-columns:1fr}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+  .card h4{margin:0 0 6px;font-size:15px}
+  .card p{margin:6px 0;font-size:14px}
+  .ev{font-size:12.5px;color:var(--muted)}
+  .callout{background:var(--b-bg);border-radius:10px;padding:14px 18px;margin:14px 0;font-size:14.5px}
+  .warn{background:var(--a-bg)}
+  /* flow diagram */
+  .flow{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin:16px 0 6px}
+  @media (max-width:900px){.flow{grid-template-columns:repeat(3,1fr)}}
+  .stage{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 10px 12px;font-size:13px;position:relative}
+  .stage .t{font-weight:700;font-size:14px}
+  .stage .a{font-family:ui-monospace,Menlo,monospace;font-size:11.5px;color:var(--muted)}
+  .stage .s{margin-top:8px}
+  .stage.fit-strong{border-top:4px solid var(--green)} .stage.fit-partial{border-top:4px solid var(--amber)} .stage.fit-gap{border-top:4px solid var(--red)}
+  .legend{font-size:12.5px;color:var(--muted)}
+  ol.tight li,ul.tight li{margin:4px 0}
+  .phase{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 20px;margin:12px 0}
+  .phase h4{margin:0 0 4px;font-size:16px}
+  .phase .when{font-size:12.5px;color:var(--muted);margin-bottom:8px}
+  footer{margin-top:60px;font-size:12.5px;color:var(--muted);border-top:1px solid var(--line);padding-top:16px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav>
+  <b>Contents</b>
+  <a href="#verdict">1 · Verdict</a>
+  <a href="#playbook">2 · What the playbook asks</a>
+  <a href="#crosswalk">3 · Stage crosswalk</a>
+  <a href="#governance">4 · Governance crosswalk</a>
+  <a href="#ahead">5 · Where the swarm is ahead</a>
+  <a href="#gaps">6 · Gaps, ranked</a>
+  <a href="#target">7 · Target shape</a>
+  <a href="#platform">7b · Platform feasibility</a>
+  <a href="#changes">8 · Change inventory</a>
+  <a href="#roadmap">9 · Phased roadmap</a>
+  <a href="#tensions">10 · Tensions: do not adopt blindly</a>
+  <a href="#metrics">11 · Measuring adoption</a>
+  <a href="#decisions">12 · Open decisions</a>
+  <a href="#method">13 · Method &amp; sources</a>
+</nav>
+
+<main>
+<h1>Can the Plan Swarm go AI‑native?</h1>
+<p class="sub">Feasibility assessment of adopting Anthropic's <em>AI‑Native SDLC Playbook</em> in the <code>plan</code> plugin swarm.</p>
+<div class="meta">
+  <span>Repo: <code>plan-skills-claude</code> @ <code>a54fa10</code> (branch <code>explore</code>)</span>
+  <span>Playbook: Louis Claxton, 21 Aug 2026</span>
+  <span>Assessed: 24 Sep 2026</span>
+  <span>Scope: Plan → Deploy in full · Maintain as roadmap</span>
+  <span>Packaging: plugin + opt‑in project templates</span>
+</div>
+
+<!-- ============================================================ 1 -->
+<section id="verdict">
+<div class="verdict">
+  <p class="big">Feasible, and a good fit. The swarm is already AI‑native in the middle of the lifecycle and pre‑AI at both ends.</p>
+  <p>The playbook's backbone (each stage commits a Markdown artifact the next stage reads, and humans approve at gates) is the swarm's founding design. <code>spec.md → plan.md → code</code> with a mandatory human gate already exists, and the adversarial validators beat the playbook's review model. What's missing is everything <strong>around</strong> the agents: deterministic enforcement (hooks), a committed evidence trail, a PR‑based delivery stage, evals for the swarm's own prompts, and an entry point that isn't a human typing a request.</p>
+  <p><strong>None of the gaps needs a redesign.</strong> Every required change either adds a new artifact or hook, or tightens an existing prompt. The two human gates, the file‑based handoffs, and the validator/deliberator machinery all stay.</p>
+</div>
+
+<div class="kpis">
+  <div class="kpi"><div class="n">1 · 3 · 2</div><div class="l">stages strong · partial · gap (of the playbook's 6)</div></div>
+  <div class="kpi"><div class="n">0</div><div class="l">hooks, evals, PR steps, CI entry points in <code>plugins/plan/</code> today</div></div>
+  <div class="kpi"><div class="n">12</div><div class="l">gaps found; 3 critical (governance is prompt‑only)</div></div>
+  <div class="kpi"><div class="n">3 + 1</div><div class="l">phases to adopt (3 delivery phases + Maintain roadmap)</div></div>
+</div>
+
+<div class="callout"><strong>The single most important change:</strong> move the swarm's rules from <em>prose</em> to <em>mechanism</em>. Today "only the auditor commits" and "stop for approval" exist only as sentences in prompts. The engineer holds <code>Bash</code> and could run <code>git commit</code>; nothing stops it. The playbook's governance model rests on deterministic hooks and committed evidence. Fix that first; everything else builds on it.</div>
+</section>
+
+<!-- ============================================================ 2 -->
+<section id="playbook">
+<h2>2 · What the playbook asks</h2>
+<p>Its premise: AI made writing code cheap, so the bottleneck moved to the human‑speed stages around it. The playbook rebuilds the SDLC as a loop of six stages. Each stage commits an artifact the next one reads, and the chain of commits is the audit trail.</p>
+<div class="flow">
+  <div class="stage fit-partial"><div class="t">1 · Plan</div><div class="a">intent.md</div><div class="s">Originator brainstorms with Claude; PO reviews &amp; commits.</div></div>
+  <div class="stage fit-strong"><div class="t">2 · Design</div><div class="a">spec.md</div><div class="s">Requirements + design in one session, constrained by policy skills.</div></div>
+  <div class="stage fit-partial"><div class="t">3 · Build</div><div class="a">plan.md · code · CLAUDE.md</div><div class="s">Plan mode first; skills, hooks, worktrees, subagents.</div></div>
+  <div class="stage fit-partial"><div class="t">4 · Test</div><div class="a">tests · evals</div><div class="s">Self‑verification loops; continuous evals of agent config in CI.</div></div>
+  <div class="stage fit-gap"><div class="t">5 · Deploy</div><div class="a">PR + findings</div><div class="s">AI PR review vs <code>REVIEW.md</code>; hook approval gates; headless CI.</div></div>
+  <div class="stage fit-gap"><div class="t">6 · Maintain</div><div class="a">intent.md (auto)</div><div class="s">Detection bands breach → Claude diagnoses → writes intent.md.</div></div>
+</div>
+<p class="legend">Top border = current swarm fit: <span class="pill strong">strong</span> <span class="pill partial">partial</span> <span class="pill gap">gap</span></p>
+<p>Governance rests on four shifts: <strong>separation of duties</strong> (the agent that writes can't approve), <strong>policies as code</strong> (skills), <strong>deterministic enforcement</strong> (hooks and approval gates), and <strong>managed settings</strong>. Evidence comes from OpenTelemetry transcripts, PR history, git history, and CI logs.</p>
+</section>
+
+<!-- ============================================================ 3 -->
+<section id="crosswalk">
+<h2>3 · Stage‑by‑stage crosswalk</h2>
+<table>
+<thead><tr><th style="width:12%">Stage</th><th style="width:24%">Playbook mechanism</th><th style="width:28%">Swarm today</th><th style="width:8%">Fit</th><th>Required change</th></tr></thead>
+<tbody>
+<tr><td><b>1 · Plan</b></td><td>Originator writes <code>intent.md</code> with Claude (problem, outcome, users/systems, constraints, open questions); PO reviews and <em>commits</em>.</td><td>Supervisor Phase 0 has <code>Explore</code> write an agent‑authored context report to <code>plans/research/</code>. The PO copies it to <code>context.md</code>. There's no originator‑owned statement of intent and no commit at this point.</td><td><span class="pill partial">partial</span></td><td>Add <code>intent.md</code> as the front door. It absorbs the research report and <code>context.md</code>. Untriaged intents go in <code>plans/intents/</code>; on acceptance the PO <code>git mv</code>s one into the milestone and commits.</td></tr>
+<tr><td><b>2 · Design</b></td><td>Requirements + design in one session, constrained by org <em>policy skills</em> (brand, security, compliance, UX). PO resolves flagged concerns with policy owners.</td><td>Grill Loop → Gherkin <code>spec.md</code>. Optional <code>spec-deliberator</code> (disjoint stakeholder bundles) and <code>spec-validator</code> (3 skeptics, 2‑of‑3). No hook for loading org policy.</td><td><span class="pill strong">strong</span></td><td>Keep the rigor. Add a <em>policy‑skill slot</em>: the PO and <code>spec-validator</code> load project‑declared policy skills. Add a <code>Policy Concerns</code> section to <code>spec.md</code> (concern · policy · owner · resolution).</td></tr>
+<tr><td><b>3 · Build</b></td><td>Plan mode before code; approved <code>plan.md</code> committed; <code>CLAUDE.md</code> as institutional memory; skills; hooks; parallel sessions in git worktrees; subagents with scoped tools.</td><td>The architect is effectively plan mode (no <code>Bash</code>, writes only <code>plans/</code>). Parallel groups, TDD engineers, scoped tool allowlists. <b>But:</b> approval is a chat word, the plan isn't committed before code, every engineer shares one working tree, there are no hooks, and <code>CLAUDE.md</code> is read "if present" and never written back.</td><td><span class="pill partial">partial</span></td><td>Commit the approved plan (with an approval record) before Group 1. Run parallel engineers in worktrees. Ship hooks (§8). The auditor proposes <code>CLAUDE.md</code> "common mistakes" updates from failed audits.</td></tr>
+<tr><td><b>4 · Test</b></td><td>Claude verifies its own work (tests, build, screenshots) before humans look; continuous evals regression‑test prompts, skills, and hooks in CI and gate config changes.</td><td>Strong feedback loop: TDD engineer, auditor runs build and tests, anti‑shortcut scan, "no code without tests" auto‑FAIL. <b>No evals of the swarm itself:</b> the only tests cover <code>wf-trajectory</code>. No screenshot or visual verification for UI work.</td><td><span class="pill partial">partial</span></td><td>Build an eval suite for the swarm's own prompts (validator JSON contract, gate discipline, commit refusal, first_domino accuracy) and gate prompt PRs on it. Add optional screenshot verification to the auditor for UI tasks.</td></tr>
+<tr><td><b>5 · Deploy</b></td><td>Claude reviews every PR against <code>REVIEW.md</code>, severity‑ranked; <code>@claude</code> addresses comments; hooks enforce change‑management gates; Claude runs headless in CI; MCP deploy tooling; sandboxed short‑lived creds.</td><td>Ends at a <em>local</em> <code>git commit</code> by the auditor on the current branch, then an optional local tag. No PR, no <code>REVIEW.md</code>, no CI entry point, no MCP. <code>implementation-validator</code> is opt‑in and per group. <code>visual-recap.html</code> is local only.</td><td><span class="pill gap">gap</span></td><td>Add a PR stage: a milestone branch, the auditor commits, the supervisor opens the PR with the recap and gate reports attached. Use <code>implementation-validator</code> as the PR‑review engine, reading <code>REVIEW.md</code>. Ship a CI template that runs it headless.</td></tr>
+<tr><td><b>6 · Maintain</b></td><td>Deterministic detection bands (<code>bands.yaml</code>) breach → Claude diagnoses through pre‑approved tiers → writes <code>intent.md</code>; incident becomes an eval.</td><td>Nothing. Phase 0's only trigger is "user makes a new request". No detection, no triage entry point, no incident → eval path.</td><td><span class="pill gap">gap</span></td><td><em>Roadmap.</em> Once Phase 1 lands, a headless <code>triage</code> entry point that only writes <code>plans/intents/*.md</code>. The human PO still triages.</td></tr>
+</tbody>
+</table>
+</section>
+
+<!-- ============================================================ 4 -->
+<section id="governance">
+<h2>4 · Governance crosswalk</h2>
+<table>
+<thead><tr><th style="width:20%">Playbook control</th><th style="width:36%">Swarm today</th><th style="width:9%">Fit</th><th>Change</th></tr></thead>
+<tbody>
+<tr><td><b>Separation of duties</b></td><td>Well designed: the engineer writes, the auditor verifies (can't fix), a human approves, and the auditor commits. <b>Two leaks.</b> <code>implementation-validator</code> step 8 says "fix confirmed defects" itself, contradicting the supervisor's "go back to the engineer". The validators hold <code>tools: all</code>.</td><td><span class="pill partial">partial</span></td><td>Validators report and don't fix. Route every fix through the engineer. Narrow validator tool grants where the runtime allows.</td></tr>
+<tr><td><b>Policies as code</b></td><td>Only generic attack surfaces (ambiguity, concurrency, and so on). No way to inject org security, brand, or compliance rules while the artifact is being written.</td><td><span class="pill gap">gap</span></td><td>Policy‑skill slot (§8, P‑3), plus <code>REVIEW.md</code> as the PR‑time policy.</td></tr>
+<tr><td><b>Deterministic enforcement</b></td><td>Everything is prose: "never commit", "STOP", "only the auditor". The one deterministic control is the tool allowlist (the architect and PO have no <code>Bash</code>).</td><td><span class="pill gap">gap</span></td><td>Plugin hooks: block <code>git commit/push/tag</code> without an approval token, block source edits by planning roles, block pre‑gate engineer dispatch.</td></tr>
+<tr><td><b>Managed settings</b></td><td>Out of a plugin's reach by design.</td><td><span class="pill info">n/a</span></td><td>Ship a <code>managed-settings</code> example as a template for admins. Don't assume it.</td></tr>
+<tr><td><b>Evidence: git history</b></td><td><code>spec.md</code>/<code>plan.md</code> land in git only incidentally (inside the first code commit). <b>Audit reports are deliberately untracked</b>: the auditor writes a <code>.gitignore</code> with <code>*</code> into <code>plans/audit/</code>. Human approvals exist only in chat.</td><td><span class="pill gap">gap</span></td><td>Commit each artifact at its gate. Move audits into the milestone folder and track them. Record approvals in an <code>approvals.md</code> ledger.</td></tr>
+<tr><td><b>Evidence: telemetry</b></td><td><code>usage.md</code> is a hand‑written cost line per dispatch. <code>wf-trajectory</code> visualizes Workflow runs only.</td><td><span class="pill partial">partial</span></td><td>Document an OpenTelemetry setup in the template. Keep <code>usage.md</code> as the human‑readable summary.</td></tr>
+</tbody>
+</table>
+</section>
+
+<!-- ============================================================ 5 -->
+<section id="ahead">
+<h2>5 · Where the swarm is already ahead: keep these</h2>
+<div class="cards">
+  <div class="card"><h4>Quorum review with severity calibration</h4><p>The playbook's PR review is "Claude reviews, ranked by severity". The swarm uses 3 independent skeptics, a 2‑of‑3 gate via <code>lib/tally.py</code>, surfaces the unconfirmed tail, and reports <em>corrected</em> severity. That's a stronger review engine than the playbook describes. Make it the PR reviewer.</p></div>
+  <div class="card"><h4>Validation at every artifact, not just the PR</h4><p>Spec and plan validators catch defects before code exists. The playbook reviews at PR time only. <code>plan-validator</code>'s <code>first_domino</code> is exactly the "cheap early catch" the playbook's speed goal needs.</p></div>
+  <div class="card"><h4>Deliberation for siloed knowledge</h4><p>The playbook's PO "resolves flagged concerns with policy owners" by hand. <code>spec-deliberator</code> formalizes that with disjoint stakeholder bundles and a recorded outcome. It's the natural home for policy‑owner input.</p></div>
+  <div class="card"><h4>Anti‑shortcut auditing</h4><p>Hunts for TODOs, gutted or skipped tests, and hardcoded outputs. The playbook's "feedback loops" don't address reward‑hacking at all. This is a differentiator.</p></div>
+  <div class="card"><h4>Files over chat</h4><p>The supervisor passes file paths, never summaries. Every artifact the playbook wants committed already exists as a file. What's missing is committing them at the right moments.</p></div>
+  <div class="card"><h4>Tool allowlists as capability contracts</h4><p>The playbook's "subagents with scoped context and tool limits" already exists: the architect and PO can't run <code>Bash</code>. Extend the pattern, don't replace it.</p></div>
+</div>
+</section>
+
+<!-- ============================================================ 6 -->
+<section id="gaps">
+<h2>6 · Gaps, ranked</h2>
+<table>
+<thead><tr><th style="width:5%">#</th><th style="width:9%">Severity</th><th style="width:30%">Gap</th><th style="width:30%">Evidence</th><th>Why it matters for AI‑DLC</th></tr></thead>
+<tbody>
+<tr><td>G1</td><td><span class="pill sev-c">critical</span></td><td>Commit, push, tag, and gate rules are prompt‑only. No hooks exist.</td><td class="ev"><code>agents/engineer.md:31</code> grants <code>Bash</code>; <code>:111</code> "DO NOT COMMIT" is prose. <code>agents/supervisor.md:213</code>. No <code>hooks/</code> dir in the plugin.</td><td>The playbook's gates are "deterministic scripts … before Claude acts". A prose rule fails silently under context pressure.</td></tr>
+<tr><td>G2</td><td><span class="pill sev-c">critical</span></td><td>No committed evidence trail. Audits are untracked and approvals live in chat.</td><td class="ev"><code>agents/auditor.md:87</code> writes <code>.gitignore</code> = <code>*</code>. Phase 3 "approve" is never persisted (<code>supervisor.md</code> Phase 3).</td><td>"The chain of commits is the audit trail: who asked, what the agent produced, who approved." Today "who approved" isn't recoverable.</td></tr>
+<tr><td>G3</td><td><span class="pill sev-c">critical</span></td><td>No evals of the swarm's own prompts.</td><td class="ev">Only <code>skills/wf-trajectory/tests/</code>. Commits <code>6fdfa47…a8624e6</code> (22–23 Sep) changed <b>47 prompt files, +411 / −2,419 lines</b> with no regression check.</td><td>"Continuous evals in CI: regression‑test the agent's configuration … gate updates on eval pass rates." Most exposed: the <code>tally.py</code> JSON contract.</td></tr>
+<tr><td>G4</td><td><span class="pill sev-h">high</span></td><td>No PR or deploy stage. The auditor commits straight to the current branch.</td><td class="ev"><code>supervisor.md</code> Phase 4 step 4; no <code>gh</code>/PR/CI references anywhere in <code>plugins/plan/</code>.</td><td>Stage 5 is built entirely on PRs: AI review, <code>@claude</code>, code‑owner approval, CI logs.</td></tr>
+<tr><td>G5</td><td><span class="pill sev-h">high</span></td><td>A reviewer can rewrite code: <code>implementation-validator</code> "fixes confirmed defects".</td><td class="ev"><code>agents/implementation-validator.md:97</code>; <code>skills/implementation-validator/SKILL.md</code> §8. Conflicts with <code>supervisor.md:162</code> ("go back to the engineer").</td><td>Breaks "the agent that writes code cannot approve it" and bypasses TDD and the auditor.</td></tr>
+<tr><td>G6</td><td><span class="pill sev-h">high</span></td><td>Parallel engineers share one working tree.</td><td class="ev"><code>architect.md:91</code>: isolation relies on disjoint files; <code>supervisor.md:144</code> dispatches all at once.</td><td>The playbook runs parallel sessions in separate worktrees. A shared tree means test runs and build outputs collide even when source files don't.</td></tr>
+<tr><td>G7</td><td><span class="pill sev-h">high</span></td><td>No <code>intent.md</code>. The lifecycle starts from an agent's research, not the originator's intent.</td><td class="ev"><code>supervisor.md:80</code> Phase 0 trigger; <code>product-owner.md</code> reads <code>plans/research/*.md</code>.</td><td>Intent is the playbook's audit root and its fastest leading metric (idea → committed intent). It's also the only entry point Stage 6 can write to.</td></tr>
+<tr><td>G8</td><td><span class="pill sev-m">medium</span></td><td>No policy‑as‑code slot.</td><td class="ev">Attack surfaces in <code>spec-validator.md:58</code> are generic; no reference to project policy skills.</td><td>Policies applied while writing, not discovered in review.</td></tr>
+<tr><td>G9</td><td><span class="pill sev-m">medium</span></td><td>Validator gates are opt‑in and single‑tier.</td><td class="ev"><code>supervisor.md</code> "Recommending a gate".</td><td>The playbook reviews <em>every</em> PR and tiers approval by risk. The swarm's risk criteria already exist and just need to become tiers.</td></tr>
+<tr><td>G10</td><td><span class="pill sev-m">medium</span></td><td><code>CLAUDE.md</code> is read, never fed.</td><td class="ev"><code>architect.md:126</code>, <code>auditor.md:57</code>: "if present".</td><td>The playbook's <code>CLAUDE.md</code> accumulates "common mistakes". Failed audits are exactly that signal.</td></tr>
+<tr><td>G11</td><td><span class="pill sev-m">medium</span></td><td>No lifecycle metrics.</td><td class="ev"><code>usage.md</code> tracks cost only.</td><td>The playbook's leading indicators are artifact‑commit timestamps. Nearly free to compute once G2 is fixed.</td></tr>
+<tr><td>G12</td><td><span class="pill sev-m">medium</span></td><td>Two sources per role: <code>agents/*.md</code> and <code>skills/*/SKILL.md</code>.</td><td class="ev">13 roles are duplicated; <code>AGENTS.md</code> invariant #1.</td><td>Not a playbook gap, but it doubles the cost of every change on this list. Evals (G3) are the guard against drift between the two.</td></tr>
+</tbody>
+</table>
+</section>
+
+<!-- ============================================================ 7 -->
+<section id="target">
+<h2>7 · Target shape</h2>
+<p>Same spine, same gates. New pieces are marked <b>＋</b>.</p>
+<table>
+<thead><tr><th style="width:14%">Stage</th><th style="width:26%">Role(s)</th><th style="width:30%">Committed artifact</th><th>Enforcement</th></tr></thead>
+<tbody>
+<tr><td>1 · Plan</td><td>originator + <code>product-owner</code> (＋ intent mode)</td><td>＋ <code>plans/intents/{date}-{slug}.md</code> → <code>git mv</code> to <code>{moniker}/intent.md</code> on acceptance</td><td>PO triage (human)</td></tr>
+<tr><td>2 · Design</td><td><code>product-owner</code> · <code>spec-deliberator</code> · <code>spec-validator</code> ＋ policy skills</td><td><code>spec.md</code> (＋ Policy Concerns) · <code>spec-validation.md</code></td><td>＋ commit at spec gate</td></tr>
+<tr><td>3 · Build</td><td><code>architect</code> · <code>plan-deliberator</code> · <code>plan-validator</code> · <code>engineer</code>×N (＋ worktrees) · <code>simplifier</code></td><td><code>plan.md</code> · ＋ <code>approvals.md</code> · code + tests</td><td>🛑 human gate → ＋ approval recorded; ＋ hook blocks engineer dispatch before approval</td></tr>
+<tr><td>4 · Test</td><td><code>auditor</code> (＋ screenshots) · <code>implementation-validator</code></td><td>＋ tracked <code>{moniker}/audit.md</code> · <code>implementation-validation.md</code></td><td>＋ swarm eval suite gates prompt changes</td></tr>
+<tr><td>5 · Deploy</td><td><code>auditor</code> commits · <code>supervisor</code> ＋ opens PR · <code>implementation-validator</code> ＋ reviews PR vs <code>REVIEW.md</code></td><td>＋ PR (body = recap + gate verdicts)</td><td>🛑 commit gate → ＋ hook requires approval token; code owner merges</td></tr>
+<tr><td>6 · Maintain</td><td>＋ <code>triage</code> (headless, roadmap)</td><td>＋ <code>plans/intents/*.md</code> with evidence</td><td>writes intents only; never plans or codes</td></tr>
+</tbody>
+</table>
+</section>
+
+<!-- ============================================================ 7b -->
+<section id="platform">
+<h2>7b · Platform feasibility: can Claude Code carry it?</h2>
+<p>Every change in §8 depends on a Claude Code capability. Each one was checked against the official docs. Where sources disagree, the design is chosen so it <em>doesn't depend</em> on the disputed capability.</p>
+<table>
+<thead><tr><th style="width:22%">Capability</th><th style="width:10%">Status</th><th style="width:38%">Mechanism</th><th>Consequence for the design</th></tr></thead>
+<tbody>
+<tr><td>Plugin‑shipped hooks</td><td><span class="pill strong">confirmed</span></td><td><code>hooks/hooks.json</code> in the plugin. <code>PreToolUse</code> on <code>Bash</code> with an <code>if: "Bash(git (commit|push) *)"</code> filter. Exit <code>2</code> or <code>permissionDecision: "deny"|"ask"</code> blocks the call.</td><td>P‑1 is buildable as plugin‑level hooks. It doesn't rely on per‑agent hooks.</td></tr>
+<tr><td>Admin can disable plugin hooks</td><td><span class="pill gap">risk</span></td><td>Managed settings <code>allowManagedHooksOnly</code> / <code>disableAllHooks</code>. Plugin hooks also need workspace trust.</td><td>In locked‑down orgs P‑1 silently stops enforcing. The gate script must be <em>also</em> offered as a managed hook (T‑5), and the supervisor should warn when the hook didn't fire.</td></tr>
+<tr><td>Worktree isolation per dispatch</td><td><span class="pill strong">confirmed</span></td><td>Agent‑tool <code>isolation: "worktree"</code>. Unchanged worktrees are auto‑cleaned. Edits to the main checkout are blocked from inside.</td><td>P‑6 sets isolation at <em>dispatch time</em> from the supervisor, so it works whatever plugin‑agent frontmatter supports.</td></tr>
+<tr><td>Worktree base ref</td><td><span class="pill partial">verify</span></td><td>Reported default is <code>worktree.baseRef: "fresh"</code> (branch from the default branch). <code>"head"</code> branches from current work.</td><td>Group 2 engineers must see Group 1's commits. P‑6 must pin <code>"head"</code>, or branch from <code>swarm/{moniker}</code>, and verify it with an eval.</td></tr>
+<tr><td>Plugin‑agent frontmatter: <code>hooks</code>, <code>permissionMode</code>, <code>mcpServers</code>, <code>initialPrompt</code></td><td><span class="pill partial">disputed</span></td><td>The docs lookup reported them as supported. The repo's own <code>SUBAGENTS.md:31</code> records that plugin agents <em>don't</em> support <code>initialPrompt</code>.</td><td>No change depends on these. Governance lives in plugin‑level hooks, and plan‑mode behavior stays with the architect's tool allowlist.</td></tr>
+<tr><td>Caller identity in hook input</td><td><span class="pill partial">verify</span></td><td>Needed to scope "planning roles may not edit source" to the architect/PO only.</td><td>The commit gate in P‑1 is token‑based and role‑agnostic, so it's safe either way. The edit‑scope rule ships only if the hook can see which agent is calling.</td></tr>
+<tr><td><code>claude plugin eval</code></td><td><span class="pill strong">confirmed</span></td><td><code>evals/&lt;case&gt;/prompt.md</code> + <code>graders/*.md</code> (<code>regex</code>, <code>tool_used</code>, <code>tool_order</code>, <code>file_exists</code>, <code>llm</code>). Default 3 runs. <code>--json</code> output. Exit codes 0/1/2 for CI.</td><td>P‑10 needs no custom harness. Tool‑order graders can assert "no <code>git commit</code> from the engineer" and "stops before Phase 4".</td></tr>
+<tr><td>Plugins in CI</td><td><span class="pill strong">confirmed</span></td><td><code>anthropics/claude-code-action</code> inputs <code>plugin_marketplaces</code> + <code>plugins</code>. Headless <code>claude -p</code> with <code>--agent</code>. <code>--output-format json</code> reports <code>plugin_errors</code>.</td><td>T‑2 installs <code>plan@plan-skills</code> in the runner and dispatches PR review headless.</td></tr>
+<tr><td><code>REVIEW.md</code> + Code Review</td><td><span class="pill strong">confirmed</span></td><td>Repo‑root <code>REVIEW.md</code> read by Code Review. Levels: Important / Nit / Pre‑existing. <code>@claude review [always|once]</code> on PRs.</td><td>One <code>REVIEW.md</code> (T‑1) serves both Code Review and <code>implementation-validator</code> PR mode. Map critical/high → Important and medium/low → Nit.</td></tr>
+<tr><td>Plugin MCP servers</td><td><span class="pill strong">confirmed</span></td><td><code>.mcp.json</code> at plugin root or inline in <code>plugin.json</code>.</td><td>An option for deploy tooling later. Not needed for Phases 1–3.</td></tr>
+<tr><td>OpenTelemetry export</td><td><span class="pill partial">unverified</span></td><td>The docs lookup couldn't locate the monitoring page.</td><td>T‑5 stays documentation‑only until confirmed. <code>usage.md</code> and <code>--output-format json</code> cost fields remain the evidence of record.</td></tr>
+</tbody>
+</table>
+</section>
+
+<!-- ============================================================ 8 -->
+<section id="changes">
+<h2>8 · Change inventory</h2>
+<p>Grouped by the packaging you chose. <b>P</b> = ships in the plugin. <b>T</b> = opt‑in template a team copies into its repo. Effort: S ≤ ½ day, M ≈ 1–3 days, L &gt; 3 days, including updating both agent and skill forms plus the two READMEs.</p>
+
+<h3>Plugin changes (P)</h3>
+<table>
+<thead><tr><th style="width:6%">ID</th><th style="width:34%">Change</th><th style="width:30%">Files touched</th><th style="width:7%">Effort</th><th>Closes</th></tr></thead>
+<tbody>
+<tr><td>P‑1</td><td><b>Governance hooks.</b> <code>PreToolUse</code> on <code>Bash</code> (<code>if: "Bash(git (commit|push|tag) *)"</code>) runs <code>lib/gate.py</code>, which exits 2 unless a fresh, single‑use approval nonce exists for the milestone. Conditional (§7b): deny source edits by planning roles, if the hook can identify the caller.</td><td>＋ <code>hooks/hooks.json</code>, ＋ <code>lib/gate.py</code></td><td>M</td><td>G1</td></tr>
+<tr><td>P‑2</td><td><b>Committed evidence.</b> Commit each artifact at its gate. Audits move to <code>{moniker}/audit.md</code> and are tracked. Approvals are appended to <code>{moniker}/approvals.md</code> (who · what · when · gate).</td><td><code>supervisor</code>, <code>auditor</code>, <code>product-owner</code> (×2 forms); READMEs' artifact maps</td><td>M</td><td>G2</td></tr>
+<tr><td>P‑3</td><td><b>Policy‑skill slot.</b> The PO, <code>spec-validator</code>, and <code>implementation-validator</code> load the policy skills listed in the project's <code>CLAUDE.md</code> (<code>## Policies</code>). <code>spec.md</code> gains a <em>Policy Concerns</em> section.</td><td><code>product-owner</code>, <code>spec-validator</code>, <code>implementation-validator</code>, visual PO template</td><td>S</td><td>G8</td></tr>
+<tr><td>P‑4</td><td><b>Validators report, engineers fix.</b> Replace <code>implementation-validator</code> step 8 "fix" with "hand off to the engineer via the supervisor". Same wording pass on spec/plan validators when they're dispatched by the supervisor.</td><td>3 validators (×2 forms)</td><td>S</td><td>G5</td></tr>
+<tr><td>P‑5</td><td><b>Intent front door.</b> PO "intent mode" writes <code>plans/intents/{date}-{slug}.md</code> (problem · outcome · users/systems · constraints · open questions · evidence). Phase 0 research attaches to the intent rather than standing alone.</td><td><code>product-owner</code>, <code>visual-product-owner</code>, <code>supervisor</code> Phase 0/1</td><td>M</td><td>G7</td></tr>
+<tr><td>P‑6</td><td><b>Worktree engineers.</b> The supervisor dispatches each engineer with <code>isolation: "worktree"</code>, based on <code>swarm/{moniker}</code> HEAD, not the default branch (§7b). It merges the worktree branches back before the audit. The plan's "disjoint files" rule stays as the merge‑safety check, and a merge conflict routes to Path B.</td><td><code>supervisor</code> Phase 4 (×2), <code>engineer</code></td><td>M</td><td>G6</td></tr>
+<tr><td>P‑7</td><td><b>PR stage.</b> The supervisor creates <code>swarm/{moniker}</code> at approval. After the last group, it opens a PR with <code>visual-recap.html</code> linked and gate verdict lines in the body. <code>implementation-validator</code> gains a <em>PR mode</em> that reads <code>REVIEW.md</code> and posts severity‑ranked findings.</td><td><code>supervisor</code>, <code>implementation-validator</code>, <code>visual-implementation-recap</code></td><td>L</td><td>G4</td></tr>
+<tr><td>P‑8</td><td><b>Risk tiers for gates.</b> Promote "Recommending a gate" into tiers: <em>routine</em> gets single‑pass review, <em>elevated</em> gets the 3‑skeptic panel, <em>critical</em> gets the panel at <code>--gate 1</code> plus a second human approver. The tier is recorded in <code>approvals.md</code>.</td><td><code>supervisor</code> (×2)</td><td>S</td><td>G9</td></tr>
+<tr><td>P‑9</td><td><b>Feed <code>CLAUDE.md</code>.</b> On a FAIL that reveals a repo convention, the auditor proposes a "Common mistakes" line. The supervisor asks before writing it.</td><td><code>auditor</code>, <code>supervisor</code></td><td>S</td><td>G10</td></tr>
+<tr><td>P‑10</td><td><b>Swarm eval suite.</b> Pytest golden fixtures for <code>tally.py</code>. <code>claude plugin eval</code> cases (<code>evals/&lt;case&gt;/prompt.md</code> + graders) for:<ul class="tight"><li>gate discipline: <code>tool_order</code> asserts no <code>git commit</code> from the engineer and a stop before Phase 4</li><li>validator JSON‑contract conformance: <code>regex</code> / <code>llm</code> graders</li><li>a seeded‑defect plan where <code>first_domino</code> must be found</li></ul>Every case runs against both the agent and skill forms.</td><td>＋ <code>evals/</code>, ＋ <code>lib/tests/</code></td><td>L</td><td>G3, G12</td></tr>
+<tr><td>P‑11</td><td><b>Lifecycle metrics.</b> <code>lib/metrics.py</code> derives intent → spec → plan → merge lead times, rework cycles (audit FAIL count), and intent survival from <code>git log</code> over <code>plans/</code>.</td><td>＋ <code>lib/metrics.py</code></td><td>S</td><td>G11</td></tr>
+</tbody>
+</table>
+
+<h3>Opt‑in project templates (T)</h3>
+<table>
+<thead><tr><th style="width:6%">ID</th><th style="width:30%">Template</th><th>Purpose</th></tr></thead>
+<tbody>
+<tr><td>T‑1</td><td><code>REVIEW.md</code></td><td>Review passes and severity thresholds that <code>implementation-validator</code> PR mode reads. Seeded from the validator's severity definitions.</td></tr>
+<tr><td>T‑2</td><td>CI workflow (GitHub Actions)</td><td>Runs PR review headless on every PR and the swarm eval suite on changes to <code>.claude/</code> or the plugin version pin.</td></tr>
+<tr><td>T‑3</td><td><code>.claude/settings.json</code> gate profile</td><td>Project‑level approval hooks (change‑management sign‑off, release authorization) and a sandbox profile for engineers.</td></tr>
+<tr><td>T‑4</td><td><code>CLAUDE.md</code> skeleton</td><td>Build/test commands, conventions, <code>## Policies</code> (for P‑3), "Common mistakes" (for P‑9).</td></tr>
+<tr><td>T‑5</td><td>OTel env snippet + managed‑settings example</td><td>For platform teams. Documented, not assumed.</td></tr>
+<tr><td>T‑6</td><td><code>bands.yaml</code> (roadmap)</td><td>Detection thresholds and tiers for the Maintain loop.</td></tr>
+</tbody>
+</table>
+</section>
+
+<!-- ============================================================ 9 -->
+<section id="roadmap">
+<h2>9 · Phased roadmap</h2>
+<div class="phase"><h4>Phase 1: Make the rules real <span class="pill sev-c">do first</span></h4><div class="when">P‑1 · P‑2 · P‑4 · P‑10 (tally fixtures + gate‑discipline scenarios only) · est. 1–1.5 weeks</div>
+<p>Hooks, committed evidence, reviewers stop fixing, and the first evals. No new stages yet. After this, every existing gate is enforced and leaves a record. Build the minimal evals first, because this phase rewrites the prompts they protect.</p>
+<p class="ev">Exit: a deliberate <code>git commit</code> from an engineer is blocked; <code>approvals.md</code> and <code>audit.md</code> appear in history; evals run green on both forms.</p></div>
+
+<div class="phase"><h4>Phase 2: Front door and back door</h4><div class="when">P‑5 · P‑7 · P‑8 · T‑1 · T‑2 · T‑4 · est. 2 weeks</div>
+<p>Add <code>intent.md</code> at the start and a PR at the end. The swarm now spans the playbook's Plan → Deploy, with <code>implementation-validator</code> as the policy‑aware PR reviewer and tiered gates.</p>
+<p class="ev">Exit: one real milestone runs intent → merged PR with every artifact committed, and <code>REVIEW.md</code> findings posted on the PR.</p></div>
+
+<div class="phase"><h4>Phase 3: Scale and learn</h4><div class="when">P‑3 · P‑6 · P‑9 · P‑11 · P‑10 (full) · T‑3 · T‑5 · est. 1.5–2 weeks</div>
+<p>Policy skills, worktree parallelism, the <code>CLAUDE.md</code> feedback loop, metrics, and the full eval suite in CI.</p>
+<p class="ev">Exit: a baseline of lead‑time and rework metrics from <code>lib/metrics.py</code>; prompt PRs gated on eval pass rate.</p></div>
+
+<div class="phase"><h4>Phase 4: Close the loop <span class="pill info">roadmap</span></h4><div class="when">T‑6 · headless <code>triage</code> entry · incident → eval · depends on Phases 1–3</div>
+<p>A detection breach invokes a triage agent that can only write <code>plans/intents/*.md</code> with evidence. The PO triages as a human. Accepted intents flow through the normal gates. Merged fixes add an eval case. Prerequisites: production signals the plugin can't own, and a team willing to operate <code>bands.yaml</code>.</p>
+<p class="ev">Feasibility: moderate. The mechanics are simple, because the swarm's intake is just a file. The operating model is the hard part.</p></div>
+<p class="ev">Estimates assume one engineer familiar with the repo, and include keeping agents/skills/READMEs in sync. They aren't commitments.</p>
+</section>
+
+<!-- ============================================================ 10 -->
+<section id="tensions">
+<h2>10 · Tensions: do not adopt blindly</h2>
+<table>
+<thead><tr><th style="width:26%">Playbook says</th><th style="width:34%">Conflict with the swarm</th><th>Recommendation</th></tr></thead>
+<tbody>
+<tr><td>Requirements and design collapse into one session.</td><td>The swarm deliberately splits <em>what/why</em> (PO, no code access) from <em>how</em> (architect, reads the code). The split is what makes <code>plan-validator</code>'s codebase check meaningful.</td><td><b>Keep the split.</b> Map the playbook's "design" onto <code>spec.md</code> + <code>data-model.md</code>/<code>api-contracts.md</code>. Speed comes from committing at each gate, not from merging roles.</td></tr>
+<tr><td>AI review on <em>every</em> PR.</td><td>A 3‑skeptic panel on every PR triples the review cost.</td><td>Risk tiers (P‑8): single‑pass review by default, the panel for elevated and critical changes.</td></tr>
+<tr><td>"No person in the invocation path."</td><td>The supervisor always orients and waits for a go‑ahead.</td><td>Only the <em>intake</em> is automated (Phase 4). The playbook itself keeps human PO triage, so both human gates stay.</td></tr>
+<tr><td>Deterministic gates everywhere.</td><td>The validators are judgment, not policy.</td><td>Hooks for <em>authority</em> (commit, push, approve, edit scope). Validators stay advisory, and they're tiered.</td></tr>
+<tr><td>Managed settings enforce everything.</td><td>A plugin can't set org policy.</td><td>Ship examples (T‑5). Never rely on them for the swarm's own guarantees; P‑1 hooks carry those.</td></tr>
+</tbody>
+</table>
+</section>
+
+<!-- ============================================================ 11 -->
+<section id="metrics">
+<h2>11 · Measuring adoption</h2>
+<p>Once artifacts are committed at each gate (P‑2), the playbook's indicators come straight from <code>git log</code> over <code>plans/</code>:</p>
+<table>
+<thead><tr><th>Playbook indicator</th><th>Source in the swarm</th><th>Available after</th></tr></thead>
+<tbody>
+<tr><td>Idea → committed <code>intent.md</code></td><td>first commit of <code>plans/intents/*</code></td><td>Phase 2</td></tr>
+<tr><td>Elapsed time between artifact commits</td><td>commit times of <code>intent → spec → plan → approvals → PR merge</code></td><td>Phase 1 (spec→plan), Phase 2 (end‑to‑end)</td></tr>
+<tr><td>First‑pass CI success</td><td>first audit PASS vs FAIL per group; CI status on PR</td><td>Phase 1 / Phase 2</td></tr>
+<tr><td>Review comments resolved without manual edits</td><td>PR‑mode findings closed by engineer commits</td><td>Phase 2</td></tr>
+<tr><td>Intent survival rate</td><td>intents moved to a milestone vs closed</td><td>Phase 2</td></tr>
+<tr><td>Rework cycles per change</td><td>audit FAIL count + <code>-r2/-r3</code> validation files</td><td>Phase 1</td></tr>
+<tr><td>Escaped defects / repeat incidents</td><td>incident‑sourced intents; eval cases added</td><td>Phase 4</td></tr>
+</tbody>
+</table>
+</section>
+
+<!-- ============================================================ 12 -->
+<section id="decisions">
+<h2>12 · Open decisions for the owner</h2>
+<ol class="tight">
+  <li><b>Where does an approval token live?</b> A file in the milestone (auditable, but forgeable by an agent with Write) or an environment/hook‑side secret (stronger, but less visible). Recommendation: the <code>approvals.md</code> entry for the record, plus a hook‑checked nonce the supervisor can only obtain from a user prompt.</li>
+  <li><b>Locked‑down orgs.</b> If admins enforce <code>allowManagedHooksOnly</code>, P‑1 does nothing unless the platform team adopts <code>lib/gate.py</code> as a managed hook. Do you ship the gate as a documented managed hook from day one?</li>
+  <li><b>PR host.</b> Is GitHub the only target? P‑7 and T‑2 assume <code>gh</code>. GitLab needs a parallel template.</li>
+  <li><b>One source per role?</b> Resolving G12 (generate skills from agents, or the reverse) before Phase 1 roughly halves the edit cost of everything after it.</li>
+  <li><b>Direct‑commit mode.</b> Keep a "local, no PR" mode for solo use, or make the PR stage mandatory?</li>
+</ol>
+</section>
+
+<!-- ============================================================ 13 -->
+<section id="method">
+<h2>13 · Method &amp; sources</h2>
+<ul class="tight">
+  <li>Playbook: <a href="https://claude.com/blog/the-ai-native-sdlc-playbook">claude.com/blog/the-ai-native-sdlc-playbook</a>. All six stages, the artifact table, governance, metrics, infrastructure, and "The loop in action".</li>
+  <li>Swarm: every file under <code>plugins/plan/</code> surveyed. <code>supervisor</code>, <code>product-owner</code>, <code>architect</code>, <code>engineer</code>, <code>auditor</code>, and <code>implementation-validator</code> read in full. Keyword sweeps for hooks, worktrees, CI, PR, <code>REVIEW.md</code>, evals, MCP, telemetry, sandbox, and plan mode came back empty.</li>
+  <li>Platform capabilities (§7b) checked against the Claude Code docs: <a href="https://code.claude.com/docs/en/hooks">hooks</a>, <a href="https://code.claude.com/docs/en/sub-agents">sub‑agents</a>, <a href="https://code.claude.com/docs/en/worktrees">worktrees</a>, <a href="https://code.claude.com/docs/en/plugins">plugins</a>, <a href="https://code.claude.com/docs/en/github-actions">GitHub Actions</a>, <a href="https://code.claude.com/docs/en/headless">headless</a>, <a href="https://code.claude.com/docs/en/code-review">Code Review</a>, <a href="https://code.claude.com/docs/en/settings">settings</a>. Where the lookup disagreed with the repo's own records, the item is marked <em>disputed</em> and no recommendation depends on it.</li>
+  <li>Prompt churn measured with <code>git diff --shortstat 893622c a8624e6 -- plugins/plan/agents plugins/plan/skills</code>.</li>
+  <li>Scope, packaging, and artifact decisions confirmed with the repo owner before writing.</li>
+  <li>No code was changed. This report is the only file produced.</li>
+</ul>
+</section>
+
+<footer>Generated 24 Sep 2026 · self‑contained, no external assets · evidence citations are <code>path:line</code> at commit <code>a54fa10</code>.</footer>
+</main>
+</div>
+</body>
+</html>

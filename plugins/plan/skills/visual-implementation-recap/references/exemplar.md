@@ -27,7 +27,7 @@ compare the recap of the *result* with the plan and spec of the same work.)
 - [x] Task 2.A: delete dead legacy/token.ts (Status: ✅ Removed)
 ```
 
-`plans/audit/AUDIT_Silent_Token_Refresh.md` (excerpt):
+`plans/active_milestones/silent-token-refresh/audit.md` (excerpt):
 ```markdown
 ## 📊 Summary
 *   Overall Status: PASS

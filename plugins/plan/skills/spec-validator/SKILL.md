@@ -91,11 +91,11 @@ was attacked" is itself the evidence the gate produced. A re-run after a materia
 goes to `spec-validation-r2.md`, `-r3.md`, … so every round is preserved for comparison.
 Fill the **The Review Document** template below verbatim.
 
-### 8. Act
-- For each **confirmed** finding, apply its `tightening` to the spec (or surface it to the user if it changes intent).
+### 8. Act (report only)
+- Never edit the spec yourself; reviewers do not change what they review.
+- For each **confirmed** finding, list its `tightening` for the author (`product-owner`), flagging any that would change intent. The supervisor hands them over; when you run standalone, ask the user to have the product owner apply them.
 - List **unconfirmed** findings so the user can eyeball the tail.
-- If you rewrote the spec materially, re-run the panel once on the revision.
-- Tick the **Actions Taken** checklist in the review file as you apply each fix.
+- The author ticks the **Actions Taken** checklist as it applies each tightening; after a material revision the panel may be re-run (`-r2`).
 
 ## Skeptic Prompt Template
 
@@ -248,3 +248,7 @@ adversarial framing. When agreeing skeptics disagree on severity, the aggregatio
 doing real work: a hole two reviewers call "high" and one calls "medium" lands at high,
 but the spread itself tells you the finding is real and the impact is debatable — worth a
 sentence to the user rather than a silent edit.
+
+## plan-swarm@3.0: policy skills
+
+If `plans/swarm.md` lists `policies`, read each named project skill (`.claude/skills/{name}/SKILL.md`) and include its rules in every skeptic's `{CONTEXT}`, so the panel also attacks the spec for policy violations and for policy questions missing from its *Policy Concerns* section.
